@@ -9,6 +9,7 @@ import { MobileBottomIcons } from './MobileBottomIcons';
 import { HorizontalPlaylist } from './HorizontalPlaylist';
 import { PlaylistPanel } from './PlaylistPanel';
 import { RadioPanel } from './RadioPanel';
+import { AudioVisualizer } from './AudioVisualizer';
 
 declare global {
   interface Window {
@@ -219,6 +220,11 @@ export const MobileMusicPlayer = () => {
           {isYouTubeMode ? '🎵 YouTube' : currentSource === 'radios' ? 'Rádio Online' : 'Artista'}
         </div>
       </div>
+
+      <AudioVisualizer
+        audioRef={audioRef}
+        isPlaying={displayPlaying}
+      />
 
       <AlbumArt
         src={displayCover}

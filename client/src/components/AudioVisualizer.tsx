@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface AudioVisualizerProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -12,51 +12,54 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
   const animationIdRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const initializationDoneRef = useRef(false);
 
   useEffect(() => {
-    if (!audioRef.current) return;
-
     const audio = audioRef.current;
+    if (!audio) return;
 
-    // Initialize Web Audio API
+    // Initialize Web Audio API only once
     const initAudioContext = () => {
-      if (audioContextRef.current) return;
+      // Prevent multiple initializations
+      if (initializationDoneRef.current || audioContextRef.current) return;
 
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioContextRef.current = audioContext;
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContextRef.current = audioContext;
 
-      // Create analyser node
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      analyserRef.current = analyser;
+        // Create analyser node
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        analyserRef.current = analyser;
 
-      // Create data array for frequency data
-      const bufferLength = analyser.frequencyBinCount;
-      dataArrayRef.current = new Uint8Array(bufferLength);
+        // Create data array for frequency data
+        const bufferLength = analyser.frequencyBinCount;
+        dataArrayRef.current = new Uint8Array(bufferLength);
 
-      // Connect audio element to analyser
-      if (!sourceRef.current) {
-        const source = audioContext.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-        sourceRef.current = source;
+        // Connect audio element to analyser (only once)
+        try {
+          const source = audioContext.createMediaElementSource(audio);
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+          sourceRef.current = source;
+          initializationDoneRef.current = true;
+        } catch (e) {
+          console.warn('AudioVisualizer: Could not create media source', e);
+          // Fallback: just use analyser without source
+          analyser.connect(audioContext.destination);
+        }
+      } catch (e) {
+        console.warn('AudioVisualizer: Could not initialize AudioContext', e);
       }
-    };
-
-    // Initialize on first play
-    const handlePlay = () => {
-      initAudioContext();
-      if (audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume();
-      }
-      draw();
     };
 
     // Draw visualizer
     const draw = () => {
       const canvas = canvasRef.current;
       if (!canvas || !analyserRef.current || !dataArrayRef.current) {
-        if (isPlaying) animationIdRef.current = requestAnimationFrame(draw);
+        if (isPlaying && audio && !audio.paused) {
+          animationIdRef.current = requestAnimationFrame(draw);
+        }
         return;
       }
 
@@ -64,7 +67,11 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
       if (!ctx) return;
 
       // Get frequency data
-      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+      try {
+        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+      } catch (e) {
+        console.warn('AudioVisualizer: Could not get frequency data', e);
+      }
 
       // Clear canvas with semi-transparent background
       ctx.fillStyle = 'rgba(23, 23, 60, 0.2)';
@@ -97,25 +104,41 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
 
       ctx.shadowColor = 'transparent';
 
-      if (isPlaying) {
+      if (isPlaying && audio && !audio.paused) {
         animationIdRef.current = requestAnimationFrame(draw);
       }
     };
 
-    audio.addEventListener('play', handlePlay);
-
-    if (isPlaying) {
+    // Only initialize and draw when actually playing
+    if (isPlaying && audio && !audio.paused) {
       initAudioContext();
+      
+      // Resume audio context if suspended
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume().catch(e => console.warn('Could not resume AudioContext', e));
+      }
+      
       draw();
     }
 
     return () => {
-      audio.removeEventListener('play', handlePlay);
+      // Clean up animation frame
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
       }
     };
   }, [isPlaying, audioRef]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+      // Don't disconnect/close on unmount to avoid interfering with playback
+      // The audio context will be cleaned up by the browser
+    };
+  }, []);
 
   return (
     <div className="w-full px-2 mb-2">

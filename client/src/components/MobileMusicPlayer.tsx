@@ -223,7 +223,7 @@ export const MobileMusicPlayer = () => {
 
       <AudioVisualizer
         audioRef={audioRef}
-        isPlaying={displayPlaying}
+        isPlaying={isPlaying && !isYouTubeMode}
       />
 
       <AlbumArt

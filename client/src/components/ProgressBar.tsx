@@ -4,6 +4,7 @@ interface ProgressBarProps {
   currentTime: number;
   duration: number;
   onSeek: (time: number) => void;
+  isRadio?: boolean;
 }
 
 const formatTime = (seconds: number): string => {
@@ -12,9 +13,10 @@ const formatTime = (seconds: number): string => {
   return `${mins}:${secs}`;
 };
 
-export const ProgressBar = ({ currentTime, duration, onSeek }: ProgressBarProps) => {
+export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false }: ProgressBarProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const isLiveStream = isRadio || duration === 0 || !isFinite(duration);
 
   // Draw heartbeat waveform on canvas
   useEffect(() => {
@@ -30,125 +32,137 @@ export const ProgressBar = ({ currentTime, duration, onSeek }: ProgressBarProps)
     canvas.width = width;
     canvas.height = height;
 
-      // Clear canvas (transparent)
-      ctx.clearRect(0, 0, width, height);
+    // Clear canvas (transparent)
+    ctx.clearRect(0, 0, width, height);
 
-    // Draw heartbeat waveform
-    const centerY = height / 2;
-    const amplitude = height * 0.35;
-    const frequency = 0.05; // Controls how many beats fit in the width
-    const beatWidth = width / 4; // Width of one heartbeat pattern
+    if (isLiveStream) {
+      // For live streams/radios, draw a simple animated line
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      // Draw a straight line across the entire width
+      ctx.moveTo(0, height / 2);
+      ctx.lineTo(width, height / 2);
+      ctx.stroke();
+      
+      // Draw red circle indicator at the end (live indicator)
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.arc(width - 10, height / 2, 6, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = '#ff3333';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      // For regular tracks with duration, draw heartbeat waveform
+      const centerY = height / 2;
+      const amplitude = height * 0.35;
+      const beatWidth = width / 4;
 
-    // Draw white line (completed portion)
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
+      // Draw white line (completed portion)
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
 
-    const progressPixels = (progress / 100) * width;
+      const progressPixels = (progress / 100) * width;
 
-    for (let x = 0; x <= progressPixels; x += 1) {
-      // Create heartbeat pattern
-      const localX = (x % beatWidth) / beatWidth; // 0 to 1 for each beat
-      let y = centerY;
+      for (let x = 0; x <= progressPixels; x += 1) {
+        const localX = (x % beatWidth) / beatWidth;
+        let y = centerY;
+
+        if (localX < 0.1) {
+          y = centerY - amplitude * Math.sin(localX * Math.PI * 10);
+        } else if (localX < 0.2) {
+          y = centerY + amplitude * Math.sin((localX - 0.1) * Math.PI * 10);
+        } else if (localX < 0.3) {
+          y = centerY - amplitude * 1.2 * Math.sin((localX - 0.2) * Math.PI * 10);
+        } else if (localX < 0.4) {
+          y = centerY + amplitude * Math.sin((localX - 0.3) * Math.PI * 10);
+        } else if (localX < 0.5) {
+          y = centerY - amplitude * 0.6 * Math.sin((localX - 0.4) * Math.PI * 10);
+        } else if (localX < 0.6) {
+          y = centerY + amplitude * 0.4 * Math.sin((localX - 0.5) * Math.PI * 10);
+        } else {
+          y = centerY;
+        }
+
+        if (x === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.stroke();
+
+      // Draw gray line (remaining portion)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      for (let x = Math.max(0, progressPixels); x <= width; x += 1) {
+        const localX = (x % beatWidth) / beatWidth;
+        let y = centerY;
+
+        if (localX < 0.1) {
+          y = centerY - amplitude * Math.sin(localX * Math.PI * 10);
+        } else if (localX < 0.2) {
+          y = centerY + amplitude * Math.sin((localX - 0.1) * Math.PI * 10);
+        } else if (localX < 0.3) {
+          y = centerY - amplitude * 1.2 * Math.sin((localX - 0.2) * Math.PI * 10);
+        } else if (localX < 0.4) {
+          y = centerY + amplitude * Math.sin((localX - 0.3) * Math.PI * 10);
+        } else if (localX < 0.5) {
+          y = centerY - amplitude * 0.6 * Math.sin((localX - 0.4) * Math.PI * 10);
+        } else if (localX < 0.6) {
+          y = centerY + amplitude * 0.4 * Math.sin((localX - 0.5) * Math.PI * 10);
+        } else {
+          y = centerY;
+        }
+
+        if (x === Math.max(0, progressPixels)) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.stroke();
+
+      // Draw red circle (progress indicator) on the waveform
+      let circleY = centerY;
+      const localProgress = (progress % 100) / 100;
+      const beatWidthPercent = 25;
+      const localX = (localProgress * 100) % beatWidthPercent / beatWidthPercent;
 
       if (localX < 0.1) {
-        // First spike
-        y = centerY - amplitude * Math.sin(localX * Math.PI * 10);
+        circleY = centerY - amplitude * Math.sin(localX * Math.PI * 10);
       } else if (localX < 0.2) {
-        // First dip
-        y = centerY + amplitude * Math.sin((localX - 0.1) * Math.PI * 10);
+        circleY = centerY + amplitude * Math.sin((localX - 0.1) * Math.PI * 10);
       } else if (localX < 0.3) {
-        // Second spike (main beat)
-        y = centerY - amplitude * 1.2 * Math.sin((localX - 0.2) * Math.PI * 10);
+        circleY = centerY - amplitude * 1.2 * Math.sin((localX - 0.2) * Math.PI * 10);
       } else if (localX < 0.4) {
-        // Second dip
-        y = centerY + amplitude * Math.sin((localX - 0.3) * Math.PI * 10);
+        circleY = centerY + amplitude * Math.sin((localX - 0.3) * Math.PI * 10);
       } else if (localX < 0.5) {
-        // Third small spike
-        y = centerY - amplitude * 0.6 * Math.sin((localX - 0.4) * Math.PI * 10);
+        circleY = centerY - amplitude * 0.6 * Math.sin((localX - 0.4) * Math.PI * 10);
       } else if (localX < 0.6) {
-        // Third dip
-        y = centerY + amplitude * 0.4 * Math.sin((localX - 0.5) * Math.PI * 10);
-      } else {
-        // Flat line (rest)
-        y = centerY;
+        circleY = centerY + amplitude * 0.4 * Math.sin((localX - 0.5) * Math.PI * 10);
       }
 
-      if (x === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.arc(progressPixels, circleY, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ff3333';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
-    ctx.stroke();
-
-    // Draw gray line (remaining portion)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-
-    for (let x = Math.max(0, progressPixels); x <= width; x += 1) {
-      const localX = (x % beatWidth) / beatWidth;
-      let y = centerY;
-
-      if (localX < 0.1) {
-        y = centerY - amplitude * Math.sin(localX * Math.PI * 10);
-      } else if (localX < 0.2) {
-        y = centerY + amplitude * Math.sin((localX - 0.1) * Math.PI * 10);
-      } else if (localX < 0.3) {
-        y = centerY - amplitude * 1.2 * Math.sin((localX - 0.2) * Math.PI * 10);
-      } else if (localX < 0.4) {
-        y = centerY + amplitude * Math.sin((localX - 0.3) * Math.PI * 10);
-      } else if (localX < 0.5) {
-        y = centerY - amplitude * 0.6 * Math.sin((localX - 0.4) * Math.PI * 10);
-      } else if (localX < 0.6) {
-        y = centerY + amplitude * 0.4 * Math.sin((localX - 0.5) * Math.PI * 10);
-      } else {
-        y = centerY;
-      }
-
-      if (x === Math.max(0, progressPixels)) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.stroke();
-
-    // Draw red circle (progress indicator) on the waveform
-    let circleY = centerY;
-    const localProgress = (progress % 100) / 100;
-    const beatWidthPercent = 25; // 25% of progress is one beat
-    const localX = (localProgress * 100) % beatWidthPercent / beatWidthPercent;
-
-    if (localX < 0.1) {
-      circleY = centerY - amplitude * Math.sin(localX * Math.PI * 10);
-    } else if (localX < 0.2) {
-      circleY = centerY + amplitude * Math.sin((localX - 0.1) * Math.PI * 10);
-    } else if (localX < 0.3) {
-      circleY = centerY - amplitude * 1.2 * Math.sin((localX - 0.2) * Math.PI * 10);
-    } else if (localX < 0.4) {
-      circleY = centerY + amplitude * Math.sin((localX - 0.3) * Math.PI * 10);
-    } else if (localX < 0.5) {
-      circleY = centerY - amplitude * 0.6 * Math.sin((localX - 0.4) * Math.PI * 10);
-    } else if (localX < 0.6) {
-      circleY = centerY + amplitude * 0.4 * Math.sin((localX - 0.5) * Math.PI * 10);
-    }
-
-    ctx.fillStyle = '#ff0000';
-    ctx.beginPath();
-    ctx.arc(progressPixels, circleY, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw red circle outline
-    ctx.strokeStyle = '#ff3333';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }, [progress]);
+  }, [progress, isLiveStream]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || isLiveStream) return; // Don't seek on live streams
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -160,18 +174,18 @@ export const ProgressBar = ({ currentTime, duration, onSeek }: ProgressBarProps)
   return (
     <div className="w-[90%] flex items-center justify-between my-2 gap-2">
       <div className="text-xs text-muted-foreground min-w-[35px]">
-        {formatTime(currentTime)}
+        {isLiveStream ? '🔴 AO VIVO' : formatTime(currentTime)}
       </div>
       <div className="flex-1">
         <canvas
           ref={canvasRef}
           onClick={handleCanvasClick}
-          className="w-full h-12 cursor-pointer hover:opacity-80 transition-opacity"
+          className={`w-full h-12 ${isLiveStream ? 'cursor-default' : 'cursor-pointer'} hover:opacity-80 transition-opacity`}
           style={{ display: 'block' }}
         />
       </div>
       <div className="text-xs text-muted-foreground min-w-[35px]">
-        {formatTime(duration)}
+        {isLiveStream ? '' : formatTime(duration)}
       </div>
     </div>
   );

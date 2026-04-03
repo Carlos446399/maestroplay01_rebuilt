@@ -161,6 +161,24 @@ export const MobileMusicPlayer = () => {
     playTrack(index);
   };
 
+  const handlePlayRadio = (index: number) => {
+    // Stop YouTube if playing
+    if (isYouTubeMode && ytPlayer) {
+      ytPlayer.stopVideo();
+      setIsYouTubeMode(false);
+      setYtPlaying(false);
+    }
+    playRadio(index);
+  };
+
+  const handleYouTubePlayWrapper = (videoId: string, title: string, thumbnail: string) => {
+    // Stop radio/track audio if playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    handleYouTubePlay(videoId, title, thumbnail);
+  };
+
   const currentTrack = currentTrackIndex >= 0 ? tracks[currentTrackIndex] : undefined;
   const currentRadio = currentRadioIndex >= 0 ? radios[currentRadioIndex] : undefined;
   
@@ -238,6 +256,7 @@ export const MobileMusicPlayer = () => {
         currentTime={displayTime}
         duration={displayDuration}
         onSeek={handleSeek}
+        isRadio={currentSource === 'radios'}
       />
 
       <MobileControls
@@ -275,14 +294,14 @@ export const MobileMusicPlayer = () => {
         tracks={tracks}
         onClose={() => setIsPlaylistOpen(false)}
         onTrackSelect={handlePlayTrack}
-        onYouTubePlay={handleYouTubePlay}
+        onYouTubePlay={handleYouTubePlayWrapper}
       />
 
       <RadioPanel
         isOpen={isRadioOpen}
         radios={radios}
         onClose={() => setIsRadioOpen(false)}
-        onRadioSelect={playRadio}
+        onRadioSelect={handlePlayRadio}
       />
 
       {/* Hidden YouTube player */}

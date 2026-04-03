@@ -179,6 +179,24 @@ export const MobileMusicPlayer = () => {
     handleYouTubePlay(videoId, title, thumbnail);
   };
 
+  const handleNextTrack = () => {
+    if (isYouTubeMode && ytPlayer) {
+      // For YouTube, just continue playing the current video
+      // (YouTube player handles autoplay of next video in playlist if available)
+      return;
+    }
+    nextTrack();
+  };
+
+  const handlePreviousTrack = () => {
+    if (isYouTubeMode && ytPlayer) {
+      // For YouTube, seek to beginning
+      ytPlayer.seekTo(0, true);
+      return;
+    }
+    previousTrack();
+  };
+
   const currentTrack = currentTrackIndex >= 0 ? tracks[currentTrackIndex] : undefined;
   const currentRadio = currentRadioIndex >= 0 ? radios[currentRadioIndex] : undefined;
   
@@ -263,8 +281,8 @@ export const MobileMusicPlayer = () => {
       <MobileControls
         isPlaying={displayPlaying}
         onTogglePlay={handleTogglePlay}
-        onPreviousTrack={previousTrack}
-        onNextTrack={nextTrack}
+        onPreviousTrack={handlePreviousTrack}
+        onNextTrack={handleNextTrack}
       />
 
       <MobileBottomIcons

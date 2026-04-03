@@ -15,11 +15,6 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const initializationDoneRef = useRef(false);
 
-  // Disable visualizer for radio streams
-  if (isRadio) {
-    return null;
-  }
-
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -140,7 +135,7 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
         cancelAnimationFrame(animationIdRef.current);
       }
     };
-  }, [isPlaying, audioRef, isRadio]);
+  }, [isPlaying, audioRef]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -150,6 +145,11 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
       }
     };
   }, []);
+
+  // Prevent rendering for radio streams
+  if (isRadio) {
+    return null;
+  }
 
   return (
     <canvas

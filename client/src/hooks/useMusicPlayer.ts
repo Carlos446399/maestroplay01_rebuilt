@@ -135,32 +135,54 @@ export const useMusicPlayer = () => {
   const playTrack = useCallback((index: number) => {
     if (index < 0 || index >= state.tracks.length) return;
     
+    const track = state.tracks[index];
+    
     setState(prev => ({ 
       ...prev, 
       currentTrackIndex: index, 
       currentRadioIndex: -1,
-      currentSource: 'tracks'
+      currentSource: 'tracks',
+      isPlaying: true
     }));
     
     if (audioRef.current) {
-      audioRef.current.src = state.tracks[index].url;
-      audioRef.current.play().catch(console.error);
+      audioRef.current.src = track.url;
+      requestAnimationFrame(() => {
+        if (audioRef.current) {
+          audioRef.current.play().catch(err => {
+            if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+              console.error('Play error:', err);
+            }
+          });
+        }
+      });
     }
   }, [state.tracks]);
 
   const playRadio = useCallback((index: number) => {
     if (index < 0 || index >= state.radios.length) return;
     
+    const radio = state.radios[index];
+    
     setState(prev => ({ 
       ...prev, 
       currentRadioIndex: index, 
       currentTrackIndex: -1,
-      currentSource: 'radios'
+      currentSource: 'radios',
+      isPlaying: true
     }));
     
     if (audioRef.current) {
-      audioRef.current.src = state.radios[index].url;
-      audioRef.current.play().catch(console.error);
+      audioRef.current.src = radio.url;
+      requestAnimationFrame(() => {
+        if (audioRef.current) {
+          audioRef.current.play().catch(err => {
+            if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+              console.error('Play error:', err);
+            }
+          });
+        }
+      });
     }
   }, [state.radios]);
 
@@ -219,10 +241,18 @@ export const useMusicPlayer = () => {
     setState(prev => ({ ...prev, repeat: !prev.repeat }));
   }, []);
 
-  const seek = useCallback((time: number) => {
+  const setVolume = useCallback((volume: number) => {
+    const clampedVolume = Math.max(0, Math.min(1, volume));
     if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setState(prev => ({ ...prev, currentTime: time }));
+      audioRef.current.volume = clampedVolume;
+    }
+    setState(prev => ({ ...prev, volume: clampedVolume }));
+  }, []);
+
+  const seek = useCallback((time: number) => {
+    if (audioRef.current && audioRef.current.duration && !isNaN(time)) {
+      audioRef.current.currentTime = Math.max(0, Math.min(time, audioRef.current.duration));
+      setState(prev => ({ ...prev, currentTime: audioRef.current!.currentTime }));
     }
   }, []);
 
@@ -272,5 +302,6 @@ export const useMusicPlayer = () => {
     previousTrack,
     toggleRepeat,
     seek,
+    setVolume,
   };
 };

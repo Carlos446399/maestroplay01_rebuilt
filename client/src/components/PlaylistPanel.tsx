@@ -46,7 +46,7 @@ export const PlaylistPanel = ({
   return (
     <div className={cn(
       "fixed left-0 w-full max-h-[60vh] z-10 transition-all duration-300 ease-in-out",
-      "bg-background border-t-2 border-border flex flex-col pb-2",
+      "bg-black border-t-2 border-border flex flex-col pb-2",
       isOpen ? "bottom-0" : "-bottom-full"
     )}>
       <button

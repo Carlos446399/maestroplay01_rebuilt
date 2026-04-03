@@ -61,7 +61,7 @@ export const MobileBottomIcons = ({
         <Star 
           className={cn(
             "cursor-pointer transition-all duration-200",
-            isFavorite ? 'text-red-accent fill-red-accent' : 'text-white hover:text-primary',
+            isFavorite ? 'text-red-600 fill-red-600' : 'text-white hover:text-primary',
             favAnim && 'scale-150'
           )}
           size={20} 
@@ -70,7 +70,7 @@ export const MobileBottomIcons = ({
         <Shuffle 
           className={cn(
             "cursor-pointer transition-colors",
-            isShuffle ? 'text-red-accent' : 'text-white hover:text-primary'
+            isShuffle ? 'text-red-600' : 'text-white hover:text-primary'
           )}
           size={20} 
           onClick={onShuffle} 
@@ -78,7 +78,7 @@ export const MobileBottomIcons = ({
         <Repeat 
           className={cn(
             "cursor-pointer transition-all duration-200",
-            isRepeat ? 'text-red-accent' : 'text-white hover:text-primary',
+            isRepeat ? 'text-red-600' : 'text-white hover:text-primary',
             repAnim && 'scale-150'
           )}
           size={20} 

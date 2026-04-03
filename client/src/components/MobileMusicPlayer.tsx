@@ -8,6 +8,7 @@ import { MobileControls } from './MobileControls';
 import { MobileBottomIcons } from './MobileBottomIcons';
 import { HorizontalPlaylist } from './HorizontalPlaylist';
 import { PlaylistPanel } from './PlaylistPanel';
+import { LocalPlaylistPanel } from './LocalPlaylistPanel';
 import { RadioPanel } from './RadioPanel';
 import { AudioVisualizer } from './AudioVisualizer';
 
@@ -44,6 +45,7 @@ export const MobileMusicPlayer = () => {
   } = useMusicPlayer();
 
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
+  const [isLocalPlaylistOpen, setIsLocalPlaylistOpen] = useState(false);
   const [isRadioOpen, setIsRadioOpen] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -286,7 +288,7 @@ export const MobileMusicPlayer = () => {
       />
 
       <MobileBottomIcons
-        onSearch={() => setIsPlaylistOpen(true)}
+        onSearch={() => setIsLocalPlaylistOpen(true)}
         onFavorite={handleFavorite}
         onShuffle={() => setIsShuffle(!isShuffle)}
         onRepeat={toggleRepeat}
@@ -306,6 +308,13 @@ export const MobileMusicPlayer = () => {
           const originalIndex = tracks.findIndex(t => t.id === favTracks[index].id);
           handlePlayTrack(originalIndex);
         }}
+      />
+
+      <LocalPlaylistPanel
+        isOpen={isLocalPlaylistOpen}
+        tracks={tracks}
+        onClose={() => setIsLocalPlaylistOpen(false)}
+        onTrackSelect={handlePlayTrack}
       />
 
       <PlaylistPanel

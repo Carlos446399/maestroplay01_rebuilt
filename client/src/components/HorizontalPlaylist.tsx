@@ -26,7 +26,7 @@ export const HorizontalPlaylist = ({
             "flex-shrink-0 w-[70px] bg-card rounded cursor-pointer p-1",
             "flex flex-col items-center",
             "transition-all duration-200",
-            index === currentTrackIndex && "border-2 border-red-accent"
+            index === currentTrackIndex && "border-2 border-red-600"
           )}
           onClick={() => onTrackSelect(index)}
         >
@@ -36,7 +36,7 @@ export const HorizontalPlaylist = ({
               alt={track.name}
               className="w-full h-full object-cover rounded"
             />
-            <Star className="absolute top-0.5 right-0.5 text-red-accent fill-red-accent" size={10} />
+            <Star className="absolute top-0.5 right-0.5 text-red-600 fill-red-600" size={10} />
           </div>
           <span className="text-[8px] text-muted-foreground text-center leading-tight mt-0.5 w-full truncate px-0.5">
             {track.name}

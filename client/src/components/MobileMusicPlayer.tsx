@@ -221,16 +221,18 @@ export const MobileMusicPlayer = () => {
         </div>
       </div>
 
-      <AudioVisualizer
-        audioRef={audioRef}
-        isPlaying={isPlaying && !isYouTubeMode}
-      />
-
-      <AlbumArt
-        src={displayCover}
-        alt={displayName}
-        isPlaying={displayPlaying}
-      />
+      <div className="relative w-[40vw] h-[40vw] max-w-[150px] max-h-[150px] mx-auto my-2">
+        <AlbumArt
+          src={displayCover}
+          alt={displayName}
+          isPlaying={displayPlaying}
+        />
+        <AudioVisualizer
+          audioRef={audioRef}
+          isPlaying={isPlaying && !isYouTubeMode}
+          isRadio={currentSource === 'radios'}
+        />
+      </div>
 
       <ProgressBar
         currentTime={displayTime}

@@ -3,26 +3,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* MaestroPlay Design System */
+/* MaestroPlay Design System - Preto Escuro */
 
 @layer base {
   :root {
-    --background: 231 60% 11%;
+    --background: 0 0% 5%;
     --foreground: 0 0% 100%;
 
     --card: 0 0% 10%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 231 60% 11%;
+    --popover: 0 0% 5%;
     --popover-foreground: 0 0% 100%;
 
     --primary: 0 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 231 35% 20%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 231 35% 20%;
+    --muted: 0 0% 15%;
     --muted-foreground: 0 0% 67%;
 
     --accent: 0 100% 50%;
@@ -31,22 +31,22 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 231 35% 25%;
-    --input: 231 35% 25%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
     --ring: 0 100% 50%;
 
     --radius: 0.75rem;
 
     /* Music player specific colors */
-    --player-bg: 231 60% 11%;
+    --player-bg: 0 0% 5%;
     --player-fg: 0 0% 100%;
     --golden: 48 100% 65%;
-    --track-bg: 231 35% 20%;
+    --track-bg: 0 0% 10%;
     --red-accent: 0 100% 50%;
     
     /* Gradients */
-    --gradient-main: linear-gradient(180deg, hsl(231 60% 11%), hsl(231 35% 15%));
-    --gradient-subtle: linear-gradient(180deg, hsl(231 60% 11%), hsl(231 35% 15%));
+    --gradient-main: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 10%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 10%));
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -54,22 +54,22 @@
   }
 
   .dark {
-    --background: 231 60% 11%;
+    --background: 0 0% 5%;
     --foreground: 0 0% 100%;
 
-    --card: 231 35% 20%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 231 60% 11%;
+    --popover: 0 0% 5%;
     --popover-foreground: 0 0% 100%;
 
     --primary: 0 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 231 35% 20%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 231 35% 25%;
+    --muted: 0 0% 15%;
     --muted-foreground: 0 0% 67%;
 
     --accent: 0 100% 50%;
@@ -78,18 +78,18 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 231 35% 25%;
-    --input: 231 35% 25%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
     --ring: 0 100% 50%;
     
-    --player-bg: 231 60% 11%;
+    --player-bg: 0 0% 5%;
     --player-fg: 0 0% 100%;
     --golden: 48 100% 65%;
-    --track-bg: 231 35% 20%;
+    --track-bg: 0 0% 10%;
     --red-accent: 0 100% 50%;
     
-    --gradient-main: linear-gradient(180deg, hsl(231 60% 11%), hsl(231 35% 15%));
-    --gradient-subtle: linear-gradient(180deg, hsl(231 60% 11%), hsl(231 35% 15%));
+    --gradient-main: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 10%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 10%));
     
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);

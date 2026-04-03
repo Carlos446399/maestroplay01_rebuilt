@@ -3,9 +3,10 @@ import { useEffect, useRef } from 'react';
 interface AudioVisualizerProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
   isPlaying: boolean;
+  isRadio: boolean;
 }
 
-export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) => {
+export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualizerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
@@ -13,6 +14,11 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const initializationDoneRef = useRef(false);
+
+  // Disable visualizer for radio streams
+  if (isRadio) {
+    return null;
+  }
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -45,7 +51,6 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
           initializationDoneRef.current = true;
         } catch (e) {
           console.warn('AudioVisualizer: Could not create media source', e);
-          // Fallback: just use analyser without source
           analyser.connect(audioContext.destination);
         }
       } catch (e) {
@@ -53,7 +58,7 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
       }
     };
 
-    // Draw visualizer
+    // Draw circular visualizer
     const draw = () => {
       const canvas = canvasRef.current;
       if (!canvas || !analyserRef.current || !dataArrayRef.current) {
@@ -73,33 +78,41 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
         console.warn('AudioVisualizer: Could not get frequency data', e);
       }
 
-      // Clear canvas with semi-transparent background
-      ctx.fillStyle = 'rgba(23, 23, 60, 0.2)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw bars
-      const barWidth = canvas.width / dataArrayRef.current.length;
+      const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
+      const radius = Math.min(centerX, centerY) * 0.7;
 
-      for (let i = 0; i < dataArrayRef.current.length; i++) {
+      // Draw circular visualizer bars
+      const barCount = dataArrayRef.current.length;
+      const angleSlice = (Math.PI * 2) / barCount;
+
+      for (let i = 0; i < barCount; i++) {
         const dataPoint = dataArrayRef.current[i];
-        const barHeight = (dataPoint / 255) * canvas.height * 0.8;
+        const barHeight = (dataPoint / 255) * radius * 0.6;
+
+        const angle = angleSlice * i - Math.PI / 2;
+        const x1 = centerX + Math.cos(angle) * radius;
+        const y1 = centerY + Math.sin(angle) * radius;
+        const x2 = centerX + Math.cos(angle) * (radius + barHeight);
+        const y2 = centerY + Math.sin(angle) * (radius + barHeight);
 
         // Create gradient for each bar
-        const hue = (i / dataArrayRef.current.length) * 360;
-        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+        const hue = (i / barCount) * 360;
+        ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
 
-        // Draw bar from center
-        ctx.fillRect(
-          i * barWidth,
-          centerY - barHeight / 2,
-          barWidth - 1,
-          barHeight
-        );
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
 
         // Add glow effect
         ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
       }
 
       ctx.shadowColor = 'transparent';
@@ -112,12 +125,12 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
     // Only initialize and draw when actually playing
     if (isPlaying && audio && !audio.paused) {
       initAudioContext();
-      
+
       // Resume audio context if suspended
       if (audioContextRef.current?.state === 'suspended') {
         audioContextRef.current.resume().catch(e => console.warn('Could not resume AudioContext', e));
       }
-      
+
       draw();
     }
 
@@ -127,7 +140,7 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
         cancelAnimationFrame(animationIdRef.current);
       }
     };
-  }, [isPlaying, audioRef]);
+  }, [isPlaying, audioRef, isRadio]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -135,22 +148,18 @@ export const AudioVisualizer = ({ audioRef, isPlaying }: AudioVisualizerProps) =
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
       }
-      // Don't disconnect/close on unmount to avoid interfering with playback
-      // The audio context will be cleaned up by the browser
     };
   }, []);
 
   return (
-    <div className="w-full px-2 mb-2">
-      <canvas
-        ref={canvasRef}
-        width={320}
-        height={80}
-        className="w-full h-20 rounded-lg border border-white/10"
-        style={{
-          background: 'linear-gradient(180deg, rgba(23,23,60,0.3), rgba(23,23,60,0.1))',
-        }}
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      width={300}
+      height={300}
+      className="w-full h-full absolute inset-0 rounded-full"
+      style={{
+        pointerEvents: 'none',
+      }}
+    />
   );
 };

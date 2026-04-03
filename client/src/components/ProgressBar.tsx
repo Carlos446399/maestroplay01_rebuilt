@@ -30,9 +30,8 @@ export const ProgressBar = ({ currentTime, duration, onSeek }: ProgressBarProps)
     canvas.width = width;
     canvas.height = height;
 
-    // Clear canvas
-    ctx.fillStyle = 'hsl(var(--background))';
-    ctx.fillRect(0, 0, width, height);
+      // Clear canvas (transparent)
+      ctx.clearRect(0, 0, width, height);
 
     // Draw heartbeat waveform
     const centerY = height / 2;

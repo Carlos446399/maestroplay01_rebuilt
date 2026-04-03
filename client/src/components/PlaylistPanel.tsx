@@ -112,22 +112,22 @@ export const PlaylistPanel = ({
       <div className="overflow-y-auto flex-1 mt-2">
         {activeTab === 'local' ? (
           <>
-            <div className="px-4 py-2 border-b border-border">
-              <span className="text-xs text-muted-foreground">
+            <div className="px-4 py-2 border-b border-border bg-white">
+              <span className="text-xs text-black">
                 Músicas: {filteredTracks.length}
               </span>
             </div>
             {filteredTracks.map((track) => (
               <div
                 key={track.id}
-                className="px-4 py-2.5 border-b border-border cursor-pointer hover:bg-card transition-colors"
+                className="px-4 py-2.5 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors bg-white"
                 onClick={() => {
                   const originalIndex = tracks.findIndex(t => t.id === track.id);
                   onTrackSelect(originalIndex);
                   onClose();
                 }}
               >
-                <span className="text-sm text-white truncate block">
+                <span className="text-sm text-black truncate block">
                   {track.name}
                 </span>
               </div>
@@ -136,20 +136,20 @@ export const PlaylistPanel = ({
         ) : (
           <>
             {isSearching && (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="animate-spin text-red-400" size={24} />
-                <span className="ml-2 text-sm text-muted-foreground">Buscando...</span>
+              <div className="flex items-center justify-center py-8 bg-white">
+                <Loader2 className="animate-spin text-red-500" size={24} />
+                <span className="ml-2 text-sm text-gray-500">Buscando...</span>
               </div>
             )}
             {!isSearching && youtubeResults.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground text-xs">
+              <div className="text-center py-8 text-gray-500 text-xs bg-white">
                 Pesquise músicas e artistas online
               </div>
             )}
             {youtubeResults.map((result) => (
               <div
                 key={result.id}
-                className="px-4 py-2 border-b border-border cursor-pointer hover:bg-card transition-colors flex items-center gap-3"
+                className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors flex items-center gap-3 bg-white"
                 onClick={() => {
                   onYouTubePlay?.(result.id, result.title, result.thumbnail);
                   onClose();
@@ -161,10 +161,10 @@ export const PlaylistPanel = ({
                   className="w-10 h-10 rounded object-cover flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs text-white truncate block leading-tight">
+                  <span className="text-xs text-black truncate block leading-tight">
                     {result.title}
                   </span>
-                  <span className="text-[10px] text-muted-foreground truncate block">
+                  <span className="text-[10px] text-gray-500 truncate block">
                     {result.channelTitle}
                   </span>
                 </div>

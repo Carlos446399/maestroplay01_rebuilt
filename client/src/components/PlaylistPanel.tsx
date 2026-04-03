@@ -96,7 +96,7 @@ export const PlaylistPanel = ({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-9 text-xs bg-gray-800 border border-gray-600 text-white flex-1 placeholder-gray-500 rounded"
+          className="h-9 text-xs bg-red-600 border border-red-700 text-white flex-1 placeholder-red-200 rounded font-semibold"
         />
         {activeTab === 'online' && (
           <button

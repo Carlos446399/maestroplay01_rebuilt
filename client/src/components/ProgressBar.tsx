@@ -5,6 +5,7 @@ interface ProgressBarProps {
   duration: number;
   onSeek: (time: number) => void;
   isRadio?: boolean;
+  isYouTube?: boolean;
 }
 
 const formatTime = (seconds: number): string => {
@@ -13,10 +14,10 @@ const formatTime = (seconds: number): string => {
   return `${mins}:${secs}`;
 };
 
-export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false }: ProgressBarProps) => {
+export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false, isYouTube = false }: ProgressBarProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const isLiveStream = isRadio || duration === 0 || !isFinite(duration);
+  const isLiveStream = (isRadio && !isYouTube) || (duration === 0 && !isYouTube) || (!isFinite(duration) && !isYouTube);
 
   // Draw heartbeat waveform on canvas
   useEffect(() => {
@@ -158,11 +159,11 @@ export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false }: 
       ctx.lineWidth = 2;
       ctx.stroke();
     }
-  }, [progress, isLiveStream]);
+  }, [progress, isLiveStream, isYouTube]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas || isLiveStream) return; // Don't seek on live streams
+    if (!canvas || (isLiveStream && !isYouTube)) return; // Don't seek on live streams (but allow on YouTube)
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -174,18 +175,18 @@ export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false }: 
   return (
     <div className="w-[90%] flex items-center justify-between my-2 gap-2">
       <div className="text-xs text-muted-foreground min-w-[35px]">
-        {isLiveStream ? '🔴 AO VIVO' : formatTime(currentTime)}
+        {isLiveStream && !isYouTube ? '🔴 AO VIVO' : formatTime(currentTime)}
       </div>
       <div className="flex-1">
         <canvas
           ref={canvasRef}
           onClick={handleCanvasClick}
-          className={`w-full h-12 ${isLiveStream ? 'cursor-default' : 'cursor-pointer'} hover:opacity-80 transition-opacity`}
+          className={`w-full h-12 ${isLiveStream && !isYouTube ? 'cursor-default' : 'cursor-pointer'} hover:opacity-80 transition-opacity`}
           style={{ display: 'block' }}
         />
       </div>
       <div className="text-xs text-muted-foreground min-w-[35px]">
-        {isLiveStream ? '' : formatTime(duration)}
+        {isLiveStream && !isYouTube ? '' : formatTime(duration)}
       </div>
     </div>
   );

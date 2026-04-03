@@ -257,6 +257,7 @@ export const MobileMusicPlayer = () => {
         duration={displayDuration}
         onSeek={handleSeek}
         isRadio={currentSource === 'radios'}
+        isYouTube={isYouTubeMode}
       />
 
       <MobileControls

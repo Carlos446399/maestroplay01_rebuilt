@@ -62,14 +62,14 @@ export const PlaylistPanel = ({
       </button>
 
       {/* Tabs */}
-      <div className="flex mt-2 mx-4 gap-2 border-b border-border">
+      <div className="flex mt-4 mx-4 gap-3 pb-3 border-b-2 border-border">
         <button
           onClick={() => setActiveTab('local')}
           className={cn(
-            "flex-1 py-2 text-xs font-semibold transition-colors relative",
+            "flex-1 py-2.5 px-4 text-sm font-bold transition-all rounded-lg",
             activeTab === 'local' 
-              ? "text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white" 
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-white text-black shadow-lg" 
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
           )}
         >
           Minhas Músicas
@@ -77,43 +77,43 @@ export const PlaylistPanel = ({
         <button
           onClick={() => setActiveTab('online')}
           className={cn(
-            "flex-1 py-2 text-xs font-semibold transition-colors relative flex items-center justify-center gap-1",
+            "flex-1 py-2.5 px-4 text-sm font-bold transition-all rounded-lg flex items-center justify-center gap-2",
             activeTab === 'online' 
-              ? "text-red-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-red-500" 
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-red-600 text-white shadow-lg" 
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
           )}
         >
-          <Youtube size={14} />
+          <Youtube size={16} />
           Online
         </button>
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-2 mx-4 mt-2">
+      <div className="flex items-center gap-2 mx-4 mt-3">
         <Input
           type="text"
           placeholder={activeTab === 'local' ? "Buscar música..." : "Buscar no YouTube..."}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-8 text-xs bg-input border-border text-foreground flex-1 placeholder-muted-foreground"
+          className="h-9 text-xs bg-gray-800 border border-gray-600 text-white flex-1 placeholder-gray-500 rounded"
         />
         {activeTab === 'online' && (
           <button
             onClick={handleOnlineSearch}
             disabled={isSearching}
-            className="h-8 px-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 flex-shrink-0"
+            className="h-9 px-4 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 flex-shrink-0 font-semibold"
           >
             {isSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
           </button>
         )}
       </div>
 
-      <div className="overflow-y-auto flex-1 mt-2">
+      <div className="overflow-y-auto flex-1 mt-3">
         {activeTab === 'local' ? (
           <>
-            <div className="px-4 py-2 border-b border-border bg-white">
-              <span className="text-xs text-black">
+            <div className="px-4 py-2 border-b border-gray-200 bg-gray-50">
+              <span className="text-xs font-semibold text-gray-700">
                 Músicas: {filteredTracks.length}
               </span>
             </div>

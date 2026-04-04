@@ -3,10 +3,10 @@ import {
   Search, 
   Star, 
   Shuffle, 
-  Repeat, 
   Plus, 
   Radio,
-  Music 
+  Music,
+  Disc3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,40 +14,31 @@ interface MobileBottomIconsProps {
   onSearch: () => void;
   onFavorite: () => void;
   onShuffle: () => void;
-  onRepeat: () => void;
+  onCategories: () => void;
   onAddMusic: () => void;
   onRadio: () => void;
   onPlaylist: () => void;
   isFavorite: boolean;
   isShuffle: boolean;
-  isRepeat: 'off' | 'all' | 'one';
 }
 
 export const MobileBottomIcons = ({ 
   onSearch,
   onFavorite,
   onShuffle,
-  onRepeat,
+  onCategories,
   onAddMusic,
   onRadio,
   onPlaylist,
   isFavorite,
-  isShuffle,
-  isRepeat
+  isShuffle
 }: MobileBottomIconsProps) => {
   const [favAnim, setFavAnim] = useState(false);
-  const [repAnim, setRepAnim] = useState(false);
 
   const handleFavorite = () => {
     setFavAnim(true);
     onFavorite();
     setTimeout(() => setFavAnim(false), 300);
-  };
-
-  const handleRepeat = () => {
-    setRepAnim(true);
-    onRepeat();
-    setTimeout(() => setRepAnim(false), 300);
   };
 
   return (
@@ -75,14 +66,10 @@ export const MobileBottomIcons = ({
           size={20} 
           onClick={onShuffle} 
         />
-        <Repeat 
-          className={cn(
-            "cursor-pointer transition-all duration-200",
-            isRepeat !== 'off' ? 'text-red-600' : 'text-white hover:text-primary',
-            repAnim && 'scale-150'
-          )}
+        <Disc3 
+          className="cursor-pointer text-white hover:text-primary transition-colors hover:animate-spin" 
           size={20} 
-          onClick={handleRepeat} 
+          onClick={onCategories} 
         />
       </div>
       

@@ -11,6 +11,7 @@ import { PlaylistPanel } from './PlaylistPanel';
 import { LocalPlaylistPanel } from './LocalPlaylistPanel';
 import { RadioPanel } from './RadioPanel';
 import { AudioVisualizer } from './AudioVisualizer';
+import { CategoryPanel } from './CategoryPanel';
 
 declare global {
   interface Window {
@@ -47,6 +48,7 @@ export const MobileMusicPlayer = () => {
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [isLocalPlaylistOpen, setIsLocalPlaylistOpen] = useState(false);
   const [isRadioOpen, setIsRadioOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   
@@ -318,13 +320,12 @@ export const MobileMusicPlayer = () => {
         onSearch={() => setIsLocalPlaylistOpen(true)}
         onFavorite={handleFavorite}
         onShuffle={() => setIsShuffle(!isShuffle)}
-        onRepeat={toggleRepeat}
+        onCategories={() => setIsCategoryOpen(true)}
         onAddMusic={handleAddMusic}
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsPlaylistOpen(true)}
         isFavorite={currentMedia ? favorites.has(currentMedia.id) : false}
         isShuffle={isShuffle}
-        isRepeat={repeat}
       />
 
       <HorizontalPlaylist
@@ -357,6 +358,16 @@ export const MobileMusicPlayer = () => {
         radios={radios}
         onClose={() => setIsRadioOpen(false)}
         onRadioSelect={handlePlayRadio}
+      />
+
+      <CategoryPanel
+        isOpen={isCategoryOpen}
+        onClose={() => setIsCategoryOpen(false)}
+        onCategorySelect={(category) => {
+          // Buscar músicas da categoria no YouTube
+          const query = category.query;
+          setIsPlaylistOpen(true);
+        }}
       />
 
       {/* Hidden YouTube player */}

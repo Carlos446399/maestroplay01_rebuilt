@@ -13,6 +13,7 @@ import { RadioPanel } from './RadioPanel';
 import { AudioVisualizer } from './AudioVisualizer';
 import { CategoryPanel } from './CategoryPanel';
 import { CategoryPlaylistPanel } from './CategoryPlaylistPanel';
+import { CategoryCarousel } from './CategoryCarousel';
 
 declare global {
   interface Window {
@@ -323,7 +324,6 @@ export const MobileMusicPlayer = () => {
         onSearch={() => setIsLocalPlaylistOpen(true)}
         onFavorite={handleFavorite}
         onShuffle={() => setIsShuffle(!isShuffle)}
-        onCategories={() => setIsCategoryOpen(true)}
         onAddMusic={handleAddMusic}
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsPlaylistOpen(true)}
@@ -338,6 +338,14 @@ export const MobileMusicPlayer = () => {
           const favTracks = tracks.filter(t => favorites.has(t.id));
           const originalIndex = tracks.findIndex(t => t.id === favTracks[index].id);
           handlePlayTrack(originalIndex);
+        }}
+      />
+
+      <CategoryCarousel
+        categories={[]}
+        onCategorySelect={(category) => {
+          setSelectedCategory(category);
+          setIsCategoryPlaylistOpen(true);
         }}
       />
 

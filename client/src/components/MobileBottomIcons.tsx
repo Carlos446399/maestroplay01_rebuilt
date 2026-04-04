@@ -14,7 +14,6 @@ interface MobileBottomIconsProps {
   onSearch: () => void;
   onFavorite: () => void;
   onShuffle: () => void;
-  onCategories: () => void;
   onAddMusic: () => void;
   onRadio: () => void;
   onPlaylist: () => void;
@@ -26,7 +25,6 @@ export const MobileBottomIcons = ({
   onSearch,
   onFavorite,
   onShuffle,
-  onCategories,
   onAddMusic,
   onRadio,
   onPlaylist,
@@ -66,11 +64,7 @@ export const MobileBottomIcons = ({
           size={20} 
           onClick={onShuffle} 
         />
-        <Disc3 
-          className="cursor-pointer text-white hover:text-primary transition-colors hover:animate-spin" 
-          size={20} 
-          onClick={onCategories} 
-        />
+
       </div>
       
       <div className="flex gap-4">

@@ -13,7 +13,7 @@ export const useMusicPlayer = () => {
     currentRadioIndex: -1,
     currentSource: 'tracks',
     isPlaying: false,
-    repeat: false,
+    repeat: 'off' as 'off' | 'all' | 'one',
     currentTime: 0,
     duration: 0,
     volume: 1,
@@ -238,7 +238,10 @@ export const useMusicPlayer = () => {
   }, [state.currentSource, state.tracks.length, state.radios.length, state.currentTrackIndex, state.currentRadioIndex, playTrack, playRadio]);
 
   const toggleRepeat = useCallback(() => {
-    setState(prev => ({ ...prev, repeat: !prev.repeat }));
+    setState(prev => {
+      const nextRepeat = prev.repeat === 'off' ? 'all' : prev.repeat === 'all' ? 'one' : 'off';
+      return { ...prev, repeat: nextRepeat };
+    });
   }, []);
 
   const setVolume = useCallback((volume: number) => {

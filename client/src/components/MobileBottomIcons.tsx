@@ -20,7 +20,7 @@ interface MobileBottomIconsProps {
   onPlaylist: () => void;
   isFavorite: boolean;
   isShuffle: boolean;
-  isRepeat: boolean;
+  isRepeat: 'off' | 'all' | 'one';
 }
 
 export const MobileBottomIcons = ({ 
@@ -78,7 +78,7 @@ export const MobileBottomIcons = ({
         <Repeat 
           className={cn(
             "cursor-pointer transition-all duration-200",
-            isRepeat ? 'text-red-600' : 'text-white hover:text-primary',
+            isRepeat !== 'off' ? 'text-red-600' : 'text-white hover:text-primary',
             repAnim && 'scale-150'
           )}
           size={20} 

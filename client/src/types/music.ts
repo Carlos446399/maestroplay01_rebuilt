@@ -22,7 +22,7 @@ export interface MusicPlayerState {
   currentRadioIndex: number;
   currentSource: 'tracks' | 'radios';
   isPlaying: boolean;
-  repeat: boolean;
+  repeat: 'off' | 'all' | 'one';
   currentTime: number;
   duration: number;
   volume: number;

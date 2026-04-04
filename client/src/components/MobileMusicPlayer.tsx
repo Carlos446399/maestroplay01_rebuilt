@@ -308,6 +308,10 @@ export const MobileMusicPlayer = () => {
         onTogglePlay={handleTogglePlay}
         onPreviousTrack={handlePreviousTrack}
         onNextTrack={handleNextTrack}
+        repeatMode={repeat as 'off' | 'all' | 'one'}
+        onToggleRepeat={toggleRepeat}
+        isShuffle={isShuffle}
+        onToggleShuffle={() => setIsShuffle(!isShuffle)}
       />
 
       <MobileBottomIcons

@@ -12,6 +12,7 @@ import { LocalPlaylistPanel } from './LocalPlaylistPanel';
 import { RadioPanel } from './RadioPanel';
 import { AudioVisualizer } from './AudioVisualizer';
 import { CategoryPanel } from './CategoryPanel';
+import { CategoryPlaylistPanel } from './CategoryPlaylistPanel';
 
 declare global {
   interface Window {
@@ -49,6 +50,8 @@ export const MobileMusicPlayer = () => {
   const [isLocalPlaylistOpen, setIsLocalPlaylistOpen] = useState(false);
   const [isRadioOpen, setIsRadioOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isCategoryPlaylistOpen, setIsCategoryPlaylistOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   
@@ -364,9 +367,26 @@ export const MobileMusicPlayer = () => {
         isOpen={isCategoryOpen}
         onClose={() => setIsCategoryOpen(false)}
         onCategorySelect={(category) => {
-          // Buscar músicas da categoria no YouTube
-          const query = category.query;
-          setIsPlaylistOpen(true);
+          setSelectedCategory(category);
+          setIsCategoryPlaylistOpen(true);
+          setIsCategoryOpen(false);
+        }}
+      />
+
+      <CategoryPlaylistPanel
+        isOpen={isCategoryPlaylistOpen}
+        category={selectedCategory}
+        onClose={() => setIsCategoryPlaylistOpen(false)}
+        onTrackSelect={(trackId, trackTitle, trackThumbnail) => {
+          setYtPlaylist(prev => [...prev, { id: trackId, title: trackTitle, thumbnail: trackThumbnail }]);
+          if (ytPlayer) {
+            ytPlayer.loadVideoById(trackId);
+            ytPlayer.playVideo();
+            setIsYouTubeMode(true);
+            setYtTitle(trackTitle);
+            setYtThumbnail(trackThumbnail);
+            setYtPlaying(true);
+          }
         }}
       />
 

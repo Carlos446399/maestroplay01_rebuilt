@@ -188,26 +188,35 @@ export const MobileMusicPlayer = () => {
   };
 
   const handleNextTrack = () => {
-    if (isYouTubeMode && ytPlayer && ytPlaylist.length > 0) {
-      const nextIndex = (ytCurrentIndex + 1) % ytPlaylist.length;
-      setYtCurrentIndex(nextIndex);
-      const nextVideo = ytPlaylist[nextIndex];
-      ytPlayer.loadVideoById(nextVideo.id);
-      setYtTitle(nextVideo.title);
-      setYtThumbnail(nextVideo.thumbnail);
+    if (isYouTubeMode && ytPlayer) {
+      // For YouTube, just continue playing or seek to next if playlist has items
+      if (ytPlaylist.length > 1) {
+        const nextIndex = (ytCurrentIndex + 1) % ytPlaylist.length;
+        setYtCurrentIndex(nextIndex);
+        const nextVideo = ytPlaylist[nextIndex];
+        ytPlayer.loadVideoById(nextVideo.id);
+        setYtTitle(nextVideo.title);
+        setYtThumbnail(nextVideo.thumbnail);
+      }
       return;
     }
     nextTrack();
   };
 
   const handlePreviousTrack = () => {
-    if (isYouTubeMode && ytPlayer && ytPlaylist.length > 0) {
-      const prevIndex = (ytCurrentIndex - 1 + ytPlaylist.length) % ytPlaylist.length;
-      setYtCurrentIndex(prevIndex);
-      const prevVideo = ytPlaylist[prevIndex];
-      ytPlayer.loadVideoById(prevVideo.id);
-      setYtTitle(prevVideo.title);
-      setYtThumbnail(prevVideo.thumbnail);
+    if (isYouTubeMode && ytPlayer) {
+      // For YouTube, seek to beginning or previous video if playlist has items
+      if (ytPlaylist.length > 1 && ytCurrentIndex > 0) {
+        const prevIndex = ytCurrentIndex - 1;
+        setYtCurrentIndex(prevIndex);
+        const prevVideo = ytPlaylist[prevIndex];
+        ytPlayer.loadVideoById(prevVideo.id);
+        setYtTitle(prevVideo.title);
+        setYtThumbnail(prevVideo.thumbnail);
+      } else if (ytPlayer.seekTo) {
+        // Seek to beginning of current video
+        ytPlayer.seekTo(0, true);
+      }
       return;
     }
     previousTrack();

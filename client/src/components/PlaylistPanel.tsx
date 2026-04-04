@@ -1,9 +1,9 @@
-import { X, Search, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Track } from '@/types/music';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { searchYouTube, YouTubeResult } from '@/services/youtubeService';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface PlaylistPanelProps {
   isOpen: boolean;
@@ -24,6 +24,18 @@ export const PlaylistPanel = ({
   const [youtubeResults, setYoutubeResults] = useState<YouTubeResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchTerm.trim()) {
+        handleOnlineSearch();
+      } else {
+        setYoutubeResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm]);
+
   const handleOnlineSearch = async () => {
     if (!searchTerm.trim()) return;
     setIsSearching(true);
@@ -34,12 +46,6 @@ export const PlaylistPanel = ({
       console.error('YouTube search error:', error);
     } finally {
       setIsSearching(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleOnlineSearch();
     }
   };
 
@@ -63,16 +69,8 @@ export const PlaylistPanel = ({
           placeholder="Buscar no YouTube..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyDown={handleKeyDown}
           className="h-9 text-xs bg-red-600 border border-red-700 text-white flex-1 placeholder-red-200 rounded font-semibold"
         />
-        <button
-          onClick={handleOnlineSearch}
-          disabled={isSearching}
-          className="h-9 px-4 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 flex-shrink-0 font-semibold"
-        >
-          {isSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-        </button>
       </div>
 
       {/* Online Label */}
@@ -83,7 +81,7 @@ export const PlaylistPanel = ({
       <div className="overflow-y-auto flex-1">
         {isSearching && (
           <div className="flex items-center justify-center py-8 bg-white">
-            <Loader2 className="animate-spin text-red-500" size={24} />
+            <div className="animate-spin h-6 w-6 border-2 border-red-500 border-t-transparent rounded-full"></div>
             <span className="ml-2 text-sm text-gray-500">Buscando...</span>
           </div>
         )}

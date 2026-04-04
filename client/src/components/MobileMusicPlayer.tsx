@@ -58,6 +58,8 @@ export const MobileMusicPlayer = () => {
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
   const [ytDuration, setYtDuration] = useState(0);
   const [isYouTubeMode, setIsYouTubeMode] = useState(false);
+  const [ytPlaylist, setYtPlaylist] = useState<Array<{id: string; title: string; thumbnail: string}>>([]);
+  const [ytCurrentIndex, setYtCurrentIndex] = useState(-1);
   const ytContainerRef = useRef<HTMLDivElement>(null);
   const ytIntervalRef = useRef<any>(null);
 
@@ -89,6 +91,10 @@ export const MobileMusicPlayer = () => {
     if (audioRef.current) {
       audioRef.current.pause();
     }
+    
+    const newVideo = { id: videoId, title, thumbnail };
+    setYtPlaylist([newVideo]);
+    setYtCurrentIndex(0);
     
     setIsYouTubeMode(true);
     setYtTitle(title);
@@ -182,18 +188,26 @@ export const MobileMusicPlayer = () => {
   };
 
   const handleNextTrack = () => {
-    if (isYouTubeMode && ytPlayer) {
-      // For YouTube, just continue playing the current video
-      // (YouTube player handles autoplay of next video in playlist if available)
+    if (isYouTubeMode && ytPlayer && ytPlaylist.length > 0) {
+      const nextIndex = (ytCurrentIndex + 1) % ytPlaylist.length;
+      setYtCurrentIndex(nextIndex);
+      const nextVideo = ytPlaylist[nextIndex];
+      ytPlayer.loadVideoById(nextVideo.id);
+      setYtTitle(nextVideo.title);
+      setYtThumbnail(nextVideo.thumbnail);
       return;
     }
     nextTrack();
   };
 
   const handlePreviousTrack = () => {
-    if (isYouTubeMode && ytPlayer) {
-      // For YouTube, seek to beginning
-      ytPlayer.seekTo(0, true);
+    if (isYouTubeMode && ytPlayer && ytPlaylist.length > 0) {
+      const prevIndex = (ytCurrentIndex - 1 + ytPlaylist.length) % ytPlaylist.length;
+      setYtCurrentIndex(prevIndex);
+      const prevVideo = ytPlaylist[prevIndex];
+      ytPlayer.loadVideoById(prevVideo.id);
+      setYtTitle(prevVideo.title);
+      setYtThumbnail(prevVideo.thumbnail);
       return;
     }
     previousTrack();

@@ -60,7 +60,7 @@ export const LocalPlaylistPanel = ({
 
       <div className="overflow-y-auto flex-1">
         {filteredTracks.length === 0 && (
-          <div className="text-center py-8 text-gray-500 text-xs bg-background">
+          <div className="text-center py-8 text-gray-500 text-xs bg-white">
             Nenhuma música local encontrada
           </div>
         )}
@@ -69,13 +69,13 @@ export const LocalPlaylistPanel = ({
           return (
             <div
               key={track.id}
-              className="px-4 py-2 border-b border-border cursor-pointer hover:bg-card transition-colors bg-background"
+              className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors bg-white"
               onClick={() => {
                 onTrackSelect(originalIndex);
                 onClose();
               }}
             >
-              <span className="text-xs text-foreground truncate block leading-tight">
+              <span className="text-xs text-black truncate block leading-tight">
                 {track.name}
               </span>
             </div>

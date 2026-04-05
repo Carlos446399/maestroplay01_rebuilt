@@ -18,12 +18,12 @@ export const RadioPanel = ({
   return (
     <div className={cn(
       "fixed left-0 w-full max-h-[50vh] z-10 transition-all duration-300 ease-in-out",
-      "bg-background border-t-2 border-border flex flex-col pb-2",
+      "bg-white border-t-2 border-gray-300 flex flex-col pb-2",
       isOpen ? "bottom-0" : "-bottom-full"
     )}>
       <button
         onClick={onClose}
-        className="absolute top-2 right-3 text-foreground text-2xl font-bold z-20 hover:text-red-500 transition-colors"
+        className="absolute top-2 right-3 text-black text-2xl font-bold z-20 hover:text-red-500 transition-colors"
       >
         <X size={24} />
       </button>
@@ -32,13 +32,13 @@ export const RadioPanel = ({
         {radios.map((radio, index) => (
           <div
             key={radio.id}
-            className="px-4 py-3 border-b border-border cursor-pointer hover:bg-card transition-colors flex items-center"
+            className="px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors flex items-center"
             onClick={() => {
               onRadioSelect(index);
               onClose();
             }}
           >
-            <span className="text-sm text-foreground">
+            <span className="text-sm text-black">
               {index + 1}. {radio.name}
             </span>
           </div>

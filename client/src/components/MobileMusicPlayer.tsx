@@ -14,7 +14,7 @@ import { AudioVisualizer } from './AudioVisualizer';
 import { CategoryPanel } from './CategoryPanel';
 import { CategoryPlaylistPanel } from './CategoryPlaylistPanel';
 import { CategoryCarousel } from './CategoryCarousel';
-import { QuotaIndicator } from './QuotaIndicator';
+import { Equalizer } from './Equalizer';
 
 declare global {
   interface Window {
@@ -56,6 +56,7 @@ export const MobileMusicPlayer = () => {
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [isFavoritesListOpen, setIsFavoritesListOpen] = useState(false);
   
   // YouTube state
   const [ytPlayer, setYtPlayer] = useState<any>(null);
@@ -324,12 +325,11 @@ export const MobileMusicPlayer = () => {
       <MobileBottomIcons
         onSearch={() => setIsLocalPlaylistOpen(true)}
         onFavorite={handleFavorite}
-        onShuffle={() => setIsShuffle(!isShuffle)}
+        onFavoritesList={() => setIsFavoritesListOpen(true)}
         onAddMusic={handleAddMusic}
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsPlaylistOpen(true)}
         isFavorite={currentMedia ? favorites.has(currentMedia.id) : false}
-        isShuffle={isShuffle}
       />
 
       <HorizontalPlaylist
@@ -402,8 +402,16 @@ export const MobileMusicPlayer = () => {
         className="hidden"
       />
 
-      {/* Quota Indicator */}
-      <QuotaIndicator />
+      {/* Favorites List Panel */}
+      <LocalPlaylistPanel
+        isOpen={isFavoritesListOpen}
+        tracks={tracks.filter(t => favorites.has(t.id))}
+        onClose={() => setIsFavoritesListOpen(false)}
+        onTrackSelect={handlePlayTrack}
+      />
+
+      {/* Equalizer */}
+      <Equalizer audioRef={audioRef} isPlaying={isPlaying && !isYouTubeMode} />
     </div>
   );
 };

@@ -2,34 +2,30 @@ import { useState } from 'react';
 import { 
   Search, 
   Star, 
-  Shuffle, 
   Plus, 
   Radio,
-  Music,
-  Disc3
+  Music
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MobileBottomIconsProps {
   onSearch: () => void;
   onFavorite: () => void;
-  onShuffle: () => void;
+  onFavoritesList: () => void;
   onAddMusic: () => void;
   onRadio: () => void;
   onPlaylist: () => void;
   isFavorite: boolean;
-  isShuffle: boolean;
 }
 
 export const MobileBottomIcons = ({ 
   onSearch,
   onFavorite,
-  onShuffle,
+  onFavoritesList,
   onAddMusic,
   onRadio,
   onPlaylist,
-  isFavorite,
-  isShuffle
+  isFavorite
 }: MobileBottomIconsProps) => {
   const [favAnim, setFavAnim] = useState(false);
 
@@ -56,13 +52,10 @@ export const MobileBottomIcons = ({
           size={20} 
           onClick={handleFavorite} 
         />
-        <Shuffle 
-          className={cn(
-            "cursor-pointer transition-colors",
-            isShuffle ? 'text-red-600' : 'text-white hover:text-primary'
-          )}
+        <Music 
+          className="cursor-pointer text-white hover:text-primary transition-colors" 
           size={20} 
-          onClick={onShuffle} 
+          onClick={onFavoritesList} 
         />
 
       </div>

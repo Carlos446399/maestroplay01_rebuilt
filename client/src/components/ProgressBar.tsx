@@ -37,25 +37,8 @@ export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false, is
     ctx.clearRect(0, 0, width, height);
 
     if (isLiveStream) {
-      // For live streams/radios, draw a simple animated line
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      
-      // Draw a straight line across the entire width
-      ctx.moveTo(0, height / 2);
-      ctx.lineTo(width, height / 2);
-      ctx.stroke();
-      
-      // Draw red circle indicator at the end (live indicator)
-      ctx.fillStyle = '#ff0000';
-      ctx.beginPath();
-      ctx.arc(width - 10, height / 2, 6, 0, Math.PI * 2);
-      ctx.fill();
-      
-      ctx.strokeStyle = '#ff3333';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      // Para rádios ao vivo, não desenhar nada (apenas centralizar "AO VIVO")
+      return;
     } else {
       // For regular tracks with duration, draw heartbeat waveform
       const centerY = height / 2;
@@ -173,21 +156,31 @@ export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false, is
   };
 
   return (
-    <div className="w-[90%] flex items-center justify-between my-2 gap-2">
-      <div className="text-xs text-muted-foreground min-w-[35px]">
-        {isLiveStream && !isYouTube ? '🔴 AO VIVO' : formatTime(currentTime)}
-      </div>
-      <div className="flex-1">
-        <canvas
-          ref={canvasRef}
-          onClick={handleCanvasClick}
-          className={`w-full h-12 ${isLiveStream && !isYouTube ? 'cursor-default' : 'cursor-pointer'} hover:opacity-80 transition-opacity`}
-          style={{ display: 'block' }}
-        />
-      </div>
-      <div className="text-xs text-muted-foreground min-w-[35px]">
-        {isLiveStream && !isYouTube ? '' : formatTime(duration)}
-      </div>
+    <div className="w-[90%] flex items-center justify-center my-2 gap-2">
+      {isLiveStream && !isYouTube ? (
+        // Para rádios ao vivo: centralizar "AO VIVO" sem linha
+        <div className="flex-1 flex items-center justify-center py-6">
+          <div className="text-sm text-red-600 font-bold">🔴 AO VIVO</div>
+        </div>
+      ) : (
+        // Para músicas com duração: mostrar barra de progresso
+        <>
+          <div className="text-xs text-muted-foreground min-w-[35px]">
+            {formatTime(currentTime)}
+          </div>
+          <div className="flex-1">
+            <canvas
+              ref={canvasRef}
+              onClick={handleCanvasClick}
+              className="w-full h-12 cursor-pointer hover:opacity-80 transition-opacity"
+              style={{ display: 'block' }}
+            />
+          </div>
+          <div className="text-xs text-muted-foreground min-w-[35px]">
+            {formatTime(duration)}
+          </div>
+        </>
+      )}
     </div>
   );
 };

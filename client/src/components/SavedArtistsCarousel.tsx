@@ -36,6 +36,21 @@ const ALL_ARTISTS: Record<string, SavedArtist> = {
   'br13': { id: 'br13', name: 'Racionais MC\'s', country: 'Brasil', genre: 'Rap/Hip-Hop' },
   'br14': { id: 'br14', name: 'Criolo', country: 'Brasil', genre: 'Rap/Hip-Hop' },
   'br15': { id: 'br15', name: 'Mc Kevinho', country: 'Brasil', genre: 'Funk' },
+  'br16': { id: 'br16', name: 'Alok', country: 'Brasil', genre: 'Eletrônico' },
+  'br17': { id: 'br17', name: 'Vintage Culture', country: 'Brasil', genre: 'House/Eletrônico' },
+  'br18': { id: 'br18', name: 'Dennis DJ', country: 'Brasil', genre: 'Funk' },
+  'br19': { id: 'br19', name: 'Gusttavo Lima', country: 'Brasil', genre: 'Sertanejo' },
+  'br20': { id: 'br20', name: 'Jorge e Mateus', country: 'Brasil', genre: 'Sertanejo' },
+  'br21': { id: 'br21', name: 'Henrique e Juliano', country: 'Brasil', genre: 'Sertanejo' },
+  'br22': { id: 'br22', name: 'Zé Neto e Cristiano', country: 'Brasil', genre: 'Sertanejo' },
+  'br23': { id: 'br23', name: 'Maiara e Maraisa', country: 'Brasil', genre: 'Sertanejo' },
+  'br24': { id: 'br24', name: 'Luan Santana', country: 'Brasil', genre: 'Sertanejo' },
+  'br25': { id: 'br25', name: 'Wesley Safadão', country: 'Brasil', genre: 'Forró' },
+  'br26': { id: 'br26', name: 'Gabriel Diniz', country: 'Brasil', genre: 'Forró' },
+  'br27': { id: 'br27', name: 'Kevin O Chris', country: 'Brasil', genre: 'Funk' },
+  'br28': { id: 'br28', name: 'PK Delas', country: 'Brasil', genre: 'Funk' },
+  'br29': { id: 'br29', name: 'Matuê', country: 'Brasil', genre: 'Trap' },
+  'br30': { id: 'br30', name: 'Filipe Ret', country: 'Brasil', genre: 'Rap' },
   'us1': { id: 'us1', name: 'Taylor Swift', country: 'EUA', genre: 'Pop' },
   'us2': { id: 'us2', name: 'The Weeknd', country: 'EUA', genre: 'R&B/Pop' },
   'us3': { id: 'us3', name: 'Ariana Grande', country: 'EUA', genre: 'Pop' },
@@ -51,6 +66,21 @@ const ALL_ARTISTS: Record<string, SavedArtist> = {
   'us13': { id: 'us13', name: 'Doja Cat', country: 'EUA', genre: 'Rap/Pop' },
   'us14': { id: 'us14', name: 'Lil Nas X', country: 'EUA', genre: 'Rap/Pop' },
   'us15': { id: 'us15', name: 'Weeknd', country: 'EUA', genre: 'R&B' },
+  'us16': { id: 'us16', name: 'Bruno Mars', country: 'EUA', genre: 'Pop/R&B' },
+  'us17': { id: 'us17', name: 'Lady Gaga', country: 'EUA', genre: 'Pop' },
+  'us18': { id: 'us18', name: 'Ed Sheeran', country: 'EUA', genre: 'Pop' },
+  'us19': { id: 'us19', name: 'Adele', country: 'EUA', genre: 'Pop/Soul' },
+  'us20': { id: 'us20', name: 'Coldplay', country: 'EUA', genre: 'Rock Alternativo' },
+  'us21': { id: 'us21', name: 'Maroon 5', country: 'EUA', genre: 'Pop/Rock' },
+  'us22': { id: 'us22', name: 'Imagine Dragons', country: 'EUA', genre: 'Rock Alternativo' },
+  'us23': { id: 'us23', name: 'Halsey', country: 'EUA', genre: 'Pop' },
+  'us24': { id: 'us24', name: 'Dua Lipa', country: 'EUA', genre: 'Pop' },
+  'us25': { id: 'us25', name: 'Harry Styles', country: 'EUA', genre: 'Pop' },
+  'us26': { id: 'us26', name: 'Shawn Mendes', country: 'EUA', genre: 'Pop' },
+  'us27': { id: 'us27', name: 'Camila Cabello', country: 'EUA', genre: 'Pop' },
+  'us28': { id: 'us28', name: 'Cardi B', country: 'EUA', genre: 'Hip-Hop/Rap' },
+  'us29': { id: 'us29', name: 'Travis Scott', country: 'EUA', genre: 'Hip-Hop/Rap' },
+  'us30': { id: 'us30', name: 'SZA', country: 'EUA', genre: 'R&B/Soul' }
 };
 
 export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselProps) => {
@@ -92,7 +122,7 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
 
       if (!songs) {
         const results = await searchYouTube(`${artist.name} música`);
-        songs = results.slice(0, 20).map((result: any) => ({
+        songs = results.items.slice(0, 50).map((result: any) => ({
           id: result.id,
           title: result.title,
           thumbnail: result.thumbnail,
@@ -130,7 +160,7 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
           {savedArtists.map((artist) => (
             <div
               key={artist.id}
-              className="flex-shrink-0 w-24 bg-gradient-to-br from-red-600 to-red-700 rounded-lg p-3 cursor-pointer hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 relative group"
+              className="flex-shrink-0 w-24 bg-gradient-to-br from-red-600 to-red-700 rounded-lg p-3 cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 relative group"
               onClick={() => handlePlayArtist(artist)}
             >
               <div className="flex flex-col items-center justify-center h-full text-center">

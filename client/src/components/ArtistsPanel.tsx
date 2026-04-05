@@ -48,6 +48,21 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'br13', name: 'Racionais MC\'s', country: 'Brasil', genre: 'Rap/Hip-Hop' },
     { id: 'br14', name: 'Criolo', country: 'Brasil', genre: 'Rap/Hip-Hop' },
     { id: 'br15', name: 'Mc Kevinho', country: 'Brasil', genre: 'Funk' },
+    { id: 'br16', name: 'Alok', country: 'Brasil', genre: 'Eletrônico' },
+    { id: 'br17', name: 'Vintage Culture', country: 'Brasil', genre: 'House/Eletrônico' },
+    { id: 'br18', name: 'Dennis DJ', country: 'Brasil', genre: 'Funk' },
+    { id: 'br19', name: 'Gusttavo Lima', country: 'Brasil', genre: 'Sertanejo' },
+    { id: 'br20', name: 'Jorge e Mateus', country: 'Brasil', genre: 'Sertanejo' },
+    { id: 'br21', name: 'Henrique e Juliano', country: 'Brasil', genre: 'Sertanejo' },
+    { id: 'br22', name: 'Zé Neto e Cristiano', country: 'Brasil', genre: 'Sertanejo' },
+    { id: 'br23', name: 'Maiara e Maraisa', country: 'Brasil', genre: 'Sertanejo' },
+    { id: 'br24', name: 'Luan Santana', country: 'Brasil', genre: 'Sertanejo' },
+    { id: 'br25', name: 'Wesley Safadão', country: 'Brasil', genre: 'Forró' },
+    { id: 'br26', name: 'Gabriel Diniz', country: 'Brasil', genre: 'Forró' },
+    { id: 'br27', name: 'Kevin O Chris', country: 'Brasil', genre: 'Funk' },
+    { id: 'br28', name: 'PK Delas', country: 'Brasil', genre: 'Funk' },
+    { id: 'br29', name: 'Matuê', country: 'Brasil', genre: 'Trap' },
+    { id: 'br30', name: 'Filipe Ret', country: 'Brasil', genre: 'Rap' }
   ],
   'EUA': [
     { id: 'us1', name: 'Taylor Swift', country: 'EUA', genre: 'Pop' },
@@ -65,6 +80,21 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'us13', name: 'Doja Cat', country: 'EUA', genre: 'Rap/Pop' },
     { id: 'us14', name: 'Lil Nas X', country: 'EUA', genre: 'Rap/Pop' },
     { id: 'us15', name: 'Weeknd', country: 'EUA', genre: 'R&B' },
+    { id: 'us16', name: 'Bruno Mars', country: 'EUA', genre: 'Pop/R&B' },
+    { id: 'us17', name: 'Lady Gaga', country: 'EUA', genre: 'Pop' },
+    { id: 'us18', name: 'Ed Sheeran', country: 'EUA', genre: 'Pop' },
+    { id: 'us19', name: 'Adele', country: 'EUA', genre: 'Pop/Soul' },
+    { id: 'us20', name: 'Coldplay', country: 'EUA', genre: 'Rock Alternativo' },
+    { id: 'us21', name: 'Maroon 5', country: 'EUA', genre: 'Pop/Rock' },
+    { id: 'us22', name: 'Imagine Dragons', country: 'EUA', genre: 'Rock Alternativo' },
+    { id: 'us23', name: 'Halsey', country: 'EUA', genre: 'Pop' },
+    { id: 'us24', name: 'Dua Lipa', country: 'EUA', genre: 'Pop' },
+    { id: 'us25', name: 'Harry Styles', country: 'EUA', genre: 'Pop' },
+    { id: 'us26', name: 'Shawn Mendes', country: 'EUA', genre: 'Pop' },
+    { id: 'us27', name: 'Camila Cabello', country: 'EUA', genre: 'Pop' },
+    { id: 'us28', name: 'Cardi B', country: 'EUA', genre: 'Hip-Hop/Rap' },
+    { id: 'us29', name: 'Travis Scott', country: 'EUA', genre: 'Hip-Hop/Rap' },
+    { id: 'us30', name: 'SZA', country: 'EUA', genre: 'R&B/Soul' }
   ],
   'Reino Unido': [
     { id: 'uk1', name: 'Ed Sheeran', country: 'Reino Unido', genre: 'Pop' },
@@ -260,7 +290,7 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
       }
 
       const results = await searchYouTube(`${artist.name} música`);
-      const songs: ArtistSong[] = results.slice(0, 10).map((result) => ({
+      const songs: ArtistSong[] = results.items.slice(0, 50).map((result) => ({
         id: result.id,
         title: result.title,
         artist: artist.name,

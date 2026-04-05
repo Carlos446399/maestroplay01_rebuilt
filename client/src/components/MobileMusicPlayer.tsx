@@ -343,7 +343,6 @@ export const MobileMusicPlayer = () => {
       />
 
       <CategoryCarousel
-        categories={[]}
         onCategorySelect={(category) => {
           setSelectedCategory(category);
           setIsCategoryPlaylistOpen(true);

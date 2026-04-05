@@ -9,7 +9,6 @@ interface Category {
 }
 
 interface CategoryCarouselProps {
-  categories: Category[];
   onCategorySelect: (category: Category) => void;
 }
 

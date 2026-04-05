@@ -44,3 +44,6 @@ export const RadioPanel = ({
           </div>
         ))}
       </div>
+    </div>
+  );
+};

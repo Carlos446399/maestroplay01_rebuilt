@@ -386,15 +386,8 @@ export const MobileMusicPlayer = () => {
         category={selectedCategory}
         onClose={() => setIsCategoryPlaylistOpen(false)}
         onTrackSelect={(trackId, trackTitle, trackThumbnail) => {
-          setYtPlaylist(prev => [...prev, { id: trackId, title: trackTitle, thumbnail: trackThumbnail }]);
-          if (ytPlayer) {
-            ytPlayer.loadVideoById(trackId);
-            ytPlayer.playVideo();
-            setIsYouTubeMode(true);
-            setYtTitle(trackTitle);
-            setYtThumbnail(trackThumbnail);
-            setYtPlaying(true);
-          }
+          // Usar handleYouTubePlay para reproduzir corretamente
+          handleYouTubePlay(trackId, trackTitle, trackThumbnail);
         }}
       />
 

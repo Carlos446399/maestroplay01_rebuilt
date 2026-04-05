@@ -31,7 +31,7 @@ export const CategoryCarousel = ({ onCategorySelect }: CategoryCarouselProps) =>
         <button
           key={category.id}
           onClick={() => onCategorySelect(category)}
-          className={`flex-shrink-0 w-[70px] rounded cursor-pointer p-1
+          className={`flex-shrink-0 w-[70px] h-[70px] rounded cursor-pointer p-1
             flex flex-col items-center justify-center
             transition-all duration-200 hover:scale-105 active:scale-95
             bg-gradient-to-br ${category.color} shadow-lg hover:shadow-xl
@@ -41,9 +41,9 @@ export const CategoryCarousel = ({ onCategorySelect }: CategoryCarouselProps) =>
           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all" />
           
           {/* Conteúdo */}
-          <div className="relative z-10 flex flex-col items-center justify-center h-[60px]">
-            <span className="text-3xl mb-1">{category.icon}</span>
-            <span className="text-white font-bold text-[8px] text-center leading-tight truncate px-0.5">
+          <div className="relative z-10 flex flex-col items-center justify-center h-full">
+            <span className="text-2xl mb-0.5">{category.icon}</span>
+            <span className="text-white font-bold text-[7px] text-center leading-tight truncate px-0.5">
               {category.name}
             </span>
           </div>

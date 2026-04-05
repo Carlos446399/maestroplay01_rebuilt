@@ -15,6 +15,7 @@ import { CategoryPanel } from './CategoryPanel';
 import { CategoryPlaylistPanel } from './CategoryPlaylistPanel';
 import { CategoryCarousel } from './CategoryCarousel';
 import { EqualizerPanel } from './EqualizerPanel';
+import { SavedArtistsCarousel } from './SavedArtistsCarousel';
 
 declare global {
   interface Window {
@@ -347,6 +348,8 @@ export const MobileMusicPlayer = () => {
         onPlaylist={() => setIsPlaylistOpen(true)}
         isFavorite={currentMedia ? favorites.has(currentMedia.id) : false}
       />
+
+      <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />
 
       <CategoryCarousel
         onCategorySelect={(category) => {

@@ -38,7 +38,7 @@ export const LocalPlaylistPanel = ({
       <div className="flex justify-center pt-2 pb-2">
         <button
           onClick={onClose}
-          className="text-white text-2xl font-bold hover:text-red-500 transition-colors"
+          className="text-red-600 text-2xl font-bold hover:text-red-700 transition-colors"
         >
           <X size={24} />
         </button>

@@ -221,7 +221,7 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
   ],
 };
 
-const ARTISTS_PER_PAGE = 8;
+const ARTISTS_PER_PAGE = 12;
 
 export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: ArtistsPanelProps) => {
   const [selectedCountry, setSelectedCountry] = useState<string>('Brasil');
@@ -307,7 +307,7 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
       <div className="flex justify-center pt-2 pb-2">
         <button
           onClick={onClose}
-          className="text-black text-2xl font-bold hover:text-red-500 transition-colors"
+          className="text-red-600 text-2xl font-bold hover:text-red-700 transition-colors"
         >
           <X size={24} />
         </button>

@@ -22,16 +22,16 @@ export const categoryService = {
       return cached;
     }
 
-    // Buscar do YouTube - Buscar 50 músicas em vez de 20
+    // Buscar do YouTube - Carregar todas as músicas disponíveis
     try {
       const results = await searchYouTube(query);
       
-      // Limitar a 50 músicas por categoria
-      const tracks = results.slice(0, 50).map((result: any) => ({
+      // Usar todas as músicas retornadas (sem limite)
+      const tracks = results.map((result: any) => ({
         id: result.id,
         title: result.title,
         thumbnail: result.thumbnail,
-      }));
+      })).filter((track: any) => track.id); // Filtrar resultados inválidos
       
       const playlist: CategoryPlaylist = {
         categoryId,

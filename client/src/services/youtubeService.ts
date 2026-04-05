@@ -7,8 +7,9 @@ export interface YouTubeResult {
   channelTitle: string;
 }
 
-export const searchYouTube = async (query: string): Promise<YouTubeResult[]> => {
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=15&q=${encodeURIComponent(query + ' music')}&key=${YOUTUBE_API_KEY}`;
+// Busca músicas no YouTube com suporte a múltiplas páginas
+export const searchYouTube = async (query: string, pageToken?: string): Promise<YouTubeResult[] & { nextPageToken?: string }> => {
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=50&q=${encodeURIComponent(query + ' music')}&key=${YOUTUBE_API_KEY}`;
   
   const response = await fetch(url);
   if (!response.ok) {

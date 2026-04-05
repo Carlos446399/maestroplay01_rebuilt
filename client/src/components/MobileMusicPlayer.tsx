@@ -401,7 +401,11 @@ export const MobileMusicPlayer = () => {
       />
 
       {/* Equalizer Panel */}
-      <EqualizerPanel audioRef={audioRef} isPlaying={isPlaying && !isYouTubeMode} />
+      <EqualizerPanel
+        audioRef={audioRef}
+        isPlaying={isPlaying && !isYouTubeMode}
+        onPlaySong={handleYouTubePlayWrapper}
+      />
     </div>
   );
 };

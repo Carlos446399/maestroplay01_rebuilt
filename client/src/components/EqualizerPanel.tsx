@@ -3,16 +3,19 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Volume2, X } from 'lucide-react';
+import { Volume2, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ArtistsPanel } from './ArtistsPanel';
 
 interface EqualizerPanelProps {
   audioRef?: React.RefObject<HTMLAudioElement>;
   isPlaying?: boolean;
+  onPlaySong?: (videoId: string, title: string, thumbnail: string) => void;
 }
 
-export const EqualizerPanel = ({ audioRef, isPlaying = false }: EqualizerPanelProps) => {
+export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong }: EqualizerPanelProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
   const [bass, setBass] = useState(0);
   const [mid, setMid] = useState(0);
   const [treble, setTreble] = useState(0);
@@ -274,6 +277,15 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false }: EqualizerPanelPr
             </button>
           </div>
 
+          {/* Artists Button */}
+          <button
+            onClick={() => setIsArtistsPanelOpen(true)}
+            className="w-full mt-4 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition-colors flex items-center justify-center gap-2"
+          >
+            <Users size={14} />
+            Ver Artistas Mundiais
+          </button>
+
           {/* Info */}
           <div className="text-[10px] text-gray-400 space-y-1 mt-4 pt-4 border-t border-gray-700">
             <p>🎵 <strong>Controle manual de tons</strong></p>
@@ -284,6 +296,13 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false }: EqualizerPanelPr
           </div>
         </div>
       )}
+
+      {/* Artists Panel */}
+      <ArtistsPanel
+        isOpen={isArtistsPanelOpen}
+        onClose={() => setIsArtistsPanelOpen(false)}
+        onPlaySong={onPlaySong}
+      />
     </div>
   );
 };

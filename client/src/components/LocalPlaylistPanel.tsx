@@ -32,12 +32,12 @@ export const LocalPlaylistPanel = ({
   return (
     <div className={cn(
       "fixed left-0 w-full max-h-[60vh] z-10 transition-all duration-300 ease-in-out",
-      "bg-background border-t-2 border-border flex flex-col pb-2",
+      "bg-white border-t-2 border-gray-300 flex flex-col pb-2",
       isOpen ? "bottom-0" : "-bottom-full"
     )}>
       <button
         onClick={onClose}
-        className="absolute top-3 right-4 text-white text-2xl font-bold z-20 hover:text-red-500 transition-colors"
+        className="absolute top-3 right-4 text-black text-2xl font-bold z-20 hover:text-red-500 transition-colors"
       >
         <X size={24} />
       </button>
@@ -49,7 +49,7 @@ export const LocalPlaylistPanel = ({
           placeholder="Buscar música local..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-9 text-xs bg-red-600 border border-red-700 text-white flex-1 placeholder-red-200 rounded font-semibold"
+          className="h-9 text-xs bg-black border border-gray-700 text-white flex-1 placeholder-gray-500 rounded font-semibold"
         />
       </div>
 

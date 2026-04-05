@@ -14,7 +14,7 @@ import { AudioVisualizer } from './AudioVisualizer';
 import { CategoryPanel } from './CategoryPanel';
 import { CategoryPlaylistPanel } from './CategoryPlaylistPanel';
 import { CategoryCarousel } from './CategoryCarousel';
-import { Equalizer } from './Equalizer';
+import { EqualizerPanel } from './EqualizerPanel';
 
 declare global {
   interface Window {
@@ -332,16 +332,6 @@ export const MobileMusicPlayer = () => {
         isFavorite={currentMedia ? favorites.has(currentMedia.id) : false}
       />
 
-      <HorizontalPlaylist
-        tracks={tracks.filter(t => favorites.has(t.id))}
-        currentTrackIndex={currentTrackIndex}
-        onTrackSelect={(index) => {
-          const favTracks = tracks.filter(t => favorites.has(t.id));
-          const originalIndex = tracks.findIndex(t => t.id === favTracks[index].id);
-          handlePlayTrack(originalIndex);
-        }}
-      />
-
       <CategoryCarousel
         onCategorySelect={(category) => {
           setSelectedCategory(category);
@@ -410,8 +400,8 @@ export const MobileMusicPlayer = () => {
         onTrackSelect={handlePlayTrack}
       />
 
-      {/* Equalizer */}
-      <Equalizer audioRef={audioRef} isPlaying={isPlaying && !isYouTubeMode} />
+      {/* Equalizer Panel */}
+      <EqualizerPanel audioRef={audioRef} isPlaying={isPlaying && !isYouTubeMode} />
     </div>
   );
 };

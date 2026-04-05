@@ -17,6 +17,7 @@ interface CategoryPanelProps {
 }
 
 const CATEGORIES: Category[] = [
+  // Gêneros Principais
   { id: 'pop', name: 'Pop', icon: '🎤', color: 'from-pink-500 to-red-500', query: 'pop music' },
   { id: 'rock', name: 'Rock', icon: '🎸', color: 'from-red-500 to-orange-500', query: 'rock music' },
   { id: 'sertanejo', name: 'Sertanejo', icon: '🤠', color: 'from-yellow-500 to-orange-500', query: 'sertanejo' },
@@ -25,6 +26,33 @@ const CATEGORIES: Category[] = [
   { id: 'reggae', name: 'Reggae', icon: '🌴', color: 'from-green-500 to-emerald-500', query: 'reggae music' },
   { id: 'hiphop', name: 'Hip-Hop', icon: '🎤', color: 'from-gray-700 to-gray-900', query: 'hip hop music' },
   { id: 'forro', name: 'Forró', icon: '🪗', color: 'from-amber-500 to-yellow-500', query: 'forró music' },
+  
+  // Gêneros Adicionais
+  { id: 'mpb', name: 'MPB', icon: '🎹', color: 'from-indigo-500 to-purple-500', query: 'MPB música brasileira' },
+  { id: 'samba', name: 'Samba', icon: '🥁', color: 'from-yellow-600 to-red-600', query: 'samba music' },
+  { id: 'bossa', name: 'Bossa Nova', icon: '🎸', color: 'from-blue-600 to-cyan-600', query: 'bossa nova' },
+  { id: 'pagode', name: 'Pagode', icon: '🎺', color: 'from-orange-500 to-red-500', query: 'pagode music' },
+  { id: 'axe', name: 'Axé', icon: '🎉', color: 'from-pink-600 to-orange-600', query: 'axé music' },
+  { id: 'forrozao', name: 'Forró Universitário', icon: '🎪', color: 'from-purple-600 to-pink-600', query: 'forró universitário' },
+  
+  // Gêneros Internacionais
+  { id: 'jazz', name: 'Jazz', icon: '🎷', color: 'from-amber-600 to-yellow-600', query: 'jazz music' },
+  { id: 'blues', name: 'Blues', icon: '🎸', color: 'from-blue-700 to-indigo-700', query: 'blues music' },
+  { id: 'country', name: 'Country', icon: '🤠', color: 'from-amber-700 to-orange-700', query: 'country music' },
+  { id: 'metal', name: 'Metal', icon: '🤘', color: 'from-gray-800 to-black', query: 'metal music' },
+  { id: 'indie', name: 'Indie', icon: '🎧', color: 'from-purple-500 to-indigo-500', query: 'indie music' },
+  { id: 'alternativo', name: 'Alternativo', icon: '🎸', color: 'from-green-600 to-teal-600', query: 'alternative rock' },
+  
+  // Gêneros Dançáveis
+  { id: 'dance', name: 'Dance', icon: '💃', color: 'from-pink-500 to-purple-500', query: 'dance music' },
+  { id: 'edm', name: 'EDM', icon: '🎚️', color: 'from-cyan-500 to-blue-500', query: 'EDM electronic dance' },
+  { id: 'techno', name: 'Techno', icon: '🎛️', color: 'from-gray-600 to-gray-800', query: 'techno music' },
+  { id: 'house', name: 'House', icon: '🏠', color: 'from-orange-500 to-red-500', query: 'house music' },
+  { id: 'trap', name: 'Trap', icon: '🔊', color: 'from-red-700 to-purple-700', query: 'trap music' },
+  
+  // Gêneros Clássicos
+  { id: 'classica', name: 'Clássica', icon: '🎻', color: 'from-purple-700 to-indigo-700', query: 'classical music' },
+  { id: 'orquestra', name: 'Orquestra', icon: '🎼', color: 'from-blue-700 to-purple-700', query: 'orchestra music' },
 ];
 
 export const CategoryPanel = ({ isOpen, onClose, onCategorySelect }: CategoryPanelProps) => {
@@ -50,7 +78,7 @@ export const CategoryPanel = ({ isOpen, onClose, onCategorySelect }: CategoryPan
         </div>
 
         {/* Grid de Categorias */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {CATEGORIES.map((category) => (
             <button
               key={category.id}

@@ -139,20 +139,20 @@ export const PlaylistPanel = ({
 
       <div className="overflow-y-auto flex-1">
         {isSearching && (
-          <div className="flex items-center justify-center py-8 bg-white">
+          <div className="flex items-center justify-center py-8 bg-background">
             <div className="animate-spin h-6 w-6 border-2 border-red-500 border-t-transparent rounded-full"></div>
-            <span className="ml-2 text-sm text-gray-500">Buscando...</span>
+            <span className="ml-2 text-sm text-muted-foreground">Buscando...</span>
           </div>
         )}
         {!isSearching && youtubeResults.length === 0 && (
-          <div className="text-center py-8 text-gray-500 text-xs bg-white">
+          <div className="text-center py-8 text-muted-foreground text-xs bg-background">
             Pesquise músicas e artistas online
           </div>
         )}
         {youtubeResults.map((result) => (
           <div
             key={result.id}
-            className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors flex items-center gap-3 bg-white"
+            className="px-4 py-2 border-b border-border cursor-pointer hover:bg-card transition-colors flex items-center gap-3 bg-background"
             onClick={() => {
               onYouTubePlay?.(result.id, result.title, result.thumbnail);
               onClose();
@@ -164,10 +164,10 @@ export const PlaylistPanel = ({
               className="w-10 h-10 rounded object-cover flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <span className="text-xs text-black truncate block leading-tight">
+              <span className="text-xs text-foreground truncate block leading-tight">
                 {result.title}
               </span>
-              <span className="text-[10px] text-gray-500 truncate block">
+              <span className="text-[10px] text-muted-foreground truncate block">
                 {result.channelTitle}
               </span>
             </div>

@@ -45,8 +45,8 @@
     --red-accent: 0 100% 50%;
     
     /* Gradients */
-    --gradient-main: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 10%));
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 10%));
+    --gradient-main: linear-gradient(180deg, hsl(0 0% 3%), hsl(0 0% 8%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 3%), hsl(0 0% 8%));
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -54,10 +54,10 @@
   }
 
   .dark {
-    --background: 0 0% 5%;
+    --background: 0 0% 3%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 10%;
+    --card: 0 0% 8%;
     --card-foreground: 0 0% 100%;
 
     --popover: 0 0% 5%;
@@ -88,8 +88,8 @@
     --track-bg: 0 0% 10%;
     --red-accent: 0 100% 50%;
     
-    --gradient-main: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 10%));
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 10%));
+    --gradient-main: linear-gradient(180deg, hsl(0 0% 3%), hsl(0 0% 8%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 3%), hsl(0 0% 8%));
     
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);

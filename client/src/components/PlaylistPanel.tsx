@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import { Track } from '@/types/music';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { searchYouTube, YouTubeResult } from '@/services/youtubeService';
+import { searchYouTube, YouTubeResult, YouTubeSearchResult } from '@/services/youtubeService';
 import { CacheService } from '@/services/cacheService';
 import { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
@@ -67,9 +67,9 @@ export const PlaylistPanel = ({
       const results = await searchYouTube(searchTerm);
       
       // Salvar em cache
-      CacheService.saveToCache(searchTerm, results);
+      CacheService.saveToCache(searchTerm, results.items);
       
-      setYoutubeResults(results);
+      setYoutubeResults(results.items);
     } catch (error) {
       console.error('YouTube search error:', error);
     } finally {

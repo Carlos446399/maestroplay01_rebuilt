@@ -9,40 +9,49 @@ export interface CategoryPlaylist {
     thumbnail: string;
   }>;
   lastUpdated: number;
+  nextPageToken?: string; // Para scroll infinito
 }
 
 const STORAGE_KEY = 'maestroplay_category_playlists';
 const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 dias
 
 export const categoryService = {
-  async loadCategoryPlaylist(categoryId: string, categoryName: string, query: string): Promise<CategoryPlaylist> {
-    // Verificar se existe no localStorage
-    const cached = this.getCachedPlaylist(categoryId);
-    if (cached) {
-      return cached;
+  async loadCategoryPlaylist(categoryId: string, categoryName: string, query: string, pageToken?: string): Promise<CategoryPlaylist> {
+    // Se é primeira página, verificar cache
+    if (!pageToken) {
+      const cached = this.getCachedPlaylist(categoryId);
+      if (cached) {
+        return cached;
+      }
     }
 
     // Buscar do YouTube - Carregar todas as músicas disponíveis
     try {
-      const results = await searchYouTube(query);
+      const result = await searchYouTube(query, pageToken);
       
-      // Usar todas as músicas retornadas (sem limite)
-      const tracks = results.map((result: any) => ({
-        id: result.id,
-        title: result.title,
-        thumbnail: result.thumbnail,
-      })).filter((track: any) => track.id); // Filtrar resultados inválidos
-      
-      const playlist: CategoryPlaylist = {
+      // Se é primeira página, retornar novo
+      if (!pageToken) {
+        const playlist: CategoryPlaylist = {
+          categoryId,
+          categoryName,
+          tracks: result.items.filter((track: any) => track.id),
+          lastUpdated: Date.now(),
+          nextPageToken: result.nextPageToken,
+        };
+
+        // Salvar no localStorage
+        this.saveCategoryPlaylist(playlist);
+        return playlist;
+      }
+
+      // Se é página subsequente, retornar apenas os novos itens e nextPageToken
+      return {
         categoryId,
         categoryName,
-        tracks,
+        tracks: result.items.filter((track: any) => track.id),
         lastUpdated: Date.now(),
+        nextPageToken: result.nextPageToken,
       };
-
-      // Salvar no localStorage
-      this.saveCategoryPlaylist(playlist);
-      return playlist;
     } catch (error) {
       console.error(`Erro ao carregar playlist da categoria ${categoryName}:`, error);
       throw error;

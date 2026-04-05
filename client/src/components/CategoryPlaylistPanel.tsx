@@ -1,5 +1,5 @@
 import { X, Play, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { categoryService, CategoryPlaylist } from '@/services/categoryService';
 
@@ -22,7 +22,9 @@ export const CategoryPlaylistPanel = ({
 }: CategoryPlaylistPanelProps) => {
   const [playlist, setPlaylist] = useState<CategoryPlaylist | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && category) {
@@ -51,11 +53,56 @@ export const CategoryPlaylistPanel = ({
     }
   };
 
+  const loadMoreTracks = async () => {
+    if (!category || !playlist?.nextPageToken || loadingMore) return;
+
+    setLoadingMore(true);
+    try {
+      const result = await categoryService.loadCategoryPlaylist(
+        category.id,
+        category.name,
+        category.query,
+        playlist.nextPageToken
+      );
+
+      // Combinar tracks anteriores com novos
+      setPlaylist(prev => {
+        if (!prev) return result;
+        return {
+          ...prev,
+          tracks: [...prev.tracks, ...result.tracks],
+          nextPageToken: result.nextPageToken,
+        };
+      });
+    } catch (err) {
+      console.error('Erro ao carregar mais músicas:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Detectar scroll infinito
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Carregar mais quando chegar a 80% do scroll
+      if (scrollHeight - scrollTop - clientHeight < 200 && !loadingMore && playlist?.nextPageToken) {
+        loadMoreTracks();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [playlist, loadingMore]);
+
   if (!isOpen || !category) return null;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end">
-      <div className="w-full bg-gradient-to-t from-black via-black to-gray-900 rounded-t-3xl p-6 max-h-[60vh] overflow-y-auto">
+      <div className="w-full bg-gradient-to-t from-black via-black to-gray-900 rounded-t-3xl p-6 max-h-[60vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -68,11 +115,31 @@ export const CategoryPlaylistPanel = ({
               {category.id === 'reggae' && '🌴'}
               {category.id === 'hiphop' && '🎤'}
               {category.id === 'forro' && '🪗'}
+              {category.id === 'mpb' && '🎶'}
+              {category.id === 'samba' && '🥁'}
+              {category.id === 'bossanova' && '🎹'}
+              {category.id === 'pagode' && '🎸'}
+              {category.id === 'axe' && '🎉'}
+              {category.id === 'forrouni' && '🎺'}
+              {category.id === 'jazz' && '🎷'}
+              {category.id === 'blues' && '🎸'}
+              {category.id === 'country' && '🤠'}
+              {category.id === 'metal' && '🎸'}
+              {category.id === 'indie' && '🎸'}
+              {category.id === 'alternativo' && '🎸'}
+              {category.id === 'dance' && '💃'}
+              {category.id === 'edm' && '🎧'}
+              {category.id === 'techno' && '🎛️'}
+              {category.id === 'house' && '🏠'}
+              {category.id === 'trap' && '🎤'}
+              {category.id === 'classica' && '🎻'}
+              {category.id === 'orquestra' && '🎻'}
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">{category.name}</h2>
               <p className="text-gray-400 text-sm">
                 {playlist?.tracks.length || 0} músicas
+                {playlist?.nextPageToken && ' (+ disponíveis)'}
               </p>
             </div>
           </div>
@@ -107,9 +174,12 @@ export const CategoryPlaylistPanel = ({
           </div>
         )}
 
-        {/* Playlist */}
+        {/* Playlist with Infinite Scroll */}
         {playlist && !loading && (
-          <div className="space-y-2">
+          <div
+            ref={scrollContainerRef}
+            className="overflow-y-auto flex-1 space-y-2 pr-2"
+          >
             {playlist.tracks.map((track, index) => (
               <button
                 key={track.id}
@@ -147,6 +217,21 @@ export const CategoryPlaylistPanel = ({
                 />
               </button>
             ))}
+
+            {/* Loading More Indicator */}
+            {loadingMore && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="animate-spin text-red-600" size={24} />
+                <span className="ml-2 text-gray-400 text-sm">Carregando mais...</span>
+              </div>
+            )}
+
+            {/* End of List */}
+            {playlist && !playlist.nextPageToken && playlist.tracks.length > 0 && (
+              <div className="text-center py-4">
+                <p className="text-gray-500 text-sm">Fim da lista</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -158,9 +243,6 @@ export const CategoryPlaylistPanel = ({
             </p>
           </div>
         )}
-
-        {/* Espaço para scroll */}
-        <div className="h-4" />
       </div>
     </div>
   );

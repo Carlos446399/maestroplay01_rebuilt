@@ -43,13 +43,13 @@ export const LocalPlaylistPanel = ({
       </button>
 
       {/* Search */}
-      <div className="flex items-center gap-2 mx-4 mt-4">
+      <div className="flex items-center gap-2 mx-4 mt-4 bg-white">
         <Input
           type="text"
           placeholder="Buscar música local..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-9 text-xs bg-black border border-gray-700 text-white flex-1 placeholder-gray-500 rounded font-semibold"
+          className="h-9 text-xs bg-black !bg-black border border-gray-700 text-white !text-white flex-1 placeholder-gray-500 !placeholder-gray-500 rounded font-semibold"
         />
       </div>
 

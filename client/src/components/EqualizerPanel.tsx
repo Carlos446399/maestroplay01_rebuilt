@@ -19,37 +19,56 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false }: EqualizerPanelPr
   const [frequencies, setFrequencies] = useState<number[]>(Array(8).fill(0));
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaElementAudioSource | null>(null);
   const bassFilterRef = useRef<BiquadFilterNode | null>(null);
   const midFilterRef = useRef<BiquadFilterNode | null>(null);
   const trebleFilterRef = useRef<BiquadFilterNode | null>(null);
   const animationRef = useRef<number | null>(null);
+  const initializationAttemptRef = useRef(0);
 
-  // Inicializar Web Audio API
+  // Inicializar Web Audio API com retry logic
   useEffect(() => {
-    if (!audioRef?.current) return;
+    if (!audioRef?.current || initializationAttemptRef.current > 0) return;
 
-    try {
-      if (!audioContextRef.current) {
+    const initAudio = () => {
+      try {
+        // Verificar se já foi inicializado
+        if (audioContextRef.current && sourceRef.current) {
+          return;
+        }
+
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        // Resume context se estiver suspended
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+
         audioContextRef.current = audioContext;
 
-        const source = audioContext.createMediaElementAudioSource(audioRef.current);
-        
+        // Criar source apenas uma vez
+        if (!sourceRef.current) {
+          sourceRef.current = audioContext.createMediaElementAudioSource(audioRef.current!);
+        }
+
         // Criar filtros EQ
         const bassFilter = audioContext.createBiquadFilter();
         bassFilter.type = 'lowshelf';
         bassFilter.frequency.value = 200;
+        bassFilter.gain.value = 0;
         bassFilterRef.current = bassFilter;
 
         const midFilter = audioContext.createBiquadFilter();
         midFilter.type = 'peaking';
         midFilter.frequency.value = 1000;
         midFilter.Q.value = 1;
+        midFilter.gain.value = 0;
         midFilterRef.current = midFilter;
 
         const trebleFilter = audioContext.createBiquadFilter();
         trebleFilter.type = 'highshelf';
         trebleFilter.frequency.value = 3000;
+        trebleFilter.gain.value = 0;
         trebleFilterRef.current = trebleFilter;
 
         // Criar analisador
@@ -58,15 +77,21 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false }: EqualizerPanelPr
         analyserRef.current = analyser;
 
         // Conectar: source -> bass -> mid -> treble -> analyser -> destination
-        source.connect(bassFilter);
+        sourceRef.current.connect(bassFilter);
         bassFilter.connect(midFilter);
         midFilter.connect(trebleFilter);
         trebleFilter.connect(analyser);
         analyser.connect(audioContext.destination);
+
+        initializationAttemptRef.current = 1;
+      } catch (error) {
+        console.error('Equalizer initialization error:', error);
       }
-    } catch (error) {
-      console.error('Equalizer initialization error:', error);
-    }
+    };
+
+    // Tentar inicializar ao clicar ou após um delay
+    const timer = setTimeout(initAudio, 100);
+    return () => clearTimeout(timer);
   }, [audioRef]);
 
   // Atualizar valores dos filtros
@@ -84,7 +109,10 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false }: EqualizerPanelPr
 
   // Animar visualizador
   useEffect(() => {
-    if (!isPlaying || !analyserRef.current) return;
+    if (!isPlaying || !analyserRef.current) {
+      setFrequencies(Array(8).fill(0));
+      return;
+    }
 
     const analyser = analyserRef.current;
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -118,18 +146,33 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false }: EqualizerPanelPr
     };
   }, [isPlaying]);
 
+  const handleExpandClick = () => {
+    // Tentar inicializar o áudio ao expandir
+    if (!audioContextRef.current && audioRef?.current) {
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+      } catch (e) {
+        console.error('Error resuming audio context:', e);
+      }
+    }
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <div className="fixed top-20 right-4 z-40">
       {/* Botão do equalizador */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleExpandClick}
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300',
           'bg-black/80 backdrop-blur-sm border border-gray-700 hover:border-gray-500',
           isExpanded ? 'w-auto' : 'w-12 h-12 justify-center'
         )}
       >
-        <Volume2 size={20} className="text-red-500 animate-pulse" />
+        <Volume2 size={20} className={cn('transition-all', isPlaying ? 'text-red-500 animate-pulse' : 'text-gray-400')} />
         {isExpanded && (
           <span className="text-xs font-semibold text-white ml-2">Equalizador</span>
         )}
@@ -156,7 +199,7 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false }: EqualizerPanelPr
                 key={index}
                 className="flex-1 bg-gradient-to-t from-red-600 to-red-400 rounded-sm transition-all duration-75"
                 style={{
-                  height: `${freq * 100}%`,
+                  height: `${Math.max(freq * 100, 2)}%`,
                   minHeight: '2px',
                   opacity: 0.7 + freq * 0.3,
                   boxShadow: freq > 0.5 ? '0 0 8px rgba(239, 68, 68, 0.6)' : 'none',

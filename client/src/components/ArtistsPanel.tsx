@@ -2,7 +2,7 @@
  * ArtistsPanel - Painel de artistas mundiais com busca de músicas no YouTube
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Play, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { searchYouTube } from '@/services/youtubeService';
@@ -27,9 +27,10 @@ interface ArtistsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onPlaySong?: (videoId: string, title: string, thumbnail: string) => void;
+  onPlayPlaylist?: (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => void;
 }
 
-// Lista de artistas mundiais por país
+// Lista expandida de artistas mundiais por país
 const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
   'Brasil': [
     { id: 'br1', name: 'Anitta', country: 'Brasil', genre: 'Pop/Funk' },
@@ -37,6 +38,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'br3', name: 'Pabllo Vittar', country: 'Brasil', genre: 'Eletrônico/Pop' },
     { id: 'br4', name: 'Ivete Sangalo', country: 'Brasil', genre: 'Axé' },
     { id: 'br5', name: 'Caetano Veloso', country: 'Brasil', genre: 'MPB' },
+    { id: 'br6', name: 'Iza', country: 'Brasil', genre: 'R&B/Soul' },
+    { id: 'br7', name: 'Thiaguinho', country: 'Brasil', genre: 'Samba/Pagode' },
+    { id: 'br8', name: 'Simone Mendes', country: 'Brasil', genre: 'Sertanejo' },
+    { id: 'br9', name: 'Marília Mendes', country: 'Brasil', genre: 'Sertanejo' },
+    { id: 'br10', name: 'Ferrugem', country: 'Brasil', genre: 'Samba/Pagode' },
+    { id: 'br11', name: 'Projota', country: 'Brasil', genre: 'Rap/Hip-Hop' },
+    { id: 'br12', name: 'Emicida', country: 'Brasil', genre: 'Rap/Hip-Hop' },
+    { id: 'br13', name: 'Racionais MC\'s', country: 'Brasil', genre: 'Rap/Hip-Hop' },
+    { id: 'br14', name: 'Criolo', country: 'Brasil', genre: 'Rap/Hip-Hop' },
+    { id: 'br15', name: 'Mc Kevinho', country: 'Brasil', genre: 'Funk' },
   ],
   'EUA': [
     { id: 'us1', name: 'Taylor Swift', country: 'EUA', genre: 'Pop' },
@@ -44,6 +55,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'us3', name: 'Ariana Grande', country: 'EUA', genre: 'Pop' },
     { id: 'us4', name: 'Drake', country: 'EUA', genre: 'Hip-Hop/Rap' },
     { id: 'us5', name: 'Billie Eilish', country: 'EUA', genre: 'Pop/Alternativo' },
+    { id: 'us6', name: 'Beyoncé', country: 'EUA', genre: 'R&B/Pop' },
+    { id: 'us7', name: 'Eminem', country: 'EUA', genre: 'Rap/Hip-Hop' },
+    { id: 'us8', name: 'Kanye West', country: 'EUA', genre: 'Rap/Hip-Hop' },
+    { id: 'us9', name: 'Rihanna', country: 'EUA', genre: 'R&B/Pop' },
+    { id: 'us10', name: 'Justin Bieber', country: 'EUA', genre: 'Pop' },
+    { id: 'us11', name: 'Post Malone', country: 'EUA', genre: 'Hip-Hop/Pop' },
+    { id: 'us12', name: 'Olivia Rodrigo', country: 'EUA', genre: 'Pop' },
+    { id: 'us13', name: 'Doja Cat', country: 'EUA', genre: 'Rap/Pop' },
+    { id: 'us14', name: 'Lil Nas X', country: 'EUA', genre: 'Rap/Pop' },
+    { id: 'us15', name: 'Weeknd', country: 'EUA', genre: 'R&B' },
   ],
   'Reino Unido': [
     { id: 'uk1', name: 'Ed Sheeran', country: 'Reino Unido', genre: 'Pop' },
@@ -51,6 +72,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'uk3', name: 'Harry Styles', country: 'Reino Unido', genre: 'Pop' },
     { id: 'uk4', name: 'Coldplay', country: 'Reino Unido', genre: 'Rock Alternativo' },
     { id: 'uk5', name: 'Amy Winehouse', country: 'Reino Unido', genre: 'Jazz/Soul' },
+    { id: 'uk6', name: 'Dua Lipa', country: 'Reino Unido', genre: 'Pop' },
+    { id: 'uk7', name: 'One Direction', country: 'Reino Unido', genre: 'Pop' },
+    { id: 'uk8', name: 'The Beatles', country: 'Reino Unido', genre: 'Rock' },
+    { id: 'uk9', name: 'Queen', country: 'Reino Unido', genre: 'Rock' },
+    { id: 'uk10', name: 'Elton John', country: 'Reino Unido', genre: 'Pop/Rock' },
+    { id: 'uk11', name: 'David Bowie', country: 'Reino Unido', genre: 'Rock' },
+    { id: 'uk12', name: 'Pink Floyd', country: 'Reino Unido', genre: 'Rock Progressivo' },
+    { id: 'uk13', name: 'The Rolling Stones', country: 'Reino Unido', genre: 'Rock' },
+    { id: 'uk14', name: 'Amy Macdonald', country: 'Reino Unido', genre: 'Pop/Rock' },
+    { id: 'uk15', name: 'Gorillaz', country: 'Reino Unido', genre: 'Eletrônico/Rock' },
   ],
   'Espanha': [
     { id: 'es1', name: 'Rosalía', country: 'Espanha', genre: 'Flamenco/Trap' },
@@ -58,6 +89,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'es3', name: 'Enrique Iglesias', country: 'Espanha', genre: 'Pop Latino' },
     { id: 'es4', name: 'Alejandro Sanz', country: 'Espanha', genre: 'Pop' },
     { id: 'es5', name: 'Maluma', country: 'Espanha', genre: 'Reggaeton/Pop' },
+    { id: 'es6', name: 'Bunbury', country: 'Espanha', genre: 'Rock' },
+    { id: 'es7', name: 'Paco de Lucía', country: 'Espanha', genre: 'Flamenco' },
+    { id: 'es8', name: 'Camarón de la Isla', country: 'Espanha', genre: 'Flamenco' },
+    { id: 'es9', name: 'Joan Manuel Serrat', country: 'Espanha', genre: 'Pop/Folk' },
+    { id: 'es10', name: 'Joaquín Sabina', country: 'Espanha', genre: 'Pop/Rock' },
+    { id: 'es11', name: 'Fito Páez', country: 'Espanha', genre: 'Rock' },
+    { id: 'es12', name: 'Andrés Calamaro', country: 'Espanha', genre: 'Rock' },
+    { id: 'es13', name: 'Mecano', country: 'Espanha', genre: 'Eletrônico/Pop' },
+    { id: 'es14', name: 'Héroes del Silencio', country: 'Espanha', genre: 'Rock' },
+    { id: 'es15', name: 'Vetusta Morla', country: 'Espanha', genre: 'Rock Indie' },
   ],
   'Colômbia': [
     { id: 'co1', name: 'Shakira', country: 'Colômbia', genre: 'Pop Latino' },
@@ -65,6 +106,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'co3', name: 'Karol G', country: 'Colômbia', genre: 'Reggaeton' },
     { id: 'co4', name: 'J Balvin', country: 'Colômbia', genre: 'Reggaeton' },
     { id: 'co5', name: 'Feid', country: 'Colômbia', genre: 'Reggaeton/Trap' },
+    { id: 'co6', name: 'Maluma', country: 'Colômbia', genre: 'Reggaeton' },
+    { id: 'co7', name: 'Silvestre Dangond', country: 'Colômbia', genre: 'Vallenato' },
+    { id: 'co8', name: 'Carlos Vives', country: 'Colômbia', genre: 'Pop Latino' },
+    { id: 'co9', name: 'Bomba Estéreo', country: 'Colômbia', genre: 'Eletrônico/Pop' },
+    { id: 'co10', name: 'Aterciopelados', country: 'Colômbia', genre: 'Rock Alternativo' },
+    { id: 'co11', name: 'Ekhymosis', country: 'Colômbia', genre: 'Rock' },
+    { id: 'co12', name: 'Momojet', country: 'Colômbia', genre: 'Reggaeton' },
+    { id: 'co13', name: 'Arcángel', country: 'Colômbia', genre: 'Reggaeton' },
+    { id: 'co14', name: 'Nio Cash', country: 'Colômbia', genre: 'Reggaeton' },
+    { id: 'co15', name: 'Ivy Queen', country: 'Colômbia', genre: 'Reggaeton' },
   ],
   'México': [
     { id: 'mx1', name: 'Peso Pluma', country: 'México', genre: 'Trap Latino' },
@@ -72,6 +123,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'mx3', name: 'Natalia Lafourcade', country: 'México', genre: 'Pop/Indie' },
     { id: 'mx4', name: 'Reik', country: 'México', genre: 'Pop' },
     { id: 'mx5', name: 'Grupo Frontera', country: 'México', genre: 'Regional Mexicano' },
+    { id: 'mx6', name: 'Juanes', country: 'México', genre: 'Rock Latino' },
+    { id: 'mx7', name: 'Café Tacvba', country: 'México', genre: 'Rock Alternativo' },
+    { id: 'mx8', name: 'Molotov', country: 'México', genre: 'Rap/Rock' },
+    { id: 'mx9', name: 'Caifanes', country: 'México', genre: 'Rock' },
+    { id: 'mx10', name: 'Jaguares', country: 'México', genre: 'Rock Alternativo' },
+    { id: 'mx11', name: 'Timbiriche', country: 'México', genre: 'Pop' },
+    { id: 'mx12', name: 'Belanova', country: 'México', genre: 'Eletrônico/Pop' },
+    { id: 'mx13', name: 'Moderatto', country: 'México', genre: 'Rock Eletrônico' },
+    { id: 'mx14', name: 'Zoé', country: 'México', genre: 'Rock Alternativo' },
+    { id: 'mx15', name: 'Resorte', country: 'México', genre: 'Rock' },
   ],
   'Itália': [
     { id: 'it1', name: 'Laura Pausini', country: 'Itália', genre: 'Pop' },
@@ -79,6 +140,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'it3', name: 'Eros Ramazzotti', country: 'Itália', genre: 'Pop' },
     { id: 'it4', name: 'Måneskin', country: 'Itália', genre: 'Rock' },
     { id: 'it5', name: 'Tiziano Ferro', country: 'Itália', genre: 'Pop' },
+    { id: 'it6', name: 'Luciano Pavarotti', country: 'Itália', genre: 'Ópera' },
+    { id: 'it7', name: 'Domenico Modugno', country: 'Itália', genre: 'Pop/Clássico' },
+    { id: 'it8', name: 'Adriano Celentano', country: 'Itália', genre: 'Pop' },
+    { id: 'it9', name: 'Renato Zero', country: 'Itália', genre: 'Pop/Rock' },
+    { id: 'it10', name: 'Vasco Rossi', country: 'Itália', genre: 'Rock' },
+    { id: 'it11', name: 'Zucchero', country: 'Itália', genre: 'Blues/Rock' },
+    { id: 'it12', name: 'Ligabue', country: 'Itália', genre: 'Rock' },
+    { id: 'it13', name: 'Elisa', country: 'Itália', genre: 'Pop/Rock' },
+    { id: 'it14', name: 'Giorgia', country: 'Itália', genre: 'Pop' },
+    { id: 'it15', name: 'Nek', country: 'Itália', genre: 'Pop/Rock' },
   ],
   'França': [
     { id: 'fr1', name: 'Dua Lipa', country: 'França', genre: 'Pop' },
@@ -86,6 +157,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'fr3', name: 'Zaz', country: 'França', genre: 'Chanson' },
     { id: 'fr4', name: 'Christine and the Queens', country: 'França', genre: 'Pop Experimental' },
     { id: 'fr5', name: 'Carla Bruni', country: 'França', genre: 'Pop/Chanson' },
+    { id: 'fr6', name: 'Edith Piaf', country: 'França', genre: 'Chanson' },
+    { id: 'fr7', name: 'Jacques Brel', country: 'França', genre: 'Chanson' },
+    { id: 'fr8', name: 'Charles Aznavour', country: 'França', genre: 'Chanson' },
+    { id: 'fr9', name: 'Serge Gainsbourg', country: 'França', genre: 'Pop/Chanson' },
+    { id: 'fr10', name: 'France Gall', country: 'França', genre: 'Pop' },
+    { id: 'fr11', name: 'Brigitte Bardot', country: 'França', genre: 'Pop/Chanson' },
+    { id: 'fr12', name: 'Claudine Longet', country: 'França', genre: 'Pop/Chanson' },
+    { id: 'fr13', name: 'Mylène Farmer', country: 'França', genre: 'Pop Eletrônico' },
+    { id: 'fr14', name: 'Vanessa Paradis', country: 'França', genre: 'Pop' },
+    { id: 'fr15', name: 'Louane', country: 'França', genre: 'Pop' },
   ],
   'Alemanha': [
     { id: 'de1', name: 'Kraftwerk', country: 'Alemanha', genre: 'Eletrônico' },
@@ -93,6 +174,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'de3', name: 'Nena', country: 'Alemanha', genre: 'Pop/New Wave' },
     { id: 'de4', name: 'Scorpions', country: 'Alemanha', genre: 'Rock' },
     { id: 'de5', name: 'Enya', country: 'Alemanha', genre: 'New Age' },
+    { id: 'de6', name: 'Tangerine Dream', country: 'Alemanha', genre: 'Eletrônico' },
+    { id: 'de7', name: 'Neu!', country: 'Alemanha', genre: 'Rock Krautrock' },
+    { id: 'de8', name: 'Can', country: 'Alemanha', genre: 'Rock Krautrock' },
+    { id: 'de9', name: 'Einsturzende Neubauten', country: 'Alemanha', genre: 'Industrial' },
+    { id: 'de10', name: 'DAF', country: 'Alemanha', genre: 'Eletrônico/Industrial' },
+    { id: 'de11', name: 'Deutsch Amerikanische Freundschaft', country: 'Alemanha', genre: 'Eletrônico' },
+    { id: 'de12', name: 'Falco', country: 'Alemanha', genre: 'Pop/Rock' },
+    { id: 'de13', name: 'Deine Lakaien', country: 'Alemanha', genre: 'Eletrônico/Gótico' },
+    { id: 'de14', name: 'Covenant', country: 'Alemanha', genre: 'Eletrônico/Gótico' },
+    { id: 'de15', name: 'VNV Nation', country: 'Alemanha', genre: 'Eletrônico/Industrial' },
   ],
   'Japão': [
     { id: 'jp1', name: 'Utada Hikaru', country: 'Japão', genre: 'J-Pop' },
@@ -100,6 +191,16 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'jp3', name: 'Hatsune Miku', country: 'Japão', genre: 'Vocaloid/Eletrônico' },
     { id: 'jp4', name: 'Sekai no Nabeatsu', country: 'Japão', genre: 'J-Pop' },
     { id: 'jp5', name: 'Yuki Kajiura', country: 'Japão', genre: 'Eletrônico/Anime' },
+    { id: 'jp6', name: 'Perfume', country: 'Japão', genre: 'Eletrônico/J-Pop' },
+    { id: 'jp7', name: 'Babymetal', country: 'Japão', genre: 'Metal/J-Pop' },
+    { id: 'jp8', name: 'Capsule', country: 'Japão', genre: 'Eletrônico' },
+    { id: 'jp9', name: 'Coda', country: 'Japão', genre: 'J-Pop' },
+    { id: 'jp10', name: 'Shiina Ringo', country: 'Japão', genre: 'J-Pop/Rock' },
+    { id: 'jp11', name: 'Nujabes', country: 'Japão', genre: 'Hip-Hop/Jazz' },
+    { id: 'jp12', name: 'Ryoji Ikeda', country: 'Japão', genre: 'Eletrônico Experimental' },
+    { id: 'jp13', name: 'Susumu Yokota', country: 'Japão', genre: 'Eletrônico' },
+    { id: 'jp14', name: 'Cornelius', country: 'Japão', genre: 'Eletrônico/Pop' },
+    { id: 'jp15', name: 'Yellow Magic Orchestra', country: 'Japão', genre: 'Eletrônico' },
   ],
   'Coreia do Sul': [
     { id: 'kr1', name: 'BTS', country: 'Coreia do Sul', genre: 'K-Pop' },
@@ -107,18 +208,33 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'kr3', name: 'IU', country: 'Coreia do Sul', genre: 'K-Pop' },
     { id: 'kr4', name: 'Stray Kids', country: 'Coreia do Sul', genre: 'K-Pop' },
     { id: 'kr5', name: 'NewJeans', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr6', name: 'Twice', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr7', name: 'Seventeen', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr8', name: 'EXO', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr9', name: 'Red Velvet', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr10', name: 'Aespa', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr11', name: 'Enhypen', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr12', name: 'Le Sserafim', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr13', name: 'Itzy', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr14', name: 'Loona', country: 'Coreia do Sul', genre: 'K-Pop' },
+    { id: 'kr15', name: 'Ive', country: 'Coreia do Sul', genre: 'K-Pop' },
   ],
 };
 
-export const ArtistsPanel = ({ isOpen, onClose, onPlaySong }: ArtistsPanelProps) => {
+const ARTISTS_PER_PAGE = 8;
+
+export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: ArtistsPanelProps) => {
   const [selectedCountry, setSelectedCountry] = useState<string>('Brasil');
   const [selectedArtist, setSelectedArtist] = useState<Artist | null>(null);
   const [artistSongs, setArtistSongs] = useState<ArtistSong[]>([]);
   const [isLoadingSongs, setIsLoadingSongs] = useState(false);
   const [savedArtists, setSavedArtists] = useState<Set<string>>(new Set());
+  const [displayedArtistsCount, setDisplayedArtistsCount] = useState(ARTISTS_PER_PAGE);
+  const artistsListRef = useRef<HTMLDivElement>(null);
 
   const countries = Object.keys(ARTISTS_BY_COUNTRY).sort();
-  const artists = ARTISTS_BY_COUNTRY[selectedCountry] || [];
+  const allArtists = ARTISTS_BY_COUNTRY[selectedCountry] || [];
+  const displayedArtists = allArtists.slice(0, displayedArtistsCount);
 
   // Carregar artistas salvos do localStorage
   useEffect(() => {
@@ -134,7 +250,6 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong }: ArtistsPanelProps)
     setIsLoadingSongs(true);
 
     try {
-      // Verificar cache primeiro
       const cacheKey = `artist_${artist.id}`;
       const cachedSongs = CacheService.getFromCache(cacheKey);
 
@@ -144,16 +259,14 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong }: ArtistsPanelProps)
         return;
       }
 
-      // Buscar no YouTube
       const results = await searchYouTube(`${artist.name} música`);
-      const songs: ArtistSong[] = results.slice(0, 10).map((result, index) => ({
+      const songs: ArtistSong[] = results.slice(0, 10).map((result) => ({
         id: result.id,
         title: result.title,
         artist: artist.name,
         thumbnail: result.thumbnail,
       }));
 
-      // Salvar no cache
       CacheService.saveToCache(cacheKey, songs);
       setArtistSongs(songs);
     } catch (error) {
@@ -175,22 +288,34 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong }: ArtistsPanelProps)
     localStorage.setItem('savedArtists', JSON.stringify(Array.from(newSaved)));
   };
 
+  // Scroll infinito
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    if (element.scrollHeight - element.scrollTop <= element.clientHeight + 100) {
+      if (displayedArtistsCount < allArtists.length) {
+        setDisplayedArtistsCount(prev => Math.min(prev + ARTISTS_PER_PAGE, allArtists.length));
+      }
+    }
+  }, [displayedArtistsCount, allArtists.length]);
+
   return (
     <div className={cn(
       'fixed left-0 w-full max-h-[80vh] z-10 transition-all duration-300 ease-in-out',
       'bg-white border-t-2 border-gray-300 flex flex-col pb-2',
       isOpen ? 'bottom-0' : '-bottom-full'
     )}>
-      <button
-        onClick={onClose}
-        className="absolute top-3 right-4 text-black text-2xl font-bold z-20 hover:text-red-500 transition-colors"
-      >
-        <X size={24} />
-      </button>
+      <div className="flex justify-center pt-2 pb-2">
+        <button
+          onClick={onClose}
+          className="text-black text-2xl font-bold hover:text-red-500 transition-colors"
+        >
+          <X size={24} />
+        </button>
+      </div>
 
       <div className="flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="px-4 pt-4 pb-2">
+        <div className="px-4 pt-2 pb-2">
           <h2 className="text-sm font-bold text-black mb-3">🎤 Artistas Mundiais</h2>
 
           {/* Country Selector */}
@@ -202,6 +327,7 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong }: ArtistsPanelProps)
                   setSelectedCountry(country);
                   setSelectedArtist(null);
                   setArtistSongs([]);
+                  setDisplayedArtistsCount(ARTISTS_PER_PAGE);
                 }}
                 className={cn(
                   'px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors',
@@ -218,10 +344,14 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong }: ArtistsPanelProps)
 
         {/* Content */}
         <div className="flex flex-1 overflow-hidden gap-4 px-4 pb-4">
-          {/* Artists List */}
-          <div className="flex-1 overflow-y-auto border-r border-gray-300 pr-4">
+          {/* Artists List com Scroll Infinito */}
+          <div
+            className="flex-1 overflow-y-auto border-r border-gray-300 pr-4"
+            ref={artistsListRef}
+            onScroll={handleScroll}
+          >
             <div className="space-y-2">
-              {artists.map((artist) => (
+              {displayedArtists.map((artist) => (
                 <div
                   key={artist.id}
                   onClick={() => handleArtistSelect(artist)}
@@ -252,6 +382,11 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong }: ArtistsPanelProps)
                   </button>
                 </div>
               ))}
+              {displayedArtistsCount < allArtists.length && (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin h-5 w-5 border-2 border-red-500 border-t-transparent rounded-full"></div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -268,11 +403,11 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong }: ArtistsPanelProps)
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {artistSongs.map((song) => (
+                    {artistSongs.map((song, index) => (
                       <div
                         key={song.id}
                         className="p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors flex items-center gap-2 cursor-pointer"
-                        onClick={() => onPlaySong?.(song.id, song.title, song.thumbnail)}
+                        onClick={() => onPlayPlaylist?.(artistSongs, index) || onPlaySong?.(song.id, song.title, song.thumbnail)}
                       >
                         <img
                           src={song.thumbnail}

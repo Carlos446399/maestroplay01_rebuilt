@@ -83,12 +83,14 @@ export const PlaylistPanel = ({
       "bg-black border-t-2 border-border flex flex-col pb-2",
       isOpen ? "bottom-0" : "-bottom-full"
     )}>
-      <button
-        onClick={onClose}
-        className="absolute top-3 right-4 text-white text-2xl font-bold z-20 hover:text-red-500 transition-colors"
-      >
-        <X size={24} />
-      </button>
+      <div className="flex justify-center pt-2 pb-2">
+        <button
+          onClick={onClose}
+          className="text-white text-2xl font-bold hover:text-red-500 transition-colors"
+        >
+          <X size={24} />
+        </button>
+      </div>
 
       {/* Quota Alert */}
       {quotaExceeded && (

@@ -11,9 +11,10 @@ interface EqualizerPanelProps {
   audioRef?: React.RefObject<HTMLAudioElement>;
   isPlaying?: boolean;
   onPlaySong?: (videoId: string, title: string, thumbnail: string) => void;
+  onPlayPlaylist?: (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => void;
 }
 
-export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong }: EqualizerPanelProps) => {
+export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlayPlaylist }: EqualizerPanelProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
   const [bass, setBass] = useState(0);
@@ -302,6 +303,7 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong }: Equa
         isOpen={isArtistsPanelOpen}
         onClose={() => setIsArtistsPanelOpen(false)}
         onPlaySong={onPlaySong}
+        onPlayPlaylist={onPlayPlaylist}
       />
     </div>
   );

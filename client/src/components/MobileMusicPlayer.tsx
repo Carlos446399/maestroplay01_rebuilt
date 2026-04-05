@@ -195,6 +195,22 @@ export const MobileMusicPlayer = () => {
     handleYouTubePlay(videoId, title, thumbnail);
   };
 
+  const handlePlayPlaylist = (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setYtPlaylist(songs);
+    setYtCurrentIndex(startIndex);
+    const startVideo = songs[startIndex];
+    setIsYouTubeMode(true);
+    setYtTitle(startVideo.title);
+    setYtThumbnail(startVideo.thumbnail);
+    setYtPlaying(true);
+    if (ytPlayer) {
+      ytPlayer.loadVideoById(startVideo.id);
+    }
+  };
+
   const handleNextTrack = () => {
     if (isYouTubeMode && ytPlayer) {
       // For YouTube, just continue playing or seek to next if playlist has items
@@ -405,6 +421,7 @@ export const MobileMusicPlayer = () => {
         audioRef={audioRef}
         isPlaying={isPlaying && !isYouTubeMode}
         onPlaySong={handleYouTubePlayWrapper}
+        onPlayPlaylist={handlePlayPlaylist}
       />
     </div>
   );

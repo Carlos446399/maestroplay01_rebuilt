@@ -1,0 +1,24 @@
+[build]
+  command = "pnpm install && pnpm build"
+  publish = "dist"
+
+[dev]
+  command = "pnpm dev"
+  port = 3000
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production]
+  command = "pnpm install && pnpm build"
+  publish = "dist"
+
+[context.deploy-preview]
+  command = "pnpm install && pnpm build"
+  publish = "dist"
+
+[context.branch-deploy]
+  command = "pnpm install && pnpm build"
+  publish = "dist"

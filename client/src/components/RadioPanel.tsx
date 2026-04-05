@@ -1,6 +1,6 @@
-import { X } from 'lucide-react';
 import { Radio } from '@/types/music';
 import { cn } from '@/lib/utils';
+import { ChevronDown } from 'lucide-react';
 
 interface RadioPanelProps {
   isOpen: boolean;
@@ -24,9 +24,9 @@ export const RadioPanel = ({
       <div className="flex justify-center pt-2 pb-2">
         <button
           onClick={onClose}
-          className="text-red-600 text-2xl font-bold hover:text-red-700 transition-colors"
+          className="text-red-600 hover:text-red-700 transition-colors"
         >
-          <X size={24} />
+          <ChevronDown size={28} />
         </button>
       </div>
 

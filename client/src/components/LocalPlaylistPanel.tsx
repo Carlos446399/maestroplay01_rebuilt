@@ -1,8 +1,9 @@
-import { X, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Track } from '@/types/music';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 interface LocalPlaylistPanelProps {
   isOpen: boolean;
@@ -38,9 +39,9 @@ export const LocalPlaylistPanel = ({
       <div className="flex justify-center pt-2 pb-2">
         <button
           onClick={onClose}
-          className="text-red-600 text-2xl font-bold hover:text-red-700 transition-colors"
+          className="text-red-600 hover:text-red-700 transition-colors"
         >
-          <X size={24} />
+          <ChevronDown size={28} />
         </button>
       </div>
 

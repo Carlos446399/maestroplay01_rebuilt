@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Play, Plus, X } from 'lucide-react';
+import { Search, Play, Plus, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { searchYouTube } from '@/services/youtubeService';
 import { CacheService } from '@/services/cacheService';
@@ -307,9 +307,9 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
       <div className="flex justify-center pt-2 pb-2">
         <button
           onClick={onClose}
-          className="text-red-600 text-2xl font-bold hover:text-red-700 transition-colors"
+          className="text-red-600 hover:text-red-700 transition-colors"
         >
-          <X size={24} />
+          <ChevronDown size={28} />
         </button>
       </div>
 

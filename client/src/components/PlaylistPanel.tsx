@@ -3,7 +3,9 @@ import { Track } from '@/types/music';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { searchYouTube, YouTubeResult } from '@/services/youtubeService';
+import { CacheService } from '@/services/cacheService';
 import { useState, useEffect } from 'react';
+import { AlertCircle } from 'lucide-react';
 
 interface PlaylistPanelProps {
   isOpen: boolean;
@@ -23,6 +25,8 @@ export const PlaylistPanel = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [youtubeResults, setYoutubeResults] = useState<YouTubeResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [quotaUsage, setQuotaUsage] = useState(CacheService.getQuotaUsage());
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -38,9 +42,33 @@ export const PlaylistPanel = ({
 
   const handleOnlineSearch = async () => {
     if (!searchTerm.trim()) return;
+
+    // Verificar cache primeiro
+    const cachedResults = CacheService.getFromCache(searchTerm);
+    if (cachedResults) {
+      setYoutubeResults(cachedResults);
+      return;
+    }
+
+    // Verificar quota
+    const quota = CacheService.getQuotaUsage();
+    if (quota.remaining <= 0) {
+      setQuotaExceeded(true);
+      setTimeout(() => setQuotaExceeded(false), 5000);
+      return;
+    }
+
     setIsSearching(true);
     try {
+      // Registrar busca
+      CacheService.recordSearch();
+      setQuotaUsage(CacheService.getQuotaUsage());
+
       const results = await searchYouTube(searchTerm);
+      
+      // Salvar em cache
+      CacheService.saveToCache(searchTerm, results);
+      
       setYoutubeResults(results);
     } catch (error) {
       console.error('YouTube search error:', error);
@@ -62,6 +90,33 @@ export const PlaylistPanel = ({
         <X size={24} />
       </button>
 
+      {/* Quota Alert */}
+      {quotaExceeded && (
+        <div className="mx-4 mt-4 p-3 bg-red-900/50 border border-red-600 rounded flex items-center gap-2">
+          <AlertCircle size={16} className="text-red-400" />
+          <span className="text-xs text-red-300">Limite de buscas diárias atingido. Tente novamente amanhã!</span>
+        </div>
+      )}
+
+      {/* Quota Usage Bar */}
+      <div className="mx-4 mt-3 px-3 py-2 bg-black/50 rounded">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] text-gray-400">Buscas usadas hoje</span>
+          <span className="text-[10px] text-gray-400">{quotaUsage.used}/{quotaUsage.limit}</span>
+        </div>
+        <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className={cn(
+              "h-full transition-all duration-300",
+              quotaUsage.percentage > 80 ? "bg-red-600" :
+              quotaUsage.percentage > 50 ? "bg-yellow-600" :
+              "bg-green-600"
+            )}
+            style={{ width: `${quotaUsage.percentage}%` }}
+          />
+        </div>
+      </div>
+
       {/* Search */}
       <div className="flex items-center gap-2 mx-4 mt-4">
         <Input
@@ -69,13 +124,17 @@ export const PlaylistPanel = ({
           placeholder="Buscar no YouTube..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-9 text-xs bg-red-600 border border-red-700 text-white flex-1 placeholder-red-200 rounded font-semibold"
+          disabled={quotaUsage.remaining <= 0}
+          className="h-9 text-xs bg-red-600 border border-red-700 text-white flex-1 placeholder-red-200 rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
       {/* Online Label */}
-      <div className="px-4 mt-3 mb-2">
+      <div className="px-4 mt-2 mb-2 flex items-center justify-between">
         <span className="text-xs font-semibold text-red-500">🎵 Online</span>
+        {quotaUsage.remaining <= 0 && (
+          <span className="text-[10px] text-red-400 font-semibold">Limite atingido</span>
+        )}
       </div>
 
       <div className="overflow-y-auto flex-1">

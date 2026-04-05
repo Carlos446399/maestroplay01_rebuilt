@@ -14,6 +14,7 @@ import { AudioVisualizer } from './AudioVisualizer';
 import { CategoryPanel } from './CategoryPanel';
 import { CategoryPlaylistPanel } from './CategoryPlaylistPanel';
 import { CategoryCarousel } from './CategoryCarousel';
+import { QuotaIndicator } from './QuotaIndicator';
 
 declare global {
   interface Window {
@@ -401,6 +402,9 @@ export const MobileMusicPlayer = () => {
         preload="metadata"
         className="hidden"
       />
+
+      {/* Quota Indicator */}
+      <QuotaIndicator />
     </div>
   );
 };

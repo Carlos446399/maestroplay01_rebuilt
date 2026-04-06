@@ -3,9 +3,10 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Volume2, X, Users } from 'lucide-react';
+import { Volume2, X, Users, Headphones } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ArtistsPanel } from './ArtistsPanel';
+import { use8DAudio } from '@/hooks/use8DAudio';
 
 interface EqualizerPanelProps {
   audioRef?: React.RefObject<HTMLAudioElement>;
@@ -21,6 +22,9 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlay
   const [mid, setMid] = useState(0);
   const [treble, setTreble] = useState(0);
   const [frequencies, setFrequencies] = useState<number[]>(Array(8).fill(0));
+  const [is8DEnabled, setIs8DEnabled] = useState(false);
+  const [audio8DSpeed, setAudio8DSpeed] = useState(1);
+  const [audio8DIntensity, setAudio8DIntensity] = useState(0.8);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSource | null>(null);
@@ -29,6 +33,7 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlay
   const trebleFilterRef = useRef<BiquadFilterNode | null>(null);
   const animationRef = useRef<number | null>(null);
   const initializationAttemptRef = useRef(0);
+  const { enable8D, disable8D, setSpeed: set8DSpeed, setIntensity: set8DIntensity } = use8DAudio(audioRef);
 
   // Inicializar Web Audio API com retry logic
   useEffect(() => {
@@ -150,6 +155,29 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlay
     };
   }, [isPlaying]);
 
+  // Gerenciar estado do 8D Audio
+  useEffect(() => {
+    if (is8DEnabled) {
+      enable8D(audio8DSpeed, audio8DIntensity);
+    } else {
+      disable8D();
+    }
+  }, [is8DEnabled, enable8D, disable8D]);
+
+  // Atualizar velocidade do 8D em tempo real
+  useEffect(() => {
+    if (is8DEnabled) {
+      set8DSpeed(audio8DSpeed);
+    }
+  }, [audio8DSpeed, is8DEnabled, set8DSpeed]);
+
+  // Atualizar intensidade do 8D em tempo real
+  useEffect(() => {
+    if (is8DEnabled) {
+      set8DIntensity(audio8DIntensity);
+    }
+  }, [audio8DIntensity, is8DEnabled, set8DIntensity]);
+
   const handleExpandClick = () => {
     // Tentar inicializar o áudio ao expandir
     if (!audioContextRef.current && audioRef?.current) {
@@ -265,16 +293,76 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlay
               />
             </div>
 
+            {/* 8D Audio Toggle */}
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Headphones size={14} className="text-purple-500" />
+                  <label className="text-xs font-semibold text-white">Audio 8D</label>
+                </div>
+                <button
+                  onClick={() => setIs8DEnabled(!is8DEnabled)}
+                  className={cn(
+                    'px-2 py-1 rounded text-xs font-semibold transition-all',
+                    is8DEnabled
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  )}
+                >
+                  {is8DEnabled ? 'Ativo' : 'Inativo'}
+                </button>
+              </div>
+
+              {is8DEnabled && (
+                <div className="space-y-3 bg-black/50 p-3 rounded">
+                  {/* Speed */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-semibold text-purple-300">Velocidade</label>
+                      <span className="text-[10px] text-purple-400">{audio8DSpeed.toFixed(1)}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="2"
+                      step="0.1"
+                      value={audio8DSpeed}
+                      onChange={(e) => setAudio8DSpeed(parseFloat(e.target.value))}
+                      className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                    />
+                  </div>
+
+                  {/* Intensity */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-semibold text-purple-300">Intensidade</label>
+                      <span className="text-[10px] text-purple-400">{(audio8DIntensity * 100).toFixed(0)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={audio8DIntensity}
+                      onChange={(e) => setAudio8DIntensity(parseFloat(e.target.value))}
+                      className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Reset Button */}
             <button
               onClick={() => {
                 setBass(0);
                 setMid(0);
                 setTreble(0);
+                setIs8DEnabled(false);
               }}
               className="w-full mt-4 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition-colors"
             >
-              Resetar
+              Resetar Tudo
             </button>
           </div>
 

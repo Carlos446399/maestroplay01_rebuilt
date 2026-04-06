@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Hourglass } from 'lucide-react';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
+import { useMediaSession } from '@/hooks/useMediaSession';
 import { MobileHeader } from './MobileHeader';
 import { AlbumArt } from './AlbumArt';
 import { ProgressBar } from './ProgressBar';
@@ -48,7 +49,26 @@ export const MobileMusicPlayer = () => {
     previousTrack,
     toggleRepeat,
     seek,
+    play,
+    pause,
   } = useMusicPlayer();
+
+  // Obter a música/rádio atual
+  const currentTrack = currentSource === 'tracks' 
+    ? tracks[currentTrackIndex] 
+    : radios[currentRadioIndex];
+
+  // Integrar Media Session API para controles na barra de notificações
+  useMediaSession(
+    { tracks, radios, currentTrackIndex, currentRadioIndex, currentSource, isPlaying, repeat, currentTime, duration, volume: 1 },
+    audioRef,
+    play,
+    pause,
+    nextTrack,
+    previousTrack,
+    seek,
+    currentTrack
+  );
 
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [isLocalPlaylistOpen, setIsLocalPlaylistOpen] = useState(false);
@@ -249,7 +269,6 @@ export const MobileMusicPlayer = () => {
     previousTrack();
   };
 
-  const currentTrack = currentTrackIndex >= 0 ? tracks[currentTrackIndex] : undefined;
   const currentRadio = currentRadioIndex >= 0 ? radios[currentRadioIndex] : undefined;
   
   // Determine what's currently showing

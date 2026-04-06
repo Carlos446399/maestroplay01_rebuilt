@@ -300,6 +300,8 @@ export const useMusicPlayer = () => {
     updateTrackCover,
     playTrack,
     playRadio,
+    play,
+    pause,
     togglePlay,
     nextTrack,
     previousTrack,

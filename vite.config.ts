@@ -213,9 +213,31 @@ const plugins = [
       ],
     },
     workbox: {
-      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
-      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf,eot}'],
+      maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf,eot,mp3,wav,m4a,ogg}'],
       runtimeCaching: [
+        {
+          urlPattern: /^blob:.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'audio-blobs',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60 * 24 * 30,
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/.*\.(mp3|m3u8|aac|ogg)$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'radio-streams',
+            expiration: {
+              maxEntries: 20,
+              maxAgeSeconds: 60 * 60 * 24,
+            },
+          },
+        },
         {
           urlPattern: /^https:\/\/www\.youtube\.com\/.*/i,
           handler: 'CacheFirst',
@@ -223,7 +245,7 @@ const plugins = [
             cacheName: 'youtube-cache',
             expiration: {
               maxEntries: 50,
-              maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+              maxAgeSeconds: 60 * 60 * 24 * 7,
             },
           },
         },
@@ -234,7 +256,7 @@ const plugins = [
             cacheName: 'youtube-thumbnails',
             expiration: {
               maxEntries: 100,
-              maxAgeSeconds: 60 * 60 * 24 * 30, // 1 month
+              maxAgeSeconds: 60 * 60 * 24 * 30,
             },
           },
         },
@@ -245,7 +267,18 @@ const plugins = [
             cacheName: 'google-api-cache',
             expiration: {
               maxEntries: 50,
-              maxAgeSeconds: 60 * 60, // 1 hour
+              maxAgeSeconds: 60 * 60,
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/.*\.(png|jpg|jpeg|gif|webp|svg)$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'images-cache',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 * 30,
             },
           },
         },

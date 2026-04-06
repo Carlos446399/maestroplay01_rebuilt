@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,7 +151,108 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+  vitePluginManusDebugCollector(),
+  VitePWA({
+    registerType: 'autoUpdate',
+    includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+    manifest: {
+      name: 'Maestro Play',
+      short_name: 'MaestroPlay',
+      description: 'Aplicativo de música com suporte a YouTube, rádios online e playlists locais',
+      theme_color: '#000000',
+      background_color: '#000000',
+      display: 'standalone',
+      scope: '/',
+      start_url: '/',
+      orientation: 'portrait-primary',
+      icons: [
+        {
+          src: '/pwa-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: '/pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: '/pwa-maskable-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'maskable',
+        },
+        {
+          src: '/pwa-maskable-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable',
+        },
+      ],
+      categories: ['music', 'entertainment'],
+      screenshots: [
+        {
+          src: '/screenshot-1.png',
+          sizes: '540x720',
+          form_factor: 'narrow',
+          type: 'image/png',
+        },
+        {
+          src: '/screenshot-2.png',
+          sizes: '1280x720',
+          form_factor: 'wide',
+          type: 'image/png',
+        },
+      ],
+    },
+    workbox: {
+      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf,eot}'],
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/www\.youtube\.com\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'youtube-cache',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/.*\.ytimg\.com\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'youtube-thumbnails',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 * 30, // 1 month
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/.*\.googleapis\.com\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'google-api-cache',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60, // 1 hour
+            },
+          },
+        },
+      ],
+    },
+  }),
+];
 
 export default defineConfig({
   plugins,

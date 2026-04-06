@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Hourglass } from 'lucide-react';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useMediaSession } from '@/hooks/useMediaSession';
+import { useBackgroundPlayback } from '@/hooks/useBackgroundPlayback';
 import { MobileHeader } from './MobileHeader';
 import { AlbumArt } from './AlbumArt';
 import { ProgressBar } from './ProgressBar';
@@ -70,6 +71,9 @@ export const MobileMusicPlayer = () => {
     currentTrack
   );
 
+  // Ativar reprodução em segundo plano e manter tela ligada
+  useBackgroundPlayback(isPlaying);
+
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [isLocalPlaylistOpen, setIsLocalPlaylistOpen] = useState(false);
   const [isRadioOpen, setIsRadioOpen] = useState(false);
@@ -80,6 +84,8 @@ export const MobileMusicPlayer = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isFavoritesListOpen, setIsFavoritesListOpen] = useState(false);
   const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
+  const [isPlayerLocked, setIsPlayerLocked] = useState(false);
+  const [lockUnlockTimer, setLockUnlockTimer] = useState<NodeJS.Timeout | null>(null);
   
   // YouTube state
   const [ytPlayer, setYtPlayer] = useState<any>(null);
@@ -311,6 +317,17 @@ export const MobileMusicPlayer = () => {
     }
   };
 
+  const handleToggleLock = () => {
+    if (isPlayerLocked) {
+      // Se já está bloqueado, desbloqueia imediatamente
+      setIsPlayerLocked(false);
+      if (lockUnlockTimer) clearTimeout(lockUnlockTimer);
+    } else {
+      // Se não está bloqueado, bloqueia
+      setIsPlayerLocked(true);
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-gradient-main text-white flex flex-col items-center overflow-hidden pb-4">
       <MobileHeader />
@@ -359,13 +376,15 @@ export const MobileMusicPlayer = () => {
 
       <MobileControls
         isPlaying={displayPlaying}
-        onTogglePlay={handleTogglePlay}
-        onPreviousTrack={handlePreviousTrack}
-        onNextTrack={handleNextTrack}
+        onTogglePlay={isPlayerLocked ? undefined : handleTogglePlay}
+        onPreviousTrack={isPlayerLocked ? undefined : handlePreviousTrack}
+        onNextTrack={isPlayerLocked ? undefined : handleNextTrack}
         repeatMode={repeat as 'off' | 'all' | 'one'}
-        onToggleRepeat={toggleRepeat}
+        onToggleRepeat={isPlayerLocked ? undefined : toggleRepeat}
         isShuffle={isShuffle}
-        onToggleShuffle={() => setIsShuffle(!isShuffle)}
+        onToggleShuffle={isPlayerLocked ? undefined : () => setIsShuffle(!isShuffle)}
+        isLocked={isPlayerLocked}
+        onToggleLock={handleToggleLock}
       />
 
       <MobileBottomIcons

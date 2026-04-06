@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { searchYouTube, YouTubeResult, YouTubeSearchResult } from '@/services/youtubeService';
 import { CacheService } from '@/services/cacheService';
+import { youtubeDownloader, DownloadProgress } from '@/services/youtubeDownloader';
 import { useState, useEffect } from 'react';
-import { AlertCircle, ChevronDown } from 'lucide-react';
+import { AlertCircle, ChevronDown, Download, CheckCircle2, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PlaylistPanelProps {
   isOpen: boolean;
@@ -27,6 +29,21 @@ export const PlaylistPanel = ({
   const [isSearching, setIsSearching] = useState(false);
   const [quotaUsage, setQuotaUsage] = useState(CacheService.getQuotaUsage());
   const [quotaExceeded, setQuotaExceeded] = useState(false);
+  const [downloadingIds, setDownloadingIds] = useState<Record<string, DownloadProgress>>( {});
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+
+  // Verificar quais vídeos já estão salvos
+  useEffect(() => {
+    const checkSaved = async () => {
+      const newSavedIds = new Set<string>();
+      for (const result of youtubeResults) {
+        const isSaved = await youtubeDownloader.isSaved(result.id);
+        if (isSaved) newSavedIds.add(result.id);
+      }
+      setSavedIds(newSavedIds);
+    };
+    if (youtubeResults.length > 0) checkSaved();
+  }, [youtubeResults]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -154,25 +171,76 @@ export const PlaylistPanel = ({
         {youtubeResults.map((result) => (
           <div
             key={result.id}
-            className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors flex items-center gap-3 bg-white"
-            onClick={() => {
-              onYouTubePlay?.(result.id, result.title, result.thumbnail);
-              onClose();
-            }}
+            className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors flex items-center gap-3 bg-white group"
           >
-            <img 
-              src={result.thumbnail} 
-              alt={result.title}
-              className="w-10 h-10 rounded object-cover flex-shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <span className="text-xs text-black truncate block leading-tight">
-                {result.title}
-              </span>
-              <span className="text-[10px] text-gray-500 truncate block">
-                {result.channelTitle}
-              </span>
+            <div 
+              className="flex items-center gap-3 flex-1 min-w-0"
+              onClick={() => {
+                onYouTubePlay?.(result.id, result.title, result.thumbnail);
+                onClose();
+              }}
+            >
+              <img 
+                src={result.thumbnail} 
+                alt={result.title}
+                className="w-10 h-10 rounded object-cover flex-shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-black truncate block leading-tight font-medium">
+                  {result.title}
+                </span>
+                <span className="text-[10px] text-gray-500 truncate block">
+                  {result.channelTitle}
+                </span>
+              </div>
             </div>
+
+            {/* Botão de Download Offline */}
+            <button
+              className={cn(
+                "p-2 rounded-full transition-all duration-200",
+                savedIds.has(result.id) ? "text-green-600 bg-green-50" : "text-red-600 hover:bg-red-50"
+              )}
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (savedIds.has(result.id)) {
+                  toast.info('Esta música já está salva offline');
+                  return;
+                }
+
+                if (downloadingIds[result.id]) return;
+
+                toast.promise(
+                  youtubeDownloader.saveForOffline(
+                    result.id, 
+                    result.title, 
+                    result.thumbnail,
+                    (p) => setDownloadingIds(prev => ({ ...prev, [result.id]: p }))
+                  ),
+                  {
+                    loading: 'Preparando download...',
+                    success: () => {
+                      setSavedIds(prev => new Set(prev).add(result.id));
+                      setDownloadingIds(prev => {
+                        const next = { ...prev };
+                        delete next[result.id];
+                        return next;
+                      });
+                      return 'Música salva offline com sucesso!';
+                    },
+                    error: 'Erro ao salvar música. Tente novamente.'
+                  }
+                );
+              }}
+            >
+              {downloadingIds[result.id] ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : savedIds.has(result.id) ? (
+                <CheckCircle2 size={18} />
+              ) : (
+                <Download size={18} />
+              )}
+            </button>
           </div>
         ))}
       </div>

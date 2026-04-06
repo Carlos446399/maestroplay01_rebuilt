@@ -191,6 +191,14 @@ export const MobileMusicPlayer = () => {
   };
 
   const handlePlayTrack = (index: number) => {
+    const track = tracks[index];
+    if (track && track.id.startsWith('yt-')) {
+      // Se for uma música salva do YouTube, usamos o player do YouTube
+      const videoId = track.id.replace('yt-', '');
+      handleYouTubePlay(videoId, track.name, track.cover || '');
+      return;
+    }
+
     // Stop YouTube if playing
     if (isYouTubeMode && ytPlayer) {
       ytPlayer.stopVideo();

@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { Search, Youtube, Music2 } from 'lucide-react';
 import { Track } from '@/types/music';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -69,18 +69,39 @@ export const LocalPlaylistPanel = ({
         )}
         {filteredTracks.map((track, index) => {
           const originalIndex = tracks.findIndex(t => t.id === track.id);
+          const isYouTube = track.id.startsWith('yt-');
+          
           return (
             <div
               key={track.id}
-              className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors bg-white"
+              className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors bg-white flex items-center gap-3"
               onClick={() => {
                 onTrackSelect(originalIndex);
                 onClose();
               }}
             >
-              <span className="text-xs text-black truncate block leading-tight">
-                {track.name}
-              </span>
+              <div className="relative w-10 h-10 flex-shrink-0">
+                <img 
+                  src={track.cover || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="24" fill="%23999"%3E🎵%3C/text%3E%3C/svg%3E'} 
+                  alt={track.name}
+                  className="w-full h-full rounded object-cover"
+                />
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
+                  {isYouTube ? (
+                    <Youtube size={10} className="text-red-600" />
+                  ) : (
+                    <Music2 size={10} className="text-blue-600" />
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-black truncate block leading-tight font-medium">
+                  {track.name}
+                </span>
+                <span className="text-[10px] text-gray-500">
+                  {isYouTube ? 'Salvo do YouTube' : 'Arquivo Local'}
+                </span>
+              </div>
             </div>
           );
         })}

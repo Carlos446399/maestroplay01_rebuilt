@@ -16,6 +16,7 @@ import { CategoryPlaylistPanel } from './CategoryPlaylistPanel';
 import { CategoryCarousel } from './CategoryCarousel';
 import { EqualizerPanel } from './EqualizerPanel';
 import { SavedArtistsCarousel } from './SavedArtistsCarousel';
+import { ArtistsPanel } from './ArtistsPanel';
 
 declare global {
   interface Window {
@@ -58,6 +59,7 @@ export const MobileMusicPlayer = () => {
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isFavoritesListOpen, setIsFavoritesListOpen] = useState(false);
+  const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
   
   // YouTube state
   const [ytPlayer, setYtPlayer] = useState<any>(null);
@@ -283,7 +285,7 @@ export const MobileMusicPlayer = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-main text-white flex flex-col items-center overflow-hidden">
+    <div className="min-h-screen w-full bg-gradient-main text-white flex flex-col items-center overflow-hidden pb-4">
       <MobileHeader />
 
       {importProgress && (
@@ -298,16 +300,16 @@ export const MobileMusicPlayer = () => {
         </div>
       )}
 
-      <div className="text-center px-4 mt-2">
-        <div className="text-base font-bold truncate max-w-[280px] mx-auto">
+      <div className="text-center px-4 mt-1">
+        <div className="text-sm font-bold truncate max-w-[280px] mx-auto">
           {displayName}
         </div>
-        <div className="text-sm text-muted-foreground mt-1">
+        <div className="text-[10px] text-muted-foreground mt-0.5">
           {isYouTubeMode ? '🎵 YouTube' : currentSource === 'radios' ? 'Rádio Online' : 'Artista'}
         </div>
       </div>
 
-      <div className="relative w-[40vw] h-[40vw] max-w-[150px] max-h-[150px] mx-auto my-2">
+      <div className="relative w-[35vw] h-[35vw] max-w-[130px] max-h-[130px] mx-auto my-1">
         <AlbumArt
           src={displayCover}
           alt={displayName}
@@ -346,17 +348,21 @@ export const MobileMusicPlayer = () => {
         onAddMusic={handleAddMusic}
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsPlaylistOpen(true)}
+        onArtists={() => setIsArtistsPanelOpen(true)}
         isFavorite={currentMedia ? favorites.has(currentMedia.id) : false}
       />
 
-      <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />
+      {/* Área de Carrosséis com scroll vertical se necessário, mas contida */}
+      <div className="w-full flex-1 overflow-y-auto custom-scrollbar px-2 space-y-2">
+        <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />
 
-      <CategoryCarousel
-        onCategorySelect={(category) => {
-          setSelectedCategory(category);
-          setIsCategoryPlaylistOpen(true);
-        }}
-      />
+        <CategoryCarousel
+          onCategorySelect={(category) => {
+            setSelectedCategory(category);
+            setIsCategoryPlaylistOpen(true);
+          }}
+        />
+      </div>
 
       <LocalPlaylistPanel
         isOpen={isLocalPlaylistOpen}
@@ -423,6 +429,14 @@ export const MobileMusicPlayer = () => {
       <EqualizerPanel
         audioRef={audioRef}
         isPlaying={isPlaying && !isYouTubeMode}
+        onPlaySong={handleYouTubePlayWrapper}
+        onPlayPlaylist={handlePlayPlaylist}
+      />
+
+      {/* Artists Panel */}
+      <ArtistsPanel
+        isOpen={isArtistsPanelOpen}
+        onClose={() => setIsArtistsPanelOpen(false)}
         onPlaySong={handleYouTubePlayWrapper}
         onPlayPlaylist={handlePlayPlaylist}
       />

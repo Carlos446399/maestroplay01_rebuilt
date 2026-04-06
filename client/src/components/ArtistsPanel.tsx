@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Play, Plus, ChevronDown } from 'lucide-react';
+import { Search, Play, Plus, ChevronDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { searchYouTube } from '@/services/youtubeService';
 import { CacheService } from '@/services/cacheService';
@@ -175,28 +175,11 @@ const ARTISTS_BY_COUNTRY: Record<string, Artist[]> = {
     { id: 'it8', name: 'Adriano Celentano', country: 'Itália', genre: 'Pop' },
     { id: 'it9', name: 'Renato Zero', country: 'Itália', genre: 'Pop/Rock' },
     { id: 'it10', name: 'Vasco Rossi', country: 'Itália', genre: 'Rock' },
-    { id: 'it11', name: 'Zucchero', country: 'Itália', genre: 'Blues/Rock' },
-    { id: 'it12', name: 'Ligabue', country: 'Itália', genre: 'Rock' },
-    { id: 'it13', name: 'Elisa', country: 'Itália', genre: 'Pop/Rock' },
-    { id: 'it14', name: 'Giorgia', country: 'Itália', genre: 'Pop' },
-    { id: 'it15', name: 'Nek', country: 'Itália', genre: 'Pop/Rock' },
-  ],
-  'França': [
-    { id: 'fr1', name: 'Dua Lipa', country: 'França', genre: 'Pop' },
-    { id: 'fr2', name: 'Stromae', country: 'França', genre: 'Pop Eletrônico' },
-    { id: 'fr3', name: 'Zaz', country: 'França', genre: 'Chanson' },
-    { id: 'fr4', name: 'Christine and the Queens', country: 'França', genre: 'Pop Experimental' },
-    { id: 'fr5', name: 'Carla Bruni', country: 'França', genre: 'Pop/Chanson' },
-    { id: 'fr6', name: 'Edith Piaf', country: 'França', genre: 'Chanson' },
-    { id: 'fr7', name: 'Jacques Brel', country: 'França', genre: 'Chanson' },
-    { id: 'fr8', name: 'Charles Aznavour', country: 'França', genre: 'Chanson' },
-    { id: 'fr9', name: 'Serge Gainsbourg', country: 'França', genre: 'Pop/Chanson' },
-    { id: 'fr10', name: 'France Gall', country: 'França', genre: 'Pop' },
-    { id: 'fr11', name: 'Brigitte Bardot', country: 'França', genre: 'Pop/Chanson' },
-    { id: 'fr12', name: 'Claudine Longet', country: 'França', genre: 'Pop/Chanson' },
-    { id: 'fr13', name: 'Mylène Farmer', country: 'França', genre: 'Pop Eletrônico' },
-    { id: 'fr14', name: 'Vanessa Paradis', country: 'França', genre: 'Pop' },
-    { id: 'fr15', name: 'Louane', country: 'França', genre: 'Pop' },
+    { id: 'it11', name: 'Gianna Nannini', country: 'Itália', genre: 'Rock' },
+    { id: 'it12', name: 'Zucchero', country: 'Itália', genre: 'Blues/Rock' },
+    { id: 'it13', name: 'Sting', country: 'Itália', genre: 'Pop/Rock' },
+    { id: 'it14', name: 'Pino Daniele', country: 'Itália', genre: 'Fusão' },
+    { id: 'it15', name: 'Ligabue', country: 'Itália', genre: 'Rock' },
   ],
   'Alemanha': [
     { id: 'de1', name: 'Kraftwerk', country: 'Alemanha', genre: 'Eletrônico' },
@@ -258,9 +241,12 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
   const [selectedArtist, setSelectedArtist] = useState<Artist | null>(null);
   const [artistSongs, setArtistSongs] = useState<ArtistSong[]>([]);
   const [isLoadingSongs, setIsLoadingSongs] = useState(false);
+  const [isLoadingMoreSongs, setIsLoadingMoreSongs] = useState(false);
   const [savedArtists, setSavedArtists] = useState<Set<string>>(new Set());
   const [displayedArtistsCount, setDisplayedArtistsCount] = useState(ARTISTS_PER_PAGE);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const artistsListRef = useRef<HTMLDivElement>(null);
+  const songsListRef = useRef<HTMLDivElement>(null);
 
   const countries = Object.keys(ARTISTS_BY_COUNTRY).sort();
   const allArtists = ARTISTS_BY_COUNTRY[selectedCountry] || [];
@@ -277,6 +263,8 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
   // Buscar músicas do artista selecionado
   const handleArtistSelect = async (artist: Artist) => {
     setSelectedArtist(artist);
+    setArtistSongs([]);
+    setNextPageToken(null);
     setIsLoadingSongs(true);
 
     try {
@@ -290,7 +278,7 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
       }
 
       const results = await searchYouTube(`${artist.name} música`);
-      const songs: ArtistSong[] = results.items.slice(0, 50).map((result) => ({
+      const songs: ArtistSong[] = results.items.map((result) => ({
         id: result.id,
         title: result.title,
         artist: artist.name,
@@ -299,11 +287,35 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
 
       CacheService.saveToCache(cacheKey, songs);
       setArtistSongs(songs);
+      setNextPageToken(results.nextPageToken || null);
     } catch (error) {
       console.error('Error fetching artist songs:', error);
       setArtistSongs([]);
     } finally {
       setIsLoadingSongs(false);
+    }
+  };
+
+  // Carregar mais músicas do artista
+  const loadMoreSongs = async () => {
+    if (!selectedArtist || !nextPageToken || isLoadingMoreSongs) return;
+
+    setIsLoadingMoreSongs(true);
+    try {
+      const results = await searchYouTube(`${selectedArtist.name} música`, nextPageToken);
+      const newSongs: ArtistSong[] = results.items.map((result) => ({
+        id: result.id,
+        title: result.title,
+        artist: selectedArtist.name,
+        thumbnail: result.thumbnail,
+      }));
+
+      setArtistSongs(prev => [...prev, ...newSongs]);
+      setNextPageToken(results.nextPageToken || null);
+    } catch (error) {
+      console.error('Error loading more songs:', error);
+    } finally {
+      setIsLoadingMoreSongs(false);
     }
   };
 
@@ -318,8 +330,8 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
     localStorage.setItem('savedArtists', JSON.stringify(Array.from(newSaved)));
   };
 
-  // Scroll infinito
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+  // Scroll infinito para artistas
+  const handleArtistsScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const element = e.currentTarget;
     if (element.scrollHeight - element.scrollTop <= element.clientHeight + 100) {
       if (displayedArtistsCount < allArtists.length) {
@@ -327,6 +339,22 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
       }
     }
   }, [displayedArtistsCount, allArtists.length]);
+
+  // Scroll infinito para músicas
+  useEffect(() => {
+    const container = songsListRef.current;
+    if (!container) return;
+
+    const handleSongsScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      if (scrollHeight - scrollTop - clientHeight < 200 && !isLoadingMoreSongs && nextPageToken) {
+        loadMoreSongs();
+      }
+    };
+
+    container.addEventListener('scroll', handleSongsScroll);
+    return () => container.removeEventListener('scroll', handleSongsScroll);
+  }, [nextPageToken, isLoadingMoreSongs]);
 
   return (
     <div className={cn(
@@ -358,6 +386,7 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
                   setSelectedArtist(null);
                   setArtistSongs([]);
                   setDisplayedArtistsCount(ARTISTS_PER_PAGE);
+                  setNextPageToken(null);
                 }}
                 className={cn(
                   'px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors',
@@ -378,7 +407,7 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
           <div
             className="flex-1 overflow-y-auto border-r border-gray-300 pr-4"
             ref={artistsListRef}
-            onScroll={handleScroll}
+            onScroll={handleArtistsScroll}
           >
             <div className="space-y-2">
               {displayedArtists.map((artist) => (
@@ -414,22 +443,25 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
               ))}
               {displayedArtistsCount < allArtists.length && (
                 <div className="flex justify-center py-4">
-                  <div className="animate-spin h-5 w-5 border-2 border-red-500 border-t-transparent rounded-full"></div>
+                  <Loader2 className="animate-spin text-red-500" size={20} />
                 </div>
               )}
             </div>
           </div>
 
-          {/* Songs List */}
-          <div className="flex-1 overflow-y-auto">
+          {/* Songs List com Scroll Infinito */}
+          <div 
+            className="flex-1 overflow-y-auto"
+            ref={songsListRef}
+          >
             {selectedArtist ? (
               <div>
                 <h3 className="text-xs font-bold text-black mb-3">
-                  {selectedArtist.name} - Músicas
+                  {selectedArtist.name} - {artistSongs.length} músicas
                 </h3>
                 {isLoadingSongs ? (
                   <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin h-6 w-6 border-2 border-red-500 border-t-transparent rounded-full"></div>
+                    <Loader2 className="animate-spin text-red-500" size={24} />
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -451,6 +483,21 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
                         <Play size={14} className="text-red-600 flex-shrink-0" />
                       </div>
                     ))}
+
+                    {/* Loading More Indicator */}
+                    {isLoadingMoreSongs && (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="animate-spin text-red-600" size={20} />
+                        <span className="ml-2 text-gray-600 text-xs">Carregando mais...</span>
+                      </div>
+                    )}
+
+                    {/* End of List */}
+                    {!nextPageToken && artistSongs.length > 0 && (
+                      <div className="text-center py-4">
+                        <p className="text-gray-500 text-xs">Fim da lista</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

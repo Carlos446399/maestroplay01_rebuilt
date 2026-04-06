@@ -4,7 +4,8 @@ import {
   Star, 
   Plus, 
   Radio,
-  Music
+  Music,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,7 @@ interface MobileBottomIconsProps {
   onAddMusic: () => void;
   onRadio: () => void;
   onPlaylist: () => void;
+  onArtists?: () => void;
   isFavorite: boolean;
 }
 
@@ -25,6 +27,7 @@ export const MobileBottomIcons = ({
   onAddMusic,
   onRadio,
   onPlaylist,
+  onArtists,
   isFavorite
 }: MobileBottomIconsProps) => {
   const [favAnim, setFavAnim] = useState(false);
@@ -57,10 +60,14 @@ export const MobileBottomIcons = ({
           size={20} 
           onClick={onFavoritesList} 
         />
-
       </div>
       
       <div className="flex gap-4">
+        <Users
+          className="cursor-pointer text-white hover:text-primary transition-colors" 
+          size={20} 
+          onClick={onArtists} 
+        />
         <Plus 
           className="cursor-pointer text-white hover:text-primary transition-colors" 
           size={20} 

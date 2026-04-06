@@ -2,8 +2,8 @@
  * SavedArtistsCarousel - Exibe artistas salvos como cards abaixo das categorias
  */
 
-import { useState, useEffect } from 'react';
-import { Play, Music, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Play, Music, ChevronDown, Loader2 } from 'lucide-react';
 import { searchYouTube } from '@/services/youtubeService';
 import { CacheService } from '@/services/cacheService';
 import { cn } from '@/lib/utils';
@@ -80,7 +80,77 @@ const ALL_ARTISTS: Record<string, SavedArtist> = {
   'us27': { id: 'us27', name: 'Camila Cabello', country: 'EUA', genre: 'Pop' },
   'us28': { id: 'us28', name: 'Cardi B', country: 'EUA', genre: 'Hip-Hop/Rap' },
   'us29': { id: 'us29', name: 'Travis Scott', country: 'EUA', genre: 'Hip-Hop/Rap' },
-  'us30': { id: 'us30', name: 'SZA', country: 'EUA', genre: 'R&B/Soul' }
+  'us30': { id: 'us30', name: 'SZA', country: 'EUA', genre: 'R&B/Soul' },
+  'uk1': { id: 'uk1', name: 'Ed Sheeran', country: 'Reino Unido', genre: 'Pop' },
+  'uk2': { id: 'uk2', name: 'Adele', country: 'Reino Unido', genre: 'Pop/Soul' },
+  'uk3': { id: 'uk3', name: 'Harry Styles', country: 'Reino Unido', genre: 'Pop' },
+  'uk4': { id: 'uk4', name: 'Coldplay', country: 'Reino Unido', genre: 'Rock Alternativo' },
+  'uk5': { id: 'uk5', name: 'Amy Winehouse', country: 'Reino Unido', genre: 'Jazz/Soul' },
+  'uk6': { id: 'uk6', name: 'Dua Lipa', country: 'Reino Unido', genre: 'Pop' },
+  'uk7': { id: 'uk7', name: 'One Direction', country: 'Reino Unido', genre: 'Pop' },
+  'uk8': { id: 'uk8', name: 'The Beatles', country: 'Reino Unido', genre: 'Rock' },
+  'uk9': { id: 'uk9', name: 'Queen', country: 'Reino Unido', genre: 'Rock' },
+  'uk10': { id: 'uk10', name: 'Elton John', country: 'Reino Unido', genre: 'Pop/Rock' },
+  'uk11': { id: 'uk11', name: 'David Bowie', country: 'Reino Unido', genre: 'Rock' },
+  'uk12': { id: 'uk12', name: 'Pink Floyd', country: 'Reino Unido', genre: 'Rock Progressivo' },
+  'uk13': { id: 'uk13', name: 'The Rolling Stones', country: 'Reino Unido', genre: 'Rock' },
+  'uk14': { id: 'uk14', name: 'Amy Macdonald', country: 'Reino Unido', genre: 'Pop/Rock' },
+  'uk15': { id: 'uk15', name: 'Gorillaz', country: 'Reino Unido', genre: 'Eletrônico/Rock' },
+  'es1': { id: 'es1', name: 'Rosalía', country: 'Espanha', genre: 'Flamenco/Trap' },
+  'es2': { id: 'es2', name: 'Bad Bunny', country: 'Espanha', genre: 'Reggaeton' },
+  'es3': { id: 'es3', name: 'Enrique Iglesias', country: 'Espanha', genre: 'Pop Latino' },
+  'es4': { id: 'es4', name: 'Alejandro Sanz', country: 'Espanha', genre: 'Pop' },
+  'es5': { id: 'es5', name: 'Maluma', country: 'Espanha', genre: 'Reggaeton/Pop' },
+  'es6': { id: 'es6', name: 'Bunbury', country: 'Espanha', genre: 'Rock' },
+  'es7': { id: 'es7', name: 'Paco de Lucía', country: 'Espanha', genre: 'Flamenco' },
+  'es8': { id: 'es8', name: 'Camarón de la Isla', country: 'Espanha', genre: 'Flamenco' },
+  'es9': { id: 'es9', name: 'Joan Manuel Serrat', country: 'Espanha', genre: 'Pop/Folk' },
+  'es10': { id: 'es10', name: 'Joaquín Sabina', country: 'Espanha', genre: 'Pop/Rock' },
+  'es11': { id: 'es11', name: 'Fito Páez', country: 'Espanha', genre: 'Rock' },
+  'es12': { id: 'es12', name: 'Andrés Calamaro', country: 'Espanha', genre: 'Rock' },
+  'es13': { id: 'es13', name: 'Mecano', country: 'Espanha', genre: 'Eletrônico/Pop' },
+  'es14': { id: 'es14', name: 'Héroes del Silencio', country: 'Espanha', genre: 'Rock' },
+  'es15': { id: 'es15', name: 'Vetusta Morla', country: 'Espanha', genre: 'Rock Indie' },
+  'co1': { id: 'co1', name: 'Shakira', country: 'Colômbia', genre: 'Pop Latino' },
+  'co2': { id: 'co2', name: 'Juanes', country: 'Colômbia', genre: 'Rock Latino' },
+  'co3': { id: 'co3', name: 'Karol G', country: 'Colômbia', genre: 'Reggaeton' },
+  'co4': { id: 'co4', name: 'J Balvin', country: 'Colômbia', genre: 'Reggaeton' },
+  'co5': { id: 'co5', name: 'Feid', country: 'Colômbia', genre: 'Reggaeton/Trap' },
+  'co6': { id: 'co6', name: 'Maluma', country: 'Colômbia', genre: 'Reggaeton' },
+  'co7': { id: 'co7', name: 'Silvestre Dangond', country: 'Colômbia', genre: 'Vallenato' },
+  'co8': { id: 'co8', name: 'Carlos Vives', country: 'Colômbia', genre: 'Pop Latino' },
+  'co9': { id: 'co9', name: 'Bomba Estéreo', country: 'Colômbia', genre: 'Eletrônico/Pop' },
+  'co10': { id: 'co10', name: 'Aterciopelados', country: 'Colômbia', genre: 'Rock Alternativo' },
+  'co11': { id: 'co11', name: 'Ekhymosis', country: 'Colômbia', genre: 'Rock' },
+  'co12': { id: 'co12', name: 'Momojet', country: 'Colômbia', genre: 'Reggaeton' },
+  'co13': { id: 'co13', name: 'Arcángel', country: 'Colômbia', genre: 'Reggaeton' },
+  'co14': { id: 'co14', name: 'Nio Cash', country: 'Colômbia', genre: 'Reggaeton' },
+  'co15': { id: 'co15', name: 'Ivy Queen', country: 'Colômbia', genre: 'Reggaeton' },
+  'mx1': { id: 'mx1', name: 'Peso Pluma', country: 'México', genre: 'Trap Latino' },
+  'mx2': { id: 'mx2', name: 'Eslabón Armado', country: 'México', genre: 'Regional Mexicano' },
+  'mx3': { id: 'mx3', name: 'Natalia Lafourcade', country: 'México', genre: 'Pop/Indie' },
+  'mx4': { id: 'mx4', name: 'Reik', country: 'México', genre: 'Pop' },
+  'mx5': { id: 'mx5', name: 'Grupo Frontera', country: 'México', genre: 'Regional Mexicano' },
+  'mx6': { id: 'mx6', name: 'Juanes', country: 'México', genre: 'Rock Latino' },
+  'mx7': { id: 'mx7', name: 'Café Tacvba', country: 'México', genre: 'Rock Alternativo' },
+  'mx8': { id: 'mx8', name: 'Molotov', country: 'México', genre: 'Rap/Rock' },
+  'mx9': { id: 'mx9', name: 'Caifanes', country: 'México', genre: 'Rock' },
+  'mx10': { id: 'mx10', name: 'Jaguares', country: 'México', genre: 'Rock Alternativo' },
+  'mx11': { id: 'mx11', name: 'Timbiriche', country: 'México', genre: 'Pop' },
+  'mx12': { id: 'mx12', name: 'Belanova', country: 'México', genre: 'Eletrônico/Pop' },
+  'mx13': { id: 'mx13', name: 'Moderatto', country: 'México', genre: 'Rock Eletrônico' },
+  'mx14': { id: 'mx14', name: 'Zoé', country: 'México', genre: 'Rock Alternativo' },
+  'mx15': { id: 'mx15', name: 'Resorte', country: 'México', genre: 'Rock' },
+  'it1': { id: 'it1', name: 'Laura Pausini', country: 'Itália', genre: 'Pop' },
+  'it2': { id: 'it2', name: 'Andrea Bocelli', country: 'Itália', genre: 'Clássico/Tenor' },
+  'it3': { id: 'it3', name: 'Eros Ramazzotti', country: 'Itália', genre: 'Pop' },
+  'it4': { id: 'it4', name: 'Måneskin', country: 'Itália', genre: 'Rock' },
+  'it5': { id: 'it5', name: 'Tiziano Ferro', country: 'Itália', genre: 'Pop' },
+  'it6': { id: 'it6', name: 'Luciano Pavarotti', country: 'Itália', genre: 'Ópera' },
+  'it7': { id: 'it7', name: 'Domenico Modugno', country: 'Itália', genre: 'Pop/Clássico' },
+  'it8': { id: 'it8', name: 'Adriano Celentano', country: 'Itália', genre: 'Pop' },
+  'it9': { id: 'it9', name: 'Renato Zero', country: 'Itália', genre: 'Pop/Rock' },
+  'it10': { id: 'it10', name: 'Vasco Rossi', country: 'Itália', genre: 'Rock' },
 };
 
 export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselProps) => {
@@ -88,23 +158,28 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
   const [selectedArtist, setSelectedArtist] = useState<SavedArtist | null>(null);
   const [artistSongs, setArtistSongs] = useState<Array<{id: string; title: string; thumbnail: string}>>([]);
   const [isLoadingSongs, setIsLoadingSongs] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showSongsPanel, setShowSongsPanel] = useState(false);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Carregar artistas salvos do localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('savedArtists');
-    if (saved) {
-      setSavedArtistIds(JSON.parse(saved));
-    }
+    const loadSaved = () => {
+      const saved = localStorage.getItem('savedArtists');
+      if (saved) {
+        try {
+          setSavedArtistIds(JSON.parse(saved));
+        } catch (e) {
+          console.error('Error parsing savedArtists', e);
+        }
+      }
+    };
+
+    loadSaved();
 
     // Atualizar a cada segundo para refletir mudanças
-    const interval = setInterval(() => {
-      const updated = localStorage.getItem('savedArtists');
-      if (updated) {
-        setSavedArtistIds(JSON.parse(updated));
-      }
-    }, 1000);
-
+    const interval = setInterval(loadSaved, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -114,28 +189,72 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
 
   const handlePlayArtist = async (artist: SavedArtist) => {
     setSelectedArtist(artist);
+    setArtistSongs([]);
+    setNextPageToken(null);
     setIsLoadingSongs(true);
     setShowSongsPanel(true);
+    
     try {
       const cacheKey = `artist_${artist.id}`;
-      let songs = CacheService.getFromCache(cacheKey);
+      let cachedSongs = CacheService.getFromCache(cacheKey);
 
-      if (!songs) {
+      if (cachedSongs) {
+        setArtistSongs(cachedSongs);
+      } else {
         const results = await searchYouTube(`${artist.name} música`);
-        songs = results.items.slice(0, 50).map((result: any) => ({
+        const songs = results.items.map((result: any) => ({
           id: result.id,
           title: result.title,
           thumbnail: result.thumbnail,
         }));
+        
+        setArtistSongs(songs);
+        setNextPageToken(results.nextPageToken || null);
         CacheService.saveToCache(cacheKey, songs);
       }
-
-      setArtistSongs(songs || []);
     } catch (error) {
       console.error('Error loading artist songs:', error);
       setArtistSongs([]);
     } finally {
       setIsLoadingSongs(false);
+    }
+  };
+
+  // Detectar scroll infinito
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Carregar mais quando chegar a 80% do scroll
+      if (scrollHeight - scrollTop - clientHeight < 200 && !isLoadingMore && nextPageToken) {
+        loadMoreSongs();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [nextPageToken, isLoadingMore]);
+
+  const loadMoreSongs = async () => {
+    if (!selectedArtist || !nextPageToken || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      const results = await searchYouTube(`${selectedArtist.name} música`, nextPageToken);
+      const newSongs = results.items.map((result: any) => ({
+        id: result.id,
+        title: result.title,
+        thumbnail: result.thumbnail,
+      }));
+
+      setArtistSongs(prev => [...prev, ...newSongs]);
+      setNextPageToken(results.nextPageToken || null);
+    } catch (error) {
+      console.error('Error loading more songs:', error);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -152,32 +271,41 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
 
   return (
     <>
-      <div className="px-4 py-4">
-        <h3 className="text-sm font-bold text-white mb-3 flex items-center justify-center gap-2">
-          <Music size={16} /> Meus Artistas Favoritos
+      <div className="w-full px-2 py-2">
+        <h3 className="text-xs font-bold text-white mb-2 flex items-center justify-center gap-2">
+          <Music size={14} /> Meus Artistas Favoritos
         </h3>
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        
+        {/* Strip horizontal seguindo o padrão do CategoryCarousel */}
+        <div className="flex gap-3 px-2 py-1 overflow-x-auto custom-scrollbar w-full">
           {savedArtists.map((artist) => (
-            <div
+            <button
               key={artist.id}
-              className="flex-shrink-0 w-24 bg-gradient-to-br from-red-600 to-red-700 rounded-lg p-3 cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 relative group"
               onClick={() => handlePlayArtist(artist)}
+              className="flex-shrink-0 w-[70px] h-[70px] bg-gradient-to-br from-red-600 to-red-800 rounded cursor-pointer p-1 flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg relative group overflow-hidden"
             >
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <p className="text-xs font-bold text-white truncate">{artist.name}</p>
-                <p className="text-[10px] text-red-100 truncate">{artist.country}</p>
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all" />
+              
+              <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
+                <p className="text-white font-bold text-[8px] text-center leading-tight truncate w-full px-0.5">
+                  {artist.name}
+                </p>
+                <p className="text-red-100 text-[6px] text-center truncate w-full">
+                  {artist.country}
+                </p>
               </div>
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-lg">
-                <Play size={20} className="text-white fill-white" />
+
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                <Play size={16} className="text-white fill-white" />
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Painel de Músicas do Artista */}
+      {/* Painel de Músicas do Artista com Scroll Infinito */}
       <div className={cn(
-        'fixed left-0 w-full max-h-[80vh] z-20 transition-all duration-300 ease-in-out',
+        'fixed left-0 w-full max-h-[80vh] z-50 transition-all duration-300 ease-in-out',
         'bg-white border-t-2 border-gray-300 flex flex-col pb-2',
         showSongsPanel ? 'bottom-0' : '-bottom-full'
       )}>
@@ -192,14 +320,19 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
 
         {selectedArtist && (
           <div className="flex flex-col h-full overflow-hidden px-4">
-            <h2 className="text-sm font-bold text-black mb-3">{selectedArtist.name} - Todas as Músicas</h2>
+            <h2 className="text-sm font-bold text-black mb-3">
+              {selectedArtist.name} - {artistSongs.length} músicas
+            </h2>
             
             {isLoadingSongs ? (
-              <div className="flex items-center justify-center flex-1">
+              <div className="flex items-center justify-center flex-1 py-10">
                 <div className="animate-spin h-8 w-8 border-2 border-red-500 border-t-transparent rounded-full"></div>
               </div>
             ) : (
-              <div className="flex-1 overflow-y-auto space-y-2">
+              <div 
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto space-y-2 pb-6"
+              >
                 {artistSongs.map((song, index) => (
                   <div
                     key={song.id}
@@ -218,6 +351,21 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
                     <Play size={16} className="text-red-600 flex-shrink-0" />
                   </div>
                 ))}
+
+                {/* Loading More Indicator */}
+                {isLoadingMore && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="animate-spin text-red-600" size={20} />
+                    <span className="ml-2 text-gray-600 text-xs">Carregando mais...</span>
+                  </div>
+                )}
+
+                {/* End of List */}
+                {!nextPageToken && artistSongs.length > 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-xs">Fim da lista</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

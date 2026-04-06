@@ -3,10 +3,12 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Play, Plus, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, Play, Plus, ChevronDown, Loader2, Download, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { searchYouTube } from '@/services/youtubeService';
 import { CacheService } from '@/services/cacheService';
+import { youtubeDownloader, DownloadProgress } from '@/services/youtubeDownloader';
+import { toast } from 'sonner';
 
 interface Artist {
   id: string;
@@ -247,6 +249,21 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const artistsListRef = useRef<HTMLDivElement>(null);
   const songsListRef = useRef<HTMLDivElement>(null);
+  const [downloadingIds, setDownloadingIds] = useState<Record<string, DownloadProgress>>({});
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+
+  // Verificar quais músicas de artistas já estão salvas
+  useEffect(() => {
+    const checkSaved = async () => {
+      const newSavedIds = new Set<string>();
+      for (const song of artistSongs) {
+        const isSaved = await youtubeDownloader.isSaved(song.id);
+        if (isSaved) newSavedIds.add(song.id);
+      }
+      setSavedIds(newSavedIds);
+    };
+    if (artistSongs.length > 0) checkSaved();
+  }, [artistSongs]);
 
   const countries = Object.keys(ARTISTS_BY_COUNTRY).sort();
   const allArtists = ARTISTS_BY_COUNTRY[selectedCountry] || [];
@@ -480,6 +497,50 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
                           <p className="text-xs font-semibold text-black truncate">{song.title}</p>
                           <p className="text-[10px] text-gray-600">{song.artist}</p>
                         </div>
+
+                        {/* Download Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (savedIds.has(song.id)) {
+                              toast.info('Esta música já está salva offline');
+                              return;
+                            }
+                            if (downloadingIds[song.id]) return;
+
+                            toast.promise(
+                              youtubeDownloader.saveForOffline(
+                                song.id,
+                                song.title,
+                                song.thumbnail,
+                                (p) => setDownloadingIds(prev => ({ ...prev, [song.id]: p }))
+                              ),
+                              {
+                                loading: 'Preparando download...',
+                                success: () => {
+                                  setSavedIds(prev => new Set(prev).add(song.id));
+                                  setDownloadingIds(prev => {
+                                    const next = { ...prev };
+                                    delete next[song.id];
+                                    return next;
+                                  });
+                                  return 'Música salva offline!';
+                                },
+                                error: 'Erro ao salvar música'
+                              }
+                            );
+                          }}
+                          className="p-1 rounded transition-all duration-200"
+                        >
+                          {downloadingIds[song.id] ? (
+                            <Loader2 className="animate-spin text-red-600" size={14} />
+                          ) : savedIds.has(song.id) ? (
+                            <CheckCircle2 className="text-green-600" size={14} />
+                          ) : (
+                            <Download className="text-red-600" size={14} />
+                          )}
+                        </button>
+
                         <Play size={14} className="text-red-600 flex-shrink-0" />
                       </div>
                     ))}

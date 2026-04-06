@@ -1,7 +1,9 @@
-import { X, Play, Loader2 } from 'lucide-react';
+import { X, Play, Loader2, Download, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { categoryService, CategoryPlaylist } from '@/services/categoryService';
+import { youtubeDownloader, DownloadProgress } from '@/services/youtubeDownloader';
+import { toast } from 'sonner';
 
 interface CategoryPlaylistPanelProps {
   isOpen: boolean;
@@ -24,7 +26,23 @@ export const CategoryPlaylistPanel = ({
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingIds, setDownloadingIds] = useState<Record<string, DownloadProgress>>({});
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Verificar quais vídeos já estão salvos
+  useEffect(() => {
+    const checkSaved = async () => {
+      if (!playlist?.tracks) return;
+      const newSavedIds = new Set<string>();
+      for (const track of playlist.tracks) {
+        const isSaved = await youtubeDownloader.isSaved(track.id);
+        if (isSaved) newSavedIds.add(track.id);
+      }
+      setSavedIds(newSavedIds);
+    };
+    checkSaved();
+  }, [playlist?.tracks]);
 
   useEffect(() => {
     if (isOpen && category) {
@@ -208,6 +226,49 @@ export const CategoryPlaylistPanel = ({
                     {track.title}
                   </p>
                 </div>
+
+                {/* Download Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (savedIds.has(track.id)) {
+                      toast.info('Esta música já está salva offline');
+                      return;
+                    }
+                    if (downloadingIds[track.id]) return;
+
+                    toast.promise(
+                      youtubeDownloader.saveForOffline(
+                        track.id,
+                        track.title,
+                        track.thumbnail,
+                        (p) => setDownloadingIds(prev => ({ ...prev, [track.id]: p }))
+                      ),
+                      {
+                        loading: 'Preparando download...',
+                        success: () => {
+                          setSavedIds(prev => new Set(prev).add(track.id));
+                          setDownloadingIds(prev => {
+                            const next = { ...prev };
+                            delete next[track.id];
+                            return next;
+                          });
+                          return 'Música salva offline!';
+                        },
+                        error: 'Erro ao salvar música'
+                      }
+                    );
+                  }}
+                  className="p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+                >
+                  {downloadingIds[track.id] ? (
+                    <Loader2 className="animate-spin text-red-600" size={18} />
+                  ) : savedIds.has(track.id) ? (
+                    <CheckCircle2 className="text-green-600" size={18} />
+                  ) : (
+                    <Download className="text-red-600" size={18} />
+                  )}
+                </button>
 
                 {/* Play Button */}
                 <Play

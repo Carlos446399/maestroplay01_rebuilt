@@ -14,7 +14,7 @@ interface MediaSessionMetadata {
 
 export const useMediaSession = (
   playerState: MusicPlayerState,
-  audioRef: React.RefObject<HTMLAudioElement>,
+  audioRef: React.RefObject<HTMLAudioElement | null>,
   onPlay: () => void,
   onPause: () => void,
   onNextTrack: () => void,

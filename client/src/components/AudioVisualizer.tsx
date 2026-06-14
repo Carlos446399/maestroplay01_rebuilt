@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { getSharedAudioGraph } from '@/lib/audioGraph';
 
 interface AudioVisualizerProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -25,7 +26,7 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
       if (initializationDoneRef.current || audioContextRef.current) return;
 
       try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const { audioContext, source } = getSharedAudioGraph(audio);
         audioContextRef.current = audioContext;
 
         // Create analyser node
@@ -37,17 +38,11 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
         const bufferLength = analyser.frequencyBinCount;
         dataArrayRef.current = new Uint8Array(bufferLength);
 
-        // Connect audio element to analyser (only once)
-        try {
-          const source = audioContext.createMediaElementSource(audio);
-          source.connect(analyser);
-          analyser.connect(audioContext.destination);
-          sourceRef.current = source;
-          initializationDoneRef.current = true;
-        } catch (e) {
-          console.warn('AudioVisualizer: Could not create media source', e);
-          analyser.connect(audioContext.destination);
-        }
+        // Connect: source -> analyser (in parallel; doesn't touch
+        // the source's existing connections to the equalizer chain)
+        source.connect(analyser);
+        sourceRef.current = source;
+        initializationDoneRef.current = true;
       } catch (e) {
         console.warn('AudioVisualizer: Could not initialize AudioContext', e);
       }

@@ -7,9 +7,10 @@ import { Volume2, X, Users, Headphones } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ArtistsPanel } from './ArtistsPanel';
 import { use8DAudio } from '@/hooks/use8DAudio';
+import { getSharedAudioGraph } from '@/lib/audioGraph';
 
 interface EqualizerPanelProps {
-  audioRef?: React.RefObject<HTMLAudioElement>;
+  audioRef?: React.RefObject<HTMLAudioElement | null>;
   isPlaying?: boolean;
   onPlaySong?: (videoId: string, title: string, thumbnail: string) => void;
   onPlayPlaylist?: (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => void;
@@ -25,15 +26,19 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlay
   const [is8DEnabled, setIs8DEnabled] = useState(false);
   const [audio8DSpeed, setAudio8DSpeed] = useState(1);
   const [audio8DIntensity, setAudio8DIntensity] = useState(0.8);
+  const [isAudioReady, setIsAudioReady] = useState(false);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const sourceRef = useRef<MediaElementAudioSource | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const bassFilterRef = useRef<BiquadFilterNode | null>(null);
   const midFilterRef = useRef<BiquadFilterNode | null>(null);
   const trebleFilterRef = useRef<BiquadFilterNode | null>(null);
+  const pannerRef = useRef<StereoPannerNode | null>(null);
   const animationRef = useRef<number | null>(null);
   const initializationAttemptRef = useRef(0);
-  const { enable8D, disable8D, setSpeed: set8DSpeed, setIntensity: set8DIntensity } = use8DAudio(audioRef);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _audioReadyTrigger = isAudioReady;
+  const { enable8D, disable8D, setSpeed: set8DSpeed, setIntensity: set8DIntensity } = use8DAudio(audioContextRef.current, pannerRef.current);
 
   // Inicializar Web Audio API com retry logic
   useEffect(() => {
@@ -46,19 +51,14 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlay
           return;
         }
 
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        
-        // Resume context se estiver suspended
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
+        // Usa o grafo de áudio compartilhado: garante que apenas UM
+        // MediaElementAudioSourceNode seja criado para este <audio>,
+        // mesmo que outros componentes (ex: AudioVisualizer) também
+        // precisem se conectar a ele.
+        const { audioContext, source } = getSharedAudioGraph(audioRef.current!);
 
         audioContextRef.current = audioContext;
-
-        // Criar source apenas uma vez
-        if (!sourceRef.current) {
-          sourceRef.current = audioContext.createMediaElementAudioSource(audioRef.current!);
-        }
+        sourceRef.current = source;
 
         // Criar filtros EQ
         const bassFilter = audioContext.createBiquadFilter();
@@ -80,23 +80,31 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlay
         trebleFilter.gain.value = 0;
         trebleFilterRef.current = trebleFilter;
 
+        // Criar panner (usado pelo efeito 8D)
+        const panner = audioContext.createStereoPanner();
+        panner.pan.value = 0;
+        pannerRef.current = panner;
+
         // Criar analisador
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
         analyserRef.current = analyser;
 
-        // Conectar: source -> bass -> mid -> treble -> analyser -> destination
-        sourceRef.current.connect(bassFilter);
+        // Conectar: source -> bass -> mid -> treble -> panner -> analyser -> destination
+        source.connect(bassFilter);
         bassFilter.connect(midFilter);
         midFilter.connect(trebleFilter);
-        trebleFilter.connect(analyser);
+        trebleFilter.connect(panner);
+        panner.connect(analyser);
         analyser.connect(audioContext.destination);
 
         initializationAttemptRef.current = 1;
+        setIsAudioReady(true);
       } catch (error) {
         console.error('Equalizer initialization error:', error);
       }
     };
+
 
     // Tentar inicializar ao clicar ou após um delay
     const timer = setTimeout(initAudio, 100);
@@ -179,16 +187,13 @@ export const EqualizerPanel = ({ audioRef, isPlaying = false, onPlaySong, onPlay
   }, [audio8DIntensity, is8DEnabled, set8DIntensity]);
 
   const handleExpandClick = () => {
-    // Tentar inicializar o áudio ao expandir
-    if (!audioContextRef.current && audioRef?.current) {
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
-      } catch (e) {
+    // Retomar o AudioContext existente (necessário em alguns navegadores
+    // após interação do usuário). Não criar um novo contexto aqui, pois
+    // ele nunca seria usado nem fechado (memory leak).
+    if (audioContextRef.current?.state === 'suspended') {
+      audioContextRef.current.resume().catch((e) => {
         console.error('Error resuming audio context:', e);
-      }
+      });
     }
     setIsExpanded(!isExpanded);
   };

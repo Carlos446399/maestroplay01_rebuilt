@@ -4,13 +4,13 @@ import { cn } from '@/lib/utils';
 
 interface MobileControlsProps {
   isPlaying: boolean;
-  onTogglePlay: () => void;
-  onPreviousTrack: () => void;
-  onNextTrack: () => void;
+  onTogglePlay?: () => void;
+  onPreviousTrack?: () => void;
+  onNextTrack?: () => void;
   repeatMode: 'off' | 'all' | 'one';
-  onToggleRepeat: () => void;
+  onToggleRepeat?: () => void;
   isShuffle: boolean;
-  onToggleShuffle: () => void;
+  onToggleShuffle?: () => void;
   isLocked?: boolean;
   onToggleLock?: () => void;
 }

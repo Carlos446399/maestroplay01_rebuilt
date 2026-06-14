@@ -7,7 +7,7 @@ import { Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EqualizerProps {
-  audioRef?: React.RefObject<HTMLAudioElement>;
+  audioRef?: React.RefObject<HTMLAudioElement | null>;
   isPlaying?: boolean;
 }
 
@@ -28,7 +28,7 @@ export const Equalizer = ({ audioRef, isPlaying = false }: EqualizerProps) => {
         audioContextRef.current = audioContext;
 
         // Conectar o elemento de áudio ao analisador
-        const source = audioContext.createMediaElementAudioSource(audioRef.current);
+        const source = audioContext.createMediaElementSource(audioRef.current);
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
         analyserRef.current = analyser;

@@ -1,6 +1,13 @@
 /**
  * Hook para gerenciar o efeito 8D Audio (panorama circular imersivo)
  * Usa Web Audio API para criar uma sensação de som girando ao redor da cabeça
+ *
+ * Importante: este hook NÃO cria seu próprio AudioContext/source. Ele opera
+ * sobre um StereoPannerNode que já faz parte da cadeia de áudio compartilhada
+ * (ver lib/audioGraph.ts e EqualizerPanel). Isso evita o erro
+ * "InvalidStateError: HTMLMediaElement already connected" causado por criar
+ * múltiplos MediaElementAudioSourceNode para o mesmo <audio>, e evita que o
+ * áudio seja reproduzido em paralelo por dois caminhos diferentes.
  */
 
 import { useRef, useEffect, useCallback } from 'react';
@@ -11,68 +18,33 @@ export interface Audio8DConfig {
   intensity: number; // 0 a 1 (intensidade do efeito)
 }
 
-export const use8DAudio = (audioRef: React.RefObject<HTMLAudioElement>) => {
-  const pannerRef = useRef<StereoPannerNode | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const sourceRef = useRef<MediaElementAudioSource | null>(null);
+export const use8DAudio = (
+  audioContext: AudioContext | null,
+  panner: StereoPannerNode | null
+) => {
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainRef = useRef<GainNode | null>(null);
-  const animationRef = useRef<number | null>(null);
-  const isInitializedRef = useRef(false);
-
-  /**
-   * Inicializa o contexto de áudio e cria os nós necessários para o efeito 8D
-   */
-  const initialize8DAudio = useCallback(() => {
-    if (isInitializedRef.current || !audioRef?.current) return;
-
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-
-      audioContextRef.current = audioContext;
-
-      // Criar source se não existir
-      if (!sourceRef.current) {
-        sourceRef.current = audioContext.createMediaElementAudioSource(audioRef.current);
-      }
-
-      // Criar StereoPanner para o efeito 8D
-      const panner = audioContext.createStereoPanner();
-      panner.pan.value = 0; // Começa no centro
-      pannerRef.current = panner;
-
-      // Conectar: source -> panner -> destination
-      sourceRef.current.connect(panner);
-      panner.connect(audioContext.destination);
-
-      isInitializedRef.current = true;
-    } catch (error) {
-      console.error('Erro ao inicializar 8D Audio:', error);
-    }
-  }, [audioRef]);
 
   /**
    * Ativa o efeito 8D com oscilação suave
    */
   const enable8D = useCallback((speed: number = 1, intensity: number = 1) => {
-    if (!pannerRef.current || !audioContextRef.current) {
-      initialize8DAudio();
-      if (!pannerRef.current || !audioContextRef.current) return;
-    }
-
-    const audioContext = audioContextRef.current;
-    const panner = pannerRef.current;
+    if (!audioContext || !panner) return;
 
     // Parar oscilação anterior se existir
     if (oscillatorRef.current) {
       try {
         oscillatorRef.current.stop();
+        oscillatorRef.current.disconnect();
       } catch (e) {
         // Já parou
+      }
+    }
+    if (gainRef.current) {
+      try {
+        gainRef.current.disconnect();
+      } catch (e) {
+        // Já desconectado
       }
     }
 
@@ -94,7 +66,7 @@ export const use8DAudio = (audioRef: React.RefObject<HTMLAudioElement>) => {
 
     oscillatorRef.current = oscillator;
     gainRef.current = gain;
-  }, [initialize8DAudio]);
+  }, [audioContext, panner]);
 
   /**
    * Desativa o efeito 8D
@@ -103,16 +75,26 @@ export const use8DAudio = (audioRef: React.RefObject<HTMLAudioElement>) => {
     if (oscillatorRef.current) {
       try {
         oscillatorRef.current.stop();
-        oscillatorRef.current = null;
+        oscillatorRef.current.disconnect();
       } catch (e) {
         // Já parou
       }
+      oscillatorRef.current = null;
     }
 
-    if (pannerRef.current) {
-      pannerRef.current.pan.value = 0; // Voltar ao centro
+    if (gainRef.current) {
+      try {
+        gainRef.current.disconnect();
+      } catch (e) {
+        // Já desconectado
+      }
+      gainRef.current = null;
     }
-  }, []);
+
+    if (panner) {
+      panner.pan.value = 0; // Voltar ao centro
+    }
+  }, [panner]);
 
   /**
    * Atualiza a velocidade do efeito 8D em tempo real
@@ -142,7 +124,6 @@ export const use8DAudio = (audioRef: React.RefObject<HTMLAudioElement>) => {
   }, [disable8D]);
 
   return {
-    initialize8DAudio,
     enable8D,
     disable8D,
     setSpeed,

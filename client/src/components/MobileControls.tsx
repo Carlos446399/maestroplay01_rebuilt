@@ -1,4 +1,4 @@
-import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, Lock, LockOpen } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,6 @@ interface MobileControlsProps {
   isShuffle: boolean;
   onToggleShuffle?: () => void;
   isLocked?: boolean;
-  onToggleLock?: () => void;
 }
 
 export const MobileControls = ({ 
@@ -25,7 +24,6 @@ export const MobileControls = ({
   isShuffle,
   onToggleShuffle,
   isLocked = false,
-  onToggleLock
 }: MobileControlsProps) => {
   return (
     <div className="flex items-center justify-center my-1 gap-4">
@@ -99,20 +97,6 @@ export const MobileControls = ({
         )}
       >
         <Shuffle size={24} />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onToggleLock}
-        className={cn(
-          'transition-all scale-100 hover:scale-110',
-          isLocked ? 'text-yellow-500' : 'text-white',
-          'hover:bg-white/10'
-        )}
-        title={isLocked ? 'Player Bloqueado - Clique para desbloquear' : 'Clique para bloquear'}
-      >
-        {isLocked ? <Lock size={24} /> : <LockOpen size={24} />}
       </Button>
     </div>
   );

@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Play, Plus, ChevronDown, Loader2, Download, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { searchYouTube } from '@/services/youtubeService';
+import { searchYouTube, searchYouTubeArtists } from '@/services/youtubeService';
 import { CacheService } from '@/services/cacheService';
 import { youtubeDownloader, DownloadProgress } from '@/services/youtubeDownloader';
 import { toast } from 'sonner';
@@ -252,6 +252,19 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
   const [downloadingIds, setDownloadingIds] = useState<Record<string, DownloadProgress>>({});
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
+  // Artistas extras carregados dinamicamente do YouTube (scroll infinito real)
+  const [extraArtists, setExtraArtists] = useState<Artist[]>([]);
+  const [isLoadingMoreArtists, setIsLoadingMoreArtists] = useState(false);
+  const [extraArtistsPageToken, setExtraArtistsPageToken] = useState<string | null | undefined>(undefined);
+  const seenExtraArtistIdsRef = useRef<Set<string>>(new Set());
+
+  // Popup de busca de artistas
+  const [isArtistSearchOpen, setIsArtistSearchOpen] = useState(false);
+  const [artistSearchQuery, setArtistSearchQuery] = useState('');
+  const [artistSearchResults, setArtistSearchResults] = useState<Artist[]>([]);
+  const [isSearchingArtists, setIsSearchingArtists] = useState(false);
+  const [artistSearchPageToken, setArtistSearchPageToken] = useState<string | null | undefined>(undefined);
+
   // Verificar quais músicas de artistas já estão salvas
   useEffect(() => {
     const checkSaved = async () => {
@@ -266,7 +279,9 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
   }, [artistSongs]);
 
   const countries = Object.keys(ARTISTS_BY_COUNTRY).sort();
-  const allArtists = ARTISTS_BY_COUNTRY[selectedCountry] || [];
+  const baseArtists = ARTISTS_BY_COUNTRY[selectedCountry] || [];
+  // Lista combinada: artistas fixos do país + artistas carregados dinamicamente
+  const allArtists = [...baseArtists, ...extraArtists];
   const displayedArtists = allArtists.slice(0, displayedArtistsCount);
 
   // Carregar artistas salvos do localStorage
@@ -276,6 +291,17 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
       setSavedArtists(new Set(JSON.parse(saved)));
     }
   }, []);
+
+  // Buscar artistas com debounce ao digitar no popup de busca
+  useEffect(() => {
+    if (!isArtistSearchOpen) return;
+
+    const timer = setTimeout(() => {
+      runArtistSearch(artistSearchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [artistSearchQuery, isArtistSearchOpen]);
 
   // Buscar músicas do artista selecionado
   const handleArtistSelect = async (artist: Artist) => {
@@ -347,15 +373,111 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
     localStorage.setItem('savedArtists', JSON.stringify(Array.from(newSaved)));
   };
 
+  // Busca artistas pelo nome (primeira página)
+  const runArtistSearch = async (query: string) => {
+    if (!query.trim()) {
+      setArtistSearchResults([]);
+      setArtistSearchPageToken(undefined);
+      return;
+    }
+
+    setIsSearchingArtists(true);
+    try {
+      const results = await searchYouTubeArtists(query);
+      const artists: Artist[] = results.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        country: 'Busca',
+        genre: 'Resultado da busca',
+        image: item.thumbnail,
+      }));
+      setArtistSearchResults(artists);
+      setArtistSearchPageToken(results.nextPageToken || null);
+    } catch (error) {
+      console.error('Error searching artists:', error);
+      setArtistSearchResults([]);
+      setArtistSearchPageToken(null);
+    } finally {
+      setIsSearchingArtists(false);
+    }
+  };
+
+  // Busca mais resultados (próxima página) dentro do popup
+  const loadMoreArtistSearchResults = async () => {
+    if (!artistSearchQuery.trim() || !artistSearchPageToken || isSearchingArtists) return;
+
+    setIsSearchingArtists(true);
+    try {
+      const results = await searchYouTubeArtists(artistSearchQuery, artistSearchPageToken);
+      const newArtists: Artist[] = results.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        country: 'Busca',
+        genre: 'Resultado da busca',
+        image: item.thumbnail,
+      }));
+      setArtistSearchResults(prev => [...prev, ...newArtists]);
+      setArtistSearchPageToken(results.nextPageToken || null);
+    } catch (error) {
+      console.error('Error loading more search results:', error);
+    } finally {
+      setIsSearchingArtists(false);
+    }
+  };
+
+  // Selecionar um artista a partir do popup de busca
+  const handleSelectSearchedArtist = (artist: Artist) => {
+    setIsArtistSearchOpen(false);
+    handleArtistSelect(artist);
+  };
+
+  // Busca mais artistas dinamicamente no YouTube quando a lista fixa do
+  // país acaba, tornando o scroll verdadeiramente infinito.
+  const loadMoreArtists = useCallback(async () => {
+    if (isLoadingMoreArtists || extraArtistsPageToken === null) return;
+
+    setIsLoadingMoreArtists(true);
+    try {
+      const query = `artistas de ${selectedCountry}`;
+      const results = await searchYouTubeArtists(query, extraArtistsPageToken || undefined);
+
+      const newArtists: Artist[] = results.items
+        .filter((item) => !seenExtraArtistIdsRef.current.has(item.id))
+        .map((item) => {
+          seenExtraArtistIdsRef.current.add(item.id);
+          return {
+            id: item.id,
+            name: item.name,
+            country: selectedCountry,
+            genre: 'Mais artistas',
+            image: item.thumbnail,
+          };
+        });
+
+      setExtraArtists(prev => [...prev, ...newArtists]);
+      setExtraArtistsPageToken(results.nextPageToken || null);
+    } catch (error) {
+      console.error('Error loading more artists:', error);
+      setExtraArtistsPageToken(null);
+    } finally {
+      setIsLoadingMoreArtists(false);
+    }
+  }, [selectedCountry, extraArtistsPageToken, isLoadingMoreArtists]);
+
   // Scroll infinito para artistas
   const handleArtistsScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const element = e.currentTarget;
     if (element.scrollHeight - element.scrollTop <= element.clientHeight + 100) {
       if (displayedArtistsCount < allArtists.length) {
         setDisplayedArtistsCount(prev => Math.min(prev + ARTISTS_PER_PAGE, allArtists.length));
+      } else if (!isLoadingMoreArtists && extraArtistsPageToken !== null) {
+        // Lista atual esgotada: buscar mais artistas no YouTube
+        loadMoreArtists().then(() => {
+          setDisplayedArtistsCount(prev => prev + ARTISTS_PER_PAGE);
+        });
       }
     }
-  }, [displayedArtistsCount, allArtists.length]);
+  }, [displayedArtistsCount, allArtists.length, isLoadingMoreArtists, extraArtistsPageToken, loadMoreArtists]);
 
   // Scroll infinito para músicas
   useEffect(() => {
@@ -391,7 +513,21 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
       <div className="flex flex-col h-full overflow-hidden">
         {/* Header */}
         <div className="px-4 pt-2 pb-2">
-          <h2 className="text-sm font-bold text-black mb-3">🎤 Artistas Mundiais</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-black">🎤 Artistas Mundiais</h2>
+            <button
+              onClick={() => {
+                setIsArtistSearchOpen(true);
+                setArtistSearchQuery('');
+                setArtistSearchResults([]);
+                setArtistSearchPageToken(undefined);
+              }}
+              className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"
+            >
+              <Search size={12} />
+              Buscar artista
+            </button>
+          </div>
 
           {/* Country Selector */}
           <div className="flex gap-2 overflow-x-auto pb-2">
@@ -404,6 +540,9 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
                   setArtistSongs([]);
                   setDisplayedArtistsCount(ARTISTS_PER_PAGE);
                   setNextPageToken(null);
+                  setExtraArtists([]);
+                  setExtraArtistsPageToken(undefined);
+                  seenExtraArtistIdsRef.current = new Set();
                 }}
                 className={cn(
                   'px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors',
@@ -461,6 +600,17 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
               {displayedArtistsCount < allArtists.length && (
                 <div className="flex justify-center py-4">
                   <Loader2 className="animate-spin text-red-500" size={20} />
+                </div>
+              )}
+              {displayedArtistsCount >= allArtists.length && isLoadingMoreArtists && (
+                <div className="flex items-center justify-center gap-2 py-4">
+                  <Loader2 className="animate-spin text-red-500" size={20} />
+                  <span className="text-[10px] text-gray-500">Buscando mais artistas...</span>
+                </div>
+              )}
+              {displayedArtistsCount >= allArtists.length && !isLoadingMoreArtists && extraArtistsPageToken === null && (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 text-xs">Fim da lista</p>
                 </div>
               )}
             </div>
@@ -570,6 +720,114 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
           </div>
         </div>
       </div>
+
+      {/* Popup de busca de artistas */}
+      {isArtistSearchOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setIsArtistSearchOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg w-full max-w-md max-h-[70vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-sm font-bold text-black mb-2">Buscar artista</h3>
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  autoFocus
+                  value={artistSearchQuery}
+                  onChange={(e) => setArtistSearchQuery(e.target.value)}
+                  placeholder="Digite o nome do artista..."
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-black"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3">
+              {isSearchingArtists && artistSearchResults.length === 0 && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="animate-spin text-red-500" size={24} />
+                </div>
+              )}
+
+              {!isSearchingArtists && artistSearchQuery.trim() && artistSearchResults.length === 0 && (
+                <div className="text-center py-8 text-gray-500 text-xs">
+                  Nenhum artista encontrado
+                </div>
+              )}
+
+              {!artistSearchQuery.trim() && (
+                <div className="text-center py-8 text-gray-500 text-xs">
+                  Digite o nome de um artista para buscar
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {artistSearchResults.map((artist) => (
+                  <div
+                    key={artist.id}
+                    onClick={() => handleSelectSearchedArtist(artist)}
+                    className="p-3 rounded cursor-pointer transition-colors flex items-center gap-3 bg-gray-100 hover:bg-gray-200"
+                  >
+                    {artist.image && (
+                      <img
+                        src={artist.image}
+                        alt={artist.name}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-black truncate">{artist.name}</p>
+                      <p className="text-[10px] text-gray-600">Canal do YouTube</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveArtist(artist);
+                      }}
+                      className={cn(
+                        'p-1 rounded transition-colors flex-shrink-0',
+                        savedArtists.has(artist.id)
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-300 text-black hover:bg-gray-400'
+                      )}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                ))}
+
+                {artistSearchResults.length > 0 && artistSearchPageToken && (
+                  <div className="flex justify-center py-2">
+                    {isSearchingArtists ? (
+                      <Loader2 className="animate-spin text-red-500" size={18} />
+                    ) : (
+                      <button
+                        onClick={loadMoreArtistSearchResults}
+                        className="text-xs text-red-600 font-semibold hover:underline"
+                      >
+                        Carregar mais
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-3 border-t border-gray-200">
+              <button
+                onClick={() => setIsArtistSearchOpen(false)}
+                className="w-full py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

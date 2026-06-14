@@ -384,7 +384,6 @@ export const MobileMusicPlayer = () => {
         isShuffle={isShuffle}
         onToggleShuffle={isPlayerLocked ? undefined : () => setIsShuffle(!isShuffle)}
         isLocked={isPlayerLocked}
-        onToggleLock={handleToggleLock}
       />
 
       <MobileBottomIcons
@@ -396,6 +395,8 @@ export const MobileMusicPlayer = () => {
         onPlaylist={() => setIsPlaylistOpen(true)}
         onArtists={() => setIsArtistsPanelOpen(true)}
         isFavorite={currentMedia ? favorites.has(currentMedia.id) : false}
+        isLocked={isPlayerLocked}
+        onToggleLock={handleToggleLock}
       />
 
       {/* Área de Carrosséis com scroll vertical se necessário, mas contida */}

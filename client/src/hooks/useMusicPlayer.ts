@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Track, Radio, MusicPlayerState } from '@/types/music';
 import { radioStations } from '@/data/radioStations';
 import { audioStorage } from '@/services/audioStorage';
+import { loadAudioSource, destroyActiveHls } from '@/lib/hlsPlayer';
 
 export const useMusicPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -146,7 +147,7 @@ export const useMusicPlayer = () => {
     }));
     
     if (audioRef.current) {
-      audioRef.current.src = track.url;
+      loadAudioSource(audioRef.current, track.url);
       requestAnimationFrame(() => {
         if (audioRef.current) {
           audioRef.current.play().catch(err => {
@@ -173,7 +174,7 @@ export const useMusicPlayer = () => {
     }));
     
     if (audioRef.current) {
-      audioRef.current.src = radio.url;
+      loadAudioSource(audioRef.current, radio.url);
       requestAnimationFrame(() => {
         if (audioRef.current) {
           audioRef.current.play().catch(err => {
@@ -266,14 +267,23 @@ export const useMusicPlayer = () => {
     const handleTimeUpdate = () => updateCurrentTime();
     const handleEnded = () => {
       setState(prev => ({ ...prev, isPlaying: false }));
-      if (state.repeat) {
+      if (state.repeat === 'one') {
         if (state.currentSource === 'tracks') {
           playTrack(state.currentTrackIndex);
         } else {
           playRadio(state.currentRadioIndex);
         }
-      } else {
+      } else if (state.repeat === 'all') {
         nextTrack();
+      } else {
+        // repeat === 'off': avança, mas para no fim da lista
+        const isLastTrack = state.currentSource === 'tracks'
+          ? state.currentTrackIndex >= state.tracks.length - 1
+          : state.currentRadioIndex >= state.radios.length - 1;
+
+        if (!isLastTrack) {
+          nextTrack();
+        }
       }
     };
     const handlePlay = () => setState(prev => ({ ...prev, isPlaying: true }));
@@ -291,6 +301,13 @@ export const useMusicPlayer = () => {
       audio.removeEventListener('pause', handlePause);
     };
   }, [state.repeat, state.currentTrackIndex, state.currentRadioIndex, state.currentSource, nextTrack, playTrack, playRadio, updateCurrentTime]);
+
+  // Limpar instância do hls.js ao desmontar o player
+  useEffect(() => {
+    return () => {
+      destroyActiveHls();
+    };
+  }, []);
 
   return {
     ...state,

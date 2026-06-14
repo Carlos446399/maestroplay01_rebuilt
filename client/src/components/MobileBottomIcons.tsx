@@ -5,7 +5,9 @@ import {
   Plus, 
   Radio,
   Music,
-  Users
+  Users,
+  Lock,
+  LockOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +20,8 @@ interface MobileBottomIconsProps {
   onPlaylist: () => void;
   onArtists?: () => void;
   isFavorite: boolean;
+  isLocked?: boolean;
+  onToggleLock?: () => void;
 }
 
 export const MobileBottomIcons = ({ 
@@ -28,7 +32,9 @@ export const MobileBottomIcons = ({
   onRadio,
   onPlaylist,
   onArtists,
-  isFavorite
+  isFavorite,
+  isLocked = false,
+  onToggleLock
 }: MobileBottomIconsProps) => {
   const [favAnim, setFavAnim] = useState(false);
 
@@ -55,6 +61,19 @@ export const MobileBottomIcons = ({
           size={20} 
           onClick={handleFavorite} 
         />
+        {isLocked ? (
+          <Lock
+            className="cursor-pointer text-yellow-500 transition-colors"
+            size={20}
+            onClick={onToggleLock}
+          />
+        ) : (
+          <LockOpen
+            className="cursor-pointer text-white hover:text-primary transition-colors"
+            size={20}
+            onClick={onToggleLock}
+          />
+        )}
         <Music 
           className="cursor-pointer text-white hover:text-primary transition-colors" 
           size={20} 

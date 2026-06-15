@@ -213,6 +213,9 @@ const plugins = [
       ],
     },
     workbox: {
+      skipWaiting: true,
+      clientsClaim: true,
+      cleanupOutdatedCaches: true,
       maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
       globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf,eot,mp3,wav,m4a,ogg}'],
       runtimeCaching: [

@@ -63,21 +63,6 @@ export const MobileMusicPlayer = () => {
     ? tracks[currentTrackIndex] 
     : radios[currentRadioIndex];
 
-  // Integrar Media Session API para controles na barra de notificações
-  useMediaSession(
-    { tracks, radios, currentTrackIndex, currentRadioIndex, currentSource, isPlaying, repeat, currentTime, duration, volume: 1 },
-    audioRef,
-    play,
-    pause,
-    nextTrack,
-    previousTrack,
-    seek,
-    currentTrack
-  );
-
-  // Ativar reprodução em segundo plano e manter tela ligada
-  useBackgroundPlayback(isPlaying);
-
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [isLocalPlaylistOpen, setIsLocalPlaylistOpen] = useState(false);
   const [isRadioOpen, setIsRadioOpen] = useState(false);
@@ -105,6 +90,16 @@ export const MobileMusicPlayer = () => {
   const [ytCurrentIndex, setYtCurrentIndex] = useState(-1);
   const ytContainerRef = useRef<HTMLDivElement>(null);
   const ytIntervalRef = useRef<any>(null);
+  // Refs para manter valores atualizados dentro do callback onStateChange
+  // do YT.Player, que é criado apenas uma vez e teria closures "presas"
+  // (stale) nos valores de estado do momento da criação.
+  const ytPlaylistRef = useRef(ytPlaylist);
+  const ytCurrentIndexRef = useRef(ytCurrentIndex);
+  const repeatRef = useRef(repeat);
+
+  useEffect(() => { ytPlaylistRef.current = ytPlaylist; }, [ytPlaylist]);
+  useEffect(() => { ytCurrentIndexRef.current = ytCurrentIndex; }, [ytCurrentIndex]);
+  useEffect(() => { repeatRef.current = repeat; }, [repeat]);
 
   // Carregar músicas salvas (favoritos) do localStorage
   useEffect(() => {
@@ -176,8 +171,42 @@ export const MobileMusicPlayer = () => {
                 } else if (event.data === window.YT.PlayerState.PAUSED) {
                   setYtPlaying(false);
                 } else if (event.data === window.YT.PlayerState.ENDED) {
-                  setYtPlaying(false);
-                  setIsYouTubeMode(false);
+                  const playlist = ytPlaylistRef.current;
+                  const currentIndex = ytCurrentIndexRef.current;
+                  const currentRepeat = repeatRef.current;
+
+                  if (currentRepeat === 'one') {
+                    // Repetir a mesma música
+                    player.seekTo(0, true);
+                    player.playVideo();
+                    return;
+                  }
+
+                  if (playlist.length > 1) {
+                    const isLast = currentIndex >= playlist.length - 1;
+
+                    if (isLast && currentRepeat === 'off') {
+                      // Fim da playlist, sem repetição
+                      setYtPlaying(false);
+                      return;
+                    }
+
+                    const nextIndex = (currentIndex + 1) % playlist.length;
+                    const nextVideo = playlist[nextIndex];
+                    setYtCurrentIndex(nextIndex);
+                    setYtTitle(nextVideo.title);
+                    setYtThumbnail(nextVideo.thumbnail);
+                    player.loadVideoById(nextVideo.id);
+                    setYtPlaying(true);
+                  } else if (currentRepeat === 'all') {
+                    // Playlist de uma música com repetir tudo: repete
+                    player.seekTo(0, true);
+                    player.playVideo();
+                  } else {
+                    // Sem playlist e sem repetição: parar
+                    setYtPlaying(false);
+                    setIsYouTubeMode(false);
+                  }
                 }
               },
             },
@@ -263,14 +292,19 @@ export const MobileMusicPlayer = () => {
 
   const handleNextTrack = () => {
     if (isYouTubeMode && ytPlayer) {
-      // For YouTube, just continue playing or seek to next if playlist has items
       if (ytPlaylist.length > 1) {
         const nextIndex = (ytCurrentIndex + 1) % ytPlaylist.length;
-        setYtCurrentIndex(nextIndex);
         const nextVideo = ytPlaylist[nextIndex];
-        ytPlayer.loadVideoById(nextVideo.id);
+        setYtCurrentIndex(nextIndex);
         setYtTitle(nextVideo.title);
         setYtThumbnail(nextVideo.thumbnail);
+        ytPlayer.loadVideoById(nextVideo.id);
+        setYtPlaying(true);
+      } else if (ytPlayer.seekTo) {
+        // Sem playlist: reinicia a música atual
+        ytPlayer.seekTo(0, true);
+        ytPlayer.playVideo();
+        setYtPlaying(true);
       }
       return;
     }
@@ -279,17 +313,19 @@ export const MobileMusicPlayer = () => {
 
   const handlePreviousTrack = () => {
     if (isYouTubeMode && ytPlayer) {
-      // For YouTube, seek to beginning or previous video if playlist has items
       if (ytPlaylist.length > 1 && ytCurrentIndex > 0) {
         const prevIndex = ytCurrentIndex - 1;
-        setYtCurrentIndex(prevIndex);
         const prevVideo = ytPlaylist[prevIndex];
-        ytPlayer.loadVideoById(prevVideo.id);
+        setYtCurrentIndex(prevIndex);
         setYtTitle(prevVideo.title);
         setYtThumbnail(prevVideo.thumbnail);
+        ytPlayer.loadVideoById(prevVideo.id);
+        setYtPlaying(true);
       } else if (ytPlayer.seekTo) {
-        // Seek to beginning of current video
+        // Início da playlist ou música única: reinicia a música atual
         ytPlayer.seekTo(0, true);
+        ytPlayer.playVideo();
+        setYtPlaying(true);
       }
       return;
     }
@@ -305,6 +341,39 @@ export const MobileMusicPlayer = () => {
   const displayTime = isYouTubeMode ? ytCurrentTime : currentTime;
   const displayDuration = isYouTubeMode ? ytDuration : duration;
   const currentMedia = currentSource === 'tracks' ? currentTrack : currentRadio;
+
+  // Ativar reprodução em segundo plano e manter tela ligada (considera YouTube também)
+  useBackgroundPlayback(displayPlaying);
+
+  // Música/rádio "efetiva" para a sessão de mídia (inclui YouTube)
+  const mediaSessionTrack = isYouTubeMode
+    ? { id: `yt-${ytPlaylist[ytCurrentIndex]?.id || ''}`, name: ytTitle, cover: ytThumbnail, type: 'local' as const, url: '' }
+    : currentMedia;
+
+  // Integrar Media Session API para controles na barra de notificações /
+  // tela de bloqueio (funciona como "mini player flutuante" do sistema,
+  // permitindo play/pause/próxima/anterior mesmo com o app em segundo plano).
+  useMediaSession(
+    {
+      tracks,
+      radios,
+      currentTrackIndex,
+      currentRadioIndex,
+      currentSource,
+      isPlaying: displayPlaying,
+      repeat,
+      currentTime: displayTime,
+      duration: displayDuration,
+      volume: 1,
+    },
+    audioRef,
+    handleTogglePlay,
+    handleTogglePlay,
+    handleNextTrack,
+    handlePreviousTrack,
+    handleSeek,
+    mediaSessionTrack
+  );
 
   const handleAddMusic = () => {
     const input = document.createElement('input');

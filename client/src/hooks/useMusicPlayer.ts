@@ -47,10 +47,20 @@ export const useMusicPlayer = () => {
           type: 'local'
         }));
 
-        setState(prev => ({
-          ...prev,
-          tracks: loadedTracks
-        }));
+        setState(prev => {
+          // Mescla com faixas já presentes no estado (ex: adicionadas antes
+          // deste efeito terminar), evitando duplicatas e não perdendo
+          // faixas adicionadas durante o carregamento.
+          const merged = [
+            ...loadedTracks,
+            ...prev.tracks.filter(t => !loadedTracks.some(lt => lt.id === t.id)),
+          ];
+          // Evita estado idêntico re-disparando renders sem necessidade
+          if (merged.length === prev.tracks.length && merged.every((t, i) => t.id === prev.tracks[i]?.id)) {
+            return prev;
+          }
+          return { ...prev, tracks: merged };
+        });
       } catch (error) {
         console.error('Error loading stored tracks:', error);
       }

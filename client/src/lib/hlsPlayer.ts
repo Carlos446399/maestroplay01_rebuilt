@@ -15,11 +15,20 @@ let activeHls: Hls | null = null;
 
 const isHlsUrl = (url: string) => /\.m3u8(\?.*)?$/i.test(url);
 
+export interface LoadAudioSourceCallbacks {
+  /** Chamado quando o stream encontra um erro fatal e não pode ser recuperado */
+  onFatalError?: (message: string) => void;
+}
+
 /**
  * Carrega e inicia a reprodução de uma URL no elemento de áudio fornecido.
  * Lida automaticamente com streams HLS (.m3u8) e com áudio comum.
  */
-export const loadAudioSource = (audio: HTMLAudioElement, url: string) => {
+export const loadAudioSource = (
+  audio: HTMLAudioElement,
+  url: string,
+  callbacks?: LoadAudioSourceCallbacks
+) => {
   // Limpar instância anterior do hls.js, se houver
   if (activeHls) {
     activeHls.destroy();
@@ -46,25 +55,48 @@ export const loadAudioSource = (audio: HTMLAudioElement, url: string) => {
       // Configuração mais tolerante para rádios ao vivo
       enableWorker: true,
       lowLatencyMode: true,
+      // Tentar novamente várias vezes antes de desistir
+      manifestLoadingMaxRetry: 4,
+      levelLoadingMaxRetry: 4,
+      fragLoadingMaxRetry: 6,
     });
 
     hls.loadSource(url);
     hls.attachMedia(audio);
     hls.on(Hls.Events.ERROR, (_event, data) => {
-      if (data.fatal) {
-        console.error('Erro fatal no stream HLS:', data);
-        switch (data.type) {
-          case Hls.ErrorTypes.NETWORK_ERROR:
+      if (!data.fatal) {
+        // Erros não fatais (ex: queda de um fragmento) são tratados
+        // internamente pelo hls.js, não precisam de ação aqui.
+        return;
+      }
+
+      console.error('Erro fatal no stream HLS:', data);
+      switch (data.type) {
+        case Hls.ErrorTypes.NETWORK_ERROR:
+          try {
             hls.startLoad();
-            break;
-          case Hls.ErrorTypes.MEDIA_ERROR:
-            hls.recoverMediaError();
-            break;
-          default:
+          } catch {
             hls.destroy();
             activeHls = null;
-            break;
-        }
+            callbacks?.onFatalError?.(
+              'Não foi possível conectar a esta rádio. Verifique sua conexão ou tente outra estação.'
+            );
+          }
+          break;
+        case Hls.ErrorTypes.MEDIA_ERROR:
+          try {
+            hls.recoverMediaError();
+          } catch {
+            hls.destroy();
+            activeHls = null;
+            callbacks?.onFatalError?.('Erro ao reproduzir esta rádio. Tente outra estação.');
+          }
+          break;
+        default:
+          hls.destroy();
+          activeHls = null;
+          callbacks?.onFatalError?.('Esta rádio está indisponível no momento.');
+          break;
       }
     });
 

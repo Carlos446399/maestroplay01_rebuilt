@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Hourglass } from 'lucide-react';
+import { Hourglass, Star } from 'lucide-react';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useMediaSession } from '@/hooks/useMediaSession';
 import { useBackgroundPlayback } from '@/hooks/useBackgroundPlayback';
@@ -19,6 +19,8 @@ import { CategoryCarousel } from './CategoryCarousel';
 import { EqualizerPanel } from './EqualizerPanel';
 import { SavedArtistsCarousel } from './SavedArtistsCarousel';
 import { ArtistsPanel } from './ArtistsPanel';
+import { SavedSongsPanel } from './SavedSongsPanel';
+import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 
 declare global {
   interface Window {
@@ -41,6 +43,8 @@ export const MobileMusicPlayer = () => {
     currentTime,
     duration,
     importProgress,
+    radioError,
+    clearRadioError,
     audioRef,
     addTracks,
     playTrack,
@@ -83,6 +87,8 @@ export const MobileMusicPlayer = () => {
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isFavoritesListOpen, setIsFavoritesListOpen] = useState(false);
+  const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
+  const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
   const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
   const [isPlayerLocked, setIsPlayerLocked] = useState(false);
   const [lockUnlockTimer, setLockUnlockTimer] = useState<NodeJS.Timeout | null>(null);
@@ -99,6 +105,13 @@ export const MobileMusicPlayer = () => {
   const [ytCurrentIndex, setYtCurrentIndex] = useState(-1);
   const ytContainerRef = useRef<HTMLDivElement>(null);
   const ytIntervalRef = useRef<any>(null);
+
+  // Carregar músicas salvas (favoritos) do localStorage
+  useEffect(() => {
+    const stored = favoritesStorage.getAll();
+    setSavedSongs(stored);
+    setFavorites(new Set(stored.map((f) => f.id)));
+  }, []);
 
   // Load YouTube IFrame API
   useEffect(() => {
@@ -306,15 +319,34 @@ export const MobileMusicPlayer = () => {
   };
 
   const handleFavorite = () => {
-    if (currentMedia) {
-      const newFavorites = new Set(favorites);
-      if (newFavorites.has(currentMedia.id)) {
-        newFavorites.delete(currentMedia.id);
-      } else {
-        newFavorites.add(currentMedia.id);
+    let favoriteSong: Omit<FavoriteSong, 'addedAt'> | null = null;
+
+    if (isYouTubeMode) {
+      const current = ytPlaylist[ytCurrentIndex];
+      const videoId = current?.id || (ytPlaylist.length === 1 ? ytPlaylist[0]?.id : undefined);
+      if (videoId) {
+        favoriteSong = {
+          id: `yt-${videoId}`,
+          name: current?.title || ytTitle,
+          cover: current?.thumbnail || ytThumbnail,
+          type: 'youtube',
+          youtubeId: videoId,
+        };
       }
-      setFavorites(newFavorites);
+    } else if (currentMedia) {
+      favoriteSong = {
+        id: currentMedia.id,
+        name: currentMedia.name,
+        cover: currentMedia.cover,
+        type: currentSource === 'radios' ? 'radio' : 'local',
+      };
     }
+
+    if (!favoriteSong) return;
+
+    const updated = favoritesStorage.toggle(favoriteSong);
+    setSavedSongs(updated);
+    setFavorites(new Set(updated.map((f) => f.id)));
   };
 
   const handleToggleLock = () => {
@@ -394,7 +426,16 @@ export const MobileMusicPlayer = () => {
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsPlaylistOpen(true)}
         onArtists={() => setIsArtistsPanelOpen(true)}
-        isFavorite={currentMedia ? favorites.has(currentMedia.id) : false}
+        isFavorite={
+          isYouTubeMode
+            ? (() => {
+                const current = ytPlaylist[ytCurrentIndex] || ytPlaylist[0];
+                return current ? favorites.has(`yt-${current.id}`) : false;
+              })()
+            : currentMedia
+              ? favorites.has(currentMedia.id)
+              : false
+        }
         isLocked={isPlayerLocked}
         onToggleLock={handleToggleLock}
       />
@@ -461,8 +502,21 @@ export const MobileMusicPlayer = () => {
       <audio 
         ref={audioRef} 
         preload="metadata"
+        crossOrigin="anonymous"
         className="hidden"
       />
+
+      {/* Toast de erro de rádio */}
+      {radioError && (
+        <div className="fixed bottom-24 left-4 right-4 z-50 flex justify-center">
+          <div className="bg-red-600 text-white text-xs px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-sm">
+            <span className="flex-1">{radioError}</span>
+            <button onClick={clearRadioError} className="font-bold text-white/80 hover:text-white">
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Favorites List Panel */}
       <LocalPlaylistPanel
@@ -478,6 +532,45 @@ export const MobileMusicPlayer = () => {
         isPlaying={isPlaying && !isYouTubeMode}
         onPlaySong={handleYouTubePlayWrapper}
         onPlayPlaylist={handlePlayPlaylist}
+      />
+
+      {/* Botão flutuante: Músicas Salvas */}
+      <button
+        onClick={() => setIsSavedSongsOpen(true)}
+        className="fixed top-20 right-4 z-40 w-12 h-12 flex items-center justify-center rounded-lg bg-black/80 backdrop-blur-sm border border-gray-700 hover:border-gray-500 transition-all duration-300"
+        title="Músicas Salvas"
+      >
+        <Star size={20} className={savedSongs.length > 0 ? 'text-red-500' : 'text-gray-400'} />
+      </button>
+
+      <SavedSongsPanel
+        isOpen={isSavedSongsOpen}
+        favorites={savedSongs}
+        onClose={() => setIsSavedSongsOpen(false)}
+        onSelect={(favorite) => {
+          if (favorite.type === 'youtube' && favorite.youtubeId) {
+            handleYouTubePlayWrapper(favorite.youtubeId, favorite.name, favorite.cover || '');
+            return;
+          }
+
+          if (favorite.type === 'radio') {
+            const radioIndex = radios.findIndex((r) => r.id === favorite.id);
+            if (radioIndex >= 0) {
+              handlePlayRadio(radioIndex);
+            }
+            return;
+          }
+
+          const trackIndex = tracks.findIndex((t) => t.id === favorite.id);
+          if (trackIndex >= 0) {
+            handlePlayTrack(trackIndex);
+          }
+        }}
+        onRemove={(id) => {
+          const updated = favoritesStorage.remove(id);
+          setSavedSongs(updated);
+          setFavorites(new Set(updated.map((f) => f.id)));
+        }}
       />
 
       {/* Artists Panel */}

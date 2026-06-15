@@ -7,6 +7,7 @@ import { loadAudioSource, destroyActiveHls } from '@/lib/hlsPlayer';
 export const useMusicPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
+  const [radioError, setRadioError] = useState<string | null>(null);
   const [state, setState] = useState<MusicPlayerState>({
     tracks: [],
     radios: radioStations,
@@ -174,12 +175,20 @@ export const useMusicPlayer = () => {
     }));
     
     if (audioRef.current) {
-      loadAudioSource(audioRef.current, radio.url);
+      setRadioError(null);
+      loadAudioSource(audioRef.current, radio.url, {
+        onFatalError: (message) => {
+          setRadioError(message);
+          setState(prev => ({ ...prev, isPlaying: false }));
+        },
+      });
       requestAnimationFrame(() => {
         if (audioRef.current) {
           audioRef.current.play().catch(err => {
             if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
               console.error('Play error:', err);
+              setRadioError('Não foi possível tocar esta rádio.');
+              setState(prev => ({ ...prev, isPlaying: false }));
             }
           });
         }
@@ -312,6 +321,8 @@ export const useMusicPlayer = () => {
   return {
     ...state,
     importProgress,
+    radioError,
+    clearRadioError: () => setRadioError(null),
     audioRef,
     addTracks,
     updateTrackCover,

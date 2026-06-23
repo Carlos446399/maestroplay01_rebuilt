@@ -223,7 +223,7 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
                 </p>
                 <p className="text-[10px] text-gray-400 flex items-center gap-1">
                   <HardDrive size={8} />
-                  Google Drive {formatFileSize(file.size) ? `· ${formatFileSize(file.size)}` : ''}
+                  {file.folderName || 'Google Drive'}{formatFileSize(file.size) ? ` · ${formatFileSize(file.size)}` : ''}
                 </p>
               </div>
 

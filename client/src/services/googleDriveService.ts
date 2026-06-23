@@ -11,7 +11,6 @@ export interface DriveAudioFile {
 
 export interface DriveFilesResult {
   files: DriveAudioFile[];
-  nextPageToken?: string;
 }
 
 const AUDIO_MIME_QUERY = [
@@ -36,72 +35,82 @@ const driveGet = async (params: Record<string, string>) => {
   return res.json();
 };
 
-/** Lista subpastas diretas de uma pasta */
-const listFolders = async (parentId: string): Promise<Array<{ id: string; name: string }>> => {
-  const data = await driveGet({
-    q: `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    fields: 'files(id,name)',
-    pageSize: '100',
-  });
-  return data.files || [];
+/** Lista tudo (subpastas e áudios) dentro de uma pasta */
+const listChildren = async (folderId: string): Promise<Array<{ id: string; name: string; mimeType: string }>> => {
+  const results: Array<{ id: string; name: string; mimeType: string }> = [];
+  let pageToken: string | undefined;
+
+  do {
+    const params: Record<string, string> = {
+      q: `'${folderId}' in parents and trashed=false`,
+      fields: 'nextPageToken,files(id,name,mimeType)',
+      pageSize: '100',
+    };
+    if (pageToken) params.pageToken = pageToken;
+
+    const data = await driveGet(params);
+    results.push(...(data.files || []));
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+
+  return results;
 };
 
-/** Lista arquivos de áudio em uma pasta */
-const listAudio = async (
+const AUDIO_MIME_TYPES = new Set([
+  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg',
+  'audio/flac', 'audio/aac', 'audio/x-m4a', 'audio/mp4', 'audio/webm',
+]);
+
+const FOLDER_MIME = 'application/vnd.google-apps.folder';
+
+/**
+ * Busca RECURSIVA: percorre todas as subpastas (qualquer nível de profundidade)
+ * e coleta todos os arquivos de áudio encontrados.
+ * 
+ * Limite de profundidade = 5 para evitar loops infinitos.
+ */
+const collectAudioFiles = async (
   folderId: string,
   folderName: string,
-  pageToken?: string
-): Promise<{ files: DriveAudioFile[]; nextPageToken?: string }> => {
-  const params: Record<string, string> = {
-    q: `'${folderId}' in parents and (${AUDIO_MIME_QUERY}) and trashed=false`,
-    fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink,size)',
-    pageSize: '200',
-    orderBy: 'name',
-  };
-  if (pageToken) params.pageToken = pageToken;
+  depth = 0,
+  allFiles: DriveAudioFile[] = []
+): Promise<DriveAudioFile[]> => {
+  if (depth > 5) return allFiles;
 
-  const data = await driveGet(params);
-  return {
-    files: (data.files || []).map((f: DriveAudioFile) => ({ ...f, folderName })),
-    nextPageToken: data.nextPageToken,
-  };
+  const children = await listChildren(folderId);
+
+  const audioFiles = children.filter(c => AUDIO_MIME_TYPES.has(c.mimeType));
+  const subFolders = children.filter(c => c.mimeType === FOLDER_MIME);
+
+  // Adiciona os áudios encontrados neste nível
+  for (const f of audioFiles) {
+    allFiles.push({ ...f, folderName });
+  }
+
+  // Entra recursivamente nas subpastas em paralelo (lote de 5 por vez)
+  const BATCH = 5;
+  for (let i = 0; i < subFolders.length; i += BATCH) {
+    const batch = subFolders.slice(i, i + BATCH);
+    await Promise.all(
+      batch.map(folder =>
+        collectAudioFiles(folder.id, folder.name, depth + 1, allFiles)
+      )
+    );
+  }
+
+  return allFiles;
 };
 
 /**
- * Lista TODAS as músicas da pasta e suas subpastas.
- * Estratégia:
- *  1. Busca subpastas da raiz
- *  2. Para cada subpasta, busca os áudios
- *  3. Retorna tudo junto ordenado por nome
+ * Ponto de entrada: lista todos os arquivos de áudio da pasta e subpastas.
  */
-export const listDriveAudioFiles = async (
-  folderId: string,
-  _pageToken?: string
-): Promise<DriveFilesResult> => {
-  // Busca em paralelo: raiz + todas as subpastas
-  const [rootResult, subFolders] = await Promise.all([
-    listAudio(folderId, ''),
-    listFolders(folderId),
-  ]);
+export const listDriveAudioFiles = async (folderId: string): Promise<DriveFilesResult> => {
+  const allFiles = await collectAudioFiles(folderId, '');
 
-  const allFiles: DriveAudioFile[] = [...rootResult.files];
-
-  if (subFolders.length > 0) {
-    const subResults = await Promise.allSettled(
-      subFolders.map(folder => listAudio(folder.id, folder.name))
-    );
-    for (const result of subResults) {
-      if (result.status === 'fulfilled') {
-        allFiles.push(...result.value.files);
-      }
-    }
-  }
-
-  // Ordena: por nome da pasta, depois por nome do arquivo
+  // Ordena por nome da pasta, depois por nome do arquivo
   allFiles.sort((a, b) => {
-    const folderCmp = (a.folderName || '').localeCompare(b.folderName || '');
-    if (folderCmp !== 0) return folderCmp;
-    return a.name.localeCompare(b.name);
+    const fc = (a.folderName || '').localeCompare(b.folderName || '');
+    return fc !== 0 ? fc : a.name.localeCompare(b.name);
   });
 
   return { files: allFiles };

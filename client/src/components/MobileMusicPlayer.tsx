@@ -401,8 +401,8 @@ export const MobileMusicPlayer = () => {
       if (audioRef.current.src?.startsWith('blob:')) {
         URL.revokeObjectURL(audioRef.current.src);
       }
-      // Usa a URL do proxy diretamente — o browser faz streaming progressivo
-      const proxyUrl = `/.netlify/functions/drive-proxy?id=${fileId}`;
+      // Usa Edge Function como proxy (evita CORS do Drive)
+      const proxyUrl = `/api/drive-proxy?id=${fileId}`;
       audioRef.current.src = proxyUrl;
       audioRef.current.play().catch(err => {
         if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {

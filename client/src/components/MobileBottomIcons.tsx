@@ -7,7 +7,8 @@ import {
   Music,
   Users,
   Lock,
-  LockOpen
+  LockOpen,
+  HardDrive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ interface MobileBottomIconsProps {
   onRadio: () => void;
   onPlaylist: () => void;
   onArtists?: () => void;
+  onDrive?: () => void;
   isFavorite: boolean;
   isLocked?: boolean;
   onToggleLock?: () => void;
@@ -32,6 +34,7 @@ export const MobileBottomIcons = ({
   onRadio,
   onPlaylist,
   onArtists,
+  onDrive,
   isFavorite,
   isLocked = false,
   onToggleLock
@@ -82,6 +85,11 @@ export const MobileBottomIcons = ({
       </div>
       
       <div className="flex gap-4">
+        <HardDrive
+          className="cursor-pointer text-green-400 hover:text-green-300 transition-colors"
+          size={20}
+          onClick={onDrive}
+        />
         <Users
           className="cursor-pointer text-white hover:text-primary transition-colors" 
           size={20} 

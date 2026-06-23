@@ -20,6 +20,7 @@ import { EqualizerPanel } from './EqualizerPanel';
 import { SavedArtistsCarousel } from './SavedArtistsCarousel';
 import { ArtistsPanel } from './ArtistsPanel';
 import { SavedSongsPanel } from './SavedSongsPanel';
+import { DrivePanel } from './DrivePanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 
 declare global {
@@ -74,6 +75,7 @@ export const MobileMusicPlayer = () => {
   const [isFavoritesListOpen, setIsFavoritesListOpen] = useState(false);
   const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
+  const [isDriveOpen, setIsDriveOpen] = useState(false);
   const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
   const [isPlayerLocked, setIsPlayerLocked] = useState(false);
   const [lockUnlockTimer, setLockUnlockTimer] = useState<NodeJS.Timeout | null>(null);
@@ -375,12 +377,29 @@ export const MobileMusicPlayer = () => {
     mediaSessionTrack
   );
 
+  // Toca um arquivo de áudio direto do Google Drive
+  const handleDrivePlay = (url: string, _title: string, _cover?: string) => {
+    if (isYouTubeMode) {
+      try { ytPlayer?.pauseVideo(); } catch {}
+      setIsYouTubeMode(false);
+      setYtPlaying(false);
+    }
+    if (audioRef.current) {
+      audioRef.current.src = url;
+      audioRef.current.play().catch(err => {
+        if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+          console.error('Drive play error:', err);
+        }
+      });
+    }
+  };
+
   const handleAddMusic = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'audio/*';
     input.multiple = true;
-    input.onchange = (e) => {
+    input.onchange = (e: Event) => {
       const files = (e.target as HTMLInputElement).files;
       if (files) addTracks(files);
     };
@@ -495,6 +514,7 @@ export const MobileMusicPlayer = () => {
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsPlaylistOpen(true)}
         onArtists={() => setIsArtistsPanelOpen(true)}
+        onDrive={() => setIsDriveOpen(true)}
         isFavorite={
           isYouTubeMode
             ? (() => {
@@ -648,6 +668,13 @@ export const MobileMusicPlayer = () => {
         onClose={() => setIsArtistsPanelOpen(false)}
         onPlaySong={handleYouTubePlayWrapper}
         onPlayPlaylist={handlePlayPlaylist}
+      />
+
+      {/* Google Drive Panel */}
+      <DrivePanel
+        isOpen={isDriveOpen}
+        onClose={() => setIsDriveOpen(false)}
+        onPlaySong={handleDrivePlay}
       />
     </div>
   );

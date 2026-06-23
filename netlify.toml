@@ -3,39 +3,9 @@
   publish = "dist/public"
   functions = "netlify/functions"
 
-[functions]
-  node_bundler = "esbuild"
-
 [dev]
   command = "pnpm dev"
   port = 3000
-
-# Functions têm prioridade sobre o catch-all — mas vamos garantir
-# que o redirect não capture /.netlify/*
-[[redirects]]
-  from = "/.netlify/*"
-  to = "/.netlify/:splat"
-  status = 200
-  force = false
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# PWA Headers
-[[headers]]
-  for = "/"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-    X-Content-Type-Options = "nosniff"
-    X-XSS-Protection = "1; mode=block"
-
-[[headers]]
-  for = "/manifest.webmanifest"
-  [headers.values]
-    Content-Type = "application/manifest+json"
-    Cache-Control = "public, max-age=3600"
 
 [[headers]]
   for = "/sw.js"
@@ -48,20 +18,3 @@
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.png"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[context.production]
-  command = "pnpm install && pnpm build"
-  publish = "dist/public"
-
-[context.deploy-preview]
-  command = "pnpm install && pnpm build"
-  publish = "dist/public"
-
-[context.branch-deploy]
-  command = "pnpm install && pnpm build"
-  publish = "dist/public"

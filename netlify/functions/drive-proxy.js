@@ -1,79 +1,70 @@
-// netlify/functions/drive-proxy.js
-// Proxy serverless para baixar arquivos do Google Drive sem CORS.
-// O browser chama /.netlify/functions/drive-proxy?id=FILE_ID
-// e esta função baixa o arquivo do Drive e repassa o stream.
+// Proxy para arquivos do Google Drive — resolve CORS para o app MaestroPlay.
+// Chamada: GET /.netlify/functions/drive-proxy?id=FILE_ID
 
 const https = require('https');
-const http = require('http');
 
 const GOOGLE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
 
-const fetchUrl = (url) =>
-  new Promise((resolve, reject) => {
-    const lib = url.startsWith('https') ? https : http;
-    const req = lib.get(url, (res) => {
-      // Seguir redirects (o Drive redireciona para o arquivo real)
+// Faz fetch seguindo redirects manualmente
+function fetchFollowRedirects(url, depth = 0) {
+  return new Promise((resolve, reject) => {
+    if (depth > 10) return reject(new Error('Muitos redirects'));
+
+    https.get(url, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        fetchUrl(res.headers.location).then(resolve).catch(reject);
+        const next = res.headers.location.startsWith('http')
+          ? res.headers.location
+          : new URL(res.headers.location, url).toString();
+        res.resume(); // descarta body
+        fetchFollowRedirects(next, depth + 1).then(resolve).catch(reject);
         return;
       }
       resolve(res);
-    });
-    req.on('error', reject);
+    }).on('error', reject);
   });
+}
+
+function readStream(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', c => chunks.push(c));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+}
 
 exports.handler = async (event) => {
-  const fileId = event.queryStringParameters?.id;
+  const id = event.queryStringParameters && event.queryStringParameters.id;
 
-  if (!fileId) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Parâmetro id obrigatório' }),
-    };
+  if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
+    return { statusCode: 400, body: 'ID inválido' };
   }
 
-  // Validar formato do fileId (alfanumérico + hífens/underscores)
-  if (!/^[a-zA-Z0-9_-]+$/.test(fileId)) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'ID inválido' }),
-    };
-  }
+  const url = `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${GOOGLE_API_KEY}`;
 
   try {
-    // Primeiro tenta via Drive API com chave
-    const apiUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${GOOGLE_API_KEY}`;
+    const res = await fetchFollowRedirects(url);
+    const body = await readStream(res);
 
-    const response = await fetchUrl(apiUrl);
-
-    // Ler o body inteiro como buffer
-    const chunks = [];
-    await new Promise((resolve, reject) => {
-      response.on('data', (chunk) => chunks.push(chunk));
-      response.on('end', resolve);
-      response.on('error', reject);
-    });
-
-    const buffer = Buffer.concat(chunks);
-
-    const contentType = response.headers['content-type'] || 'audio/mpeg';
+    const contentType = res.headers['content-type'] || 'audio/mpeg';
 
     return {
-      statusCode: 200,
+      statusCode: res.statusCode || 200,
       headers: {
         'Content-Type': contentType,
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, max-age=3600',
-        'Content-Length': buffer.length.toString(),
+        'Accept-Ranges': 'bytes',
       },
-      body: buffer.toString('base64'),
+      body: body.toString('base64'),
       isBase64Encoded: true,
     };
   } catch (err) {
-    console.error('Drive proxy error:', err);
+    console.error('drive-proxy error:', err.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message || 'Erro interno' }),
+      body: JSON.stringify({ error: err.message }),
+      headers: { 'Content-Type': 'application/json' },
     };
   }
 };

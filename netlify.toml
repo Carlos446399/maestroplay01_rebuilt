@@ -10,6 +10,14 @@
   command = "pnpm dev"
   port = 3000
 
+# Functions têm prioridade sobre o catch-all — mas vamos garantir
+# que o redirect não capture /.netlify/*
+[[redirects]]
+  from = "/.netlify/*"
+  to = "/.netlify/:splat"
+  status = 200
+  force = false
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -21,7 +29,6 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
     X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
 
 [[headers]]

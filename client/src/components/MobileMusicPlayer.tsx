@@ -22,6 +22,7 @@ import { ArtistsPanel } from './ArtistsPanel';
 import { SavedSongsPanel } from './SavedSongsPanel';
 import { DrivePanel } from './DrivePanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
+import { getDrivePreviewUrl } from '@/services/googleDriveService';
 
 declare global {
   interface Window {
@@ -76,6 +77,10 @@ export const MobileMusicPlayer = () => {
   const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
   const [isDriveOpen, setIsDriveOpen] = useState(false);
+  const [isDriveMode, setIsDriveMode] = useState(false);
+  const [driveFileId, setDriveFileId] = useState('');
+  const [driveTitle, setDriveTitle] = useState('');
+  const [driveCover, setDriveCover] = useState('');
   const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
   const [isPlayerLocked, setIsPlayerLocked] = useState(false);
   const [lockUnlockTimer, setLockUnlockTimer] = useState<NodeJS.Timeout | null>(null);
@@ -337,9 +342,9 @@ export const MobileMusicPlayer = () => {
   const currentRadio = currentRadioIndex >= 0 ? radios[currentRadioIndex] : undefined;
   
   // Determine what's currently showing
-  const displayName = isYouTubeMode ? ytTitle : (currentSource === 'tracks' ? currentTrack?.name : currentRadio?.name) || 'Nenhuma música';
-  const displayCover = isYouTubeMode ? ytThumbnail : (currentSource === 'tracks' ? currentTrack?.cover : currentRadio?.cover) || defaultCover;
-  const displayPlaying = isYouTubeMode ? ytPlaying : isPlaying;
+  const displayName = isDriveMode ? driveTitle : isYouTubeMode ? ytTitle : (currentSource === 'tracks' ? currentTrack?.name : currentRadio?.name) || 'Nenhuma música';
+  const displayCover = isDriveMode ? (driveCover || defaultCover) : isYouTubeMode ? ytThumbnail : (currentSource === 'tracks' ? currentTrack?.cover : currentRadio?.cover) || defaultCover;
+  const displayPlaying = isDriveMode ? true : isYouTubeMode ? ytPlaying : isPlaying;
   const displayTime = isYouTubeMode ? ytCurrentTime : currentTime;
   const displayDuration = isYouTubeMode ? ytDuration : duration;
   const currentMedia = currentSource === 'tracks' ? currentTrack : currentRadio;
@@ -377,21 +382,24 @@ export const MobileMusicPlayer = () => {
     mediaSessionTrack
   );
 
-  // Toca um arquivo de áudio direto do Google Drive
-  const handleDrivePlay = (url: string, _title: string, _cover?: string) => {
+  // Toca um arquivo de áudio do Google Drive via iframe embutido
+  const handleDrivePlay = (fileId: string, title: string, cover?: string) => {
+    // Sai do modo YouTube se estiver ativo
     if (isYouTubeMode) {
       try { ytPlayer?.pauseVideo(); } catch {}
       setIsYouTubeMode(false);
       setYtPlaying(false);
     }
+    // Para o audio local se estiver tocando
     if (audioRef.current) {
-      audioRef.current.src = url;
-      audioRef.current.play().catch(err => {
-        if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
-          console.error('Drive play error:', err);
-        }
-      });
+      audioRef.current.pause();
+      audioRef.current.src = '';
     }
+    // Ativa modo Drive (usa o mesmo container do YouTube)
+    setIsDriveMode(true);
+    setDriveFileId(fileId);
+    setDriveTitle(title);
+    setDriveCover(cover || '');
   };
 
   const handleAddMusic = () => {
@@ -587,6 +595,17 @@ export const MobileMusicPlayer = () => {
       <div ref={ytContainerRef} className="absolute -top-[9999px] -left-[9999px]">
         <div id="yt-player" />
       </div>
+
+      {/* Hidden Drive player (iframe para reprodução via Google Drive) */}
+      {isDriveMode && driveFileId && (
+        <iframe
+          key={driveFileId}
+          src={getDrivePreviewUrl(driveFileId)}
+          className="absolute -top-[9999px] -left-[9999px] w-1 h-1"
+          allow="autoplay"
+          title="Drive Audio Player"
+        />
+      )}
 
       <audio 
         ref={audioRef} 

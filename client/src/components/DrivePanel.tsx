@@ -3,7 +3,6 @@ import { ChevronDown, ChevronRight, Music2, Loader2, AlertCircle, HardDrive, Arr
 import { cn } from '@/lib/utils';
 import {
   listFolderContents,
-  getDriveStreamUrl,
   getDriveThumbnail,
   formatFileSize,
   cleanFolderName,
@@ -19,7 +18,7 @@ interface BreadcrumbItem { id: string; name: string; }
 interface DrivePanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onPlaySong: (url: string, title: string, cover?: string) => void;
+  onPlaySong: (fileId: string, title: string, cover?: string) => void;
 }
 
 export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => {
@@ -74,11 +73,10 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
   };
 
   const handlePlay = (file: DriveItem) => {
-    const url = getDriveStreamUrl(file.id);
     const title = file.name.replace(/\.[^/.]+$/, '');
     const cover = getDriveThumbnail(file);
     setPlayingId(file.id);
-    onPlaySong(url, title, cover);
+    onPlaySong(file.id, title, cover);
   };
 
   const folders = items.filter(i => i.mimeType === FOLDER_MIME);

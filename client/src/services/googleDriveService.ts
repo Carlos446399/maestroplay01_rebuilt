@@ -55,7 +55,11 @@ export const listFolderContents = async (folderId: string): Promise<DriveItem[]>
 };
 
 export const getDriveStreamUrl = (fileId: string): string =>
-  `https://docs.google.com/uc?export=download&id=${fileId}`;
+  `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+/** URL da página de preview do Drive (para iframe embutido) */
+export const getDrivePreviewUrl = (fileId: string): string =>
+  `https://drive.google.com/file/d/${fileId}/preview`;
 
 export const getDriveThumbnail = (file: DriveItem): string | undefined =>
   file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : undefined;

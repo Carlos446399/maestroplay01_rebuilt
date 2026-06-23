@@ -62,18 +62,40 @@ export const getDrivePreviewUrl = (fileId: string): string =>
   `https://drive.google.com/file/d/${fileId}/preview`;
 
 /**
- * Baixa o conteúdo de um arquivo do Drive e retorna um Blob URL
- * para ser usado diretamente no elemento <audio>.
- * Usa a Drive API com a chave de API (evita o CORS do domínio drive.google.com).
+ * Baixa o conteúdo de um arquivo do Drive e retorna um Blob URL.
+ * Tenta múltiplas URLs até uma funcionar.
  */
 export const getDriveAudioBlobUrl = async (fileId: string): Promise<string> => {
-  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${GOOGLE_API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Erro ao baixar áudio (${res.status})`);
+  // URLs para tentar em ordem
+  const urls = [
+    // URL direta de download público (funciona se o arquivo for público)
+    `https://drive.google.com/uc?export=download&id=${fileId}&confirm=t`,
+    // Alternativa com docs.google.com
+    `https://docs.google.com/uc?export=download&id=${fileId}&confirm=t`,
+  ];
+
+  let lastError: Error | null = null;
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'audio/*,*/*',
+        },
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob.size > 0) {
+          return URL.createObjectURL(blob);
+        }
+      }
+    } catch (err: any) {
+      lastError = err;
+    }
   }
-  const blob = await res.blob();
-  return URL.createObjectURL(blob);
+
+  throw lastError || new Error('Não foi possível baixar o arquivo do Drive.');
 };
 
 export const getDriveThumbnail = (file: DriveItem): string | undefined =>

@@ -61,6 +61,21 @@ export const getDriveStreamUrl = (fileId: string): string =>
 export const getDrivePreviewUrl = (fileId: string): string =>
   `https://drive.google.com/file/d/${fileId}/preview`;
 
+/**
+ * Baixa o conteúdo de um arquivo do Drive e retorna um Blob URL
+ * para ser usado diretamente no elemento <audio>.
+ * Usa a Drive API com a chave de API (evita o CORS do domínio drive.google.com).
+ */
+export const getDriveAudioBlobUrl = async (fileId: string): Promise<string> => {
+  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${GOOGLE_API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Erro ao baixar áudio (${res.status})`);
+  }
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+};
+
 export const getDriveThumbnail = (file: DriveItem): string | undefined =>
   file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : undefined;
 

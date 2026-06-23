@@ -22,7 +22,7 @@ import { ArtistsPanel } from './ArtistsPanel';
 import { SavedSongsPanel } from './SavedSongsPanel';
 import { DrivePanel } from './DrivePanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
-import { getDrivePreviewUrl } from '@/services/googleDriveService';
+import { getDrivePreviewUrl, getDriveAudioBlobUrl } from '@/services/googleDriveService';
 
 declare global {
   interface Window {
@@ -382,24 +382,44 @@ export const MobileMusicPlayer = () => {
     mediaSessionTrack
   );
 
-  // Toca um arquivo de áudio do Google Drive via iframe embutido
-  const handleDrivePlay = (fileId: string, title: string, cover?: string) => {
-    // Sai do modo YouTube se estiver ativo
+  // Toca um arquivo de áudio do Google Drive:
+  // baixa o binário via Drive API (evita CORS) e cria um Blob URL
+  // para o elemento <audio> tocar diretamente.
+  const handleDrivePlay = async (fileId: string, title: string, cover?: string) => {
+    // Para outros players
     if (isYouTubeMode) {
       try { ytPlayer?.pauseVideo(); } catch {}
       setIsYouTubeMode(false);
       setYtPlaying(false);
     }
-    // Para o audio local se estiver tocando
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-    }
-    // Ativa modo Drive (usa o mesmo container do YouTube)
     setIsDriveMode(true);
     setDriveFileId(fileId);
     setDriveTitle(title);
     setDriveCover(cover || '');
+
+    try {
+      // Mostra que está carregando no nome
+      setDriveTitle(`⏳ ${title}`);
+      const blobUrl = await getDriveAudioBlobUrl(fileId);
+      setDriveTitle(title);
+
+      if (audioRef.current) {
+        // Revoga blob anterior se existir
+        if (audioRef.current.src?.startsWith('blob:')) {
+          URL.revokeObjectURL(audioRef.current.src);
+        }
+        audioRef.current.src = blobUrl;
+        audioRef.current.play().catch(err => {
+          if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+            console.error('Drive play error:', err);
+            setDriveTitle(`❌ Erro ao tocar: ${title}`);
+          }
+        });
+      }
+    } catch (err: any) {
+      console.error('Drive download error:', err);
+      setDriveTitle(`❌ ${title} (erro ao carregar)`);
+    }
   };
 
   const handleAddMusic = () => {
@@ -595,17 +615,6 @@ export const MobileMusicPlayer = () => {
       <div ref={ytContainerRef} className="absolute -top-[9999px] -left-[9999px]">
         <div id="yt-player" />
       </div>
-
-      {/* Hidden Drive player (iframe para reprodução via Google Drive) */}
-      {isDriveMode && driveFileId && (
-        <iframe
-          key={driveFileId}
-          src={getDrivePreviewUrl(driveFileId)}
-          className="absolute -top-[9999px] -left-[9999px] w-1 h-1"
-          allow="autoplay"
-          title="Drive Audio Player"
-        />
-      )}
 
       <audio 
         ref={audioRef} 

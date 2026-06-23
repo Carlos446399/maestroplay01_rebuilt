@@ -62,40 +62,21 @@ export const getDrivePreviewUrl = (fileId: string): string =>
   `https://drive.google.com/file/d/${fileId}/preview`;
 
 /**
- * Baixa o conteúdo de um arquivo do Drive e retorna um Blob URL.
- * Tenta múltiplas URLs até uma funcionar.
+ * Baixa o conteúdo de um arquivo do Drive via proxy Netlify Function
+ * (evita CORS — o browser chama o mesmo domínio do app).
  */
 export const getDriveAudioBlobUrl = async (fileId: string): Promise<string> => {
-  // URLs para tentar em ordem
-  const urls = [
-    // URL direta de download público (funciona se o arquivo for público)
-    `https://drive.google.com/uc?export=download&id=${fileId}&confirm=t`,
-    // Alternativa com docs.google.com
-    `https://docs.google.com/uc?export=download&id=${fileId}&confirm=t`,
-  ];
+  const proxyUrl = `/.netlify/functions/drive-proxy?id=${fileId}`;
+  const res = await fetch(proxyUrl);
 
-  let lastError: Error | null = null;
-
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'Accept': 'audio/*,*/*',
-        },
-      });
-
-      if (res.ok) {
-        const blob = await res.blob();
-        if (blob.size > 0) {
-          return URL.createObjectURL(blob);
-        }
-      }
-    } catch (err: any) {
-      lastError = err;
-    }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error || `Erro ao carregar áudio (${res.status})`);
   }
 
-  throw lastError || new Error('Não foi possível baixar o arquivo do Drive.');
+  const blob = await res.blob();
+  if (blob.size === 0) throw new Error('Arquivo vazio');
+  return URL.createObjectURL(blob);
 };
 
 export const getDriveThumbnail = (file: DriveItem): string | undefined =>

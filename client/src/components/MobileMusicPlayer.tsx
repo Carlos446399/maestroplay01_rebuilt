@@ -22,7 +22,7 @@ import { ArtistsPanel } from './ArtistsPanel';
 import { SavedSongsPanel } from './SavedSongsPanel';
 import { DrivePanel } from './DrivePanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
-import { getDrivePreviewUrl, getDriveAudioBlobUrl } from '@/services/googleDriveService';
+import { getDrivePreviewUrl } from '@/services/googleDriveService';
 
 declare global {
   interface Window {
@@ -382,11 +382,10 @@ export const MobileMusicPlayer = () => {
     mediaSessionTrack
   );
 
-  // Toca um arquivo de áudio do Google Drive:
-  // baixa o binário via Drive API (evita CORS) e cria um Blob URL
-  // para o elemento <audio> tocar diretamente.
+  // Toca um arquivo de áudio do Google Drive via proxy Netlify Function.
+  // Usa a URL do proxy diretamente no <audio> para streaming progressivo
+  // (não precisa baixar o arquivo inteiro antes de tocar).
   const handleDrivePlay = async (fileId: string, title: string, cover?: string) => {
-    // Para outros players
     if (isYouTubeMode) {
       try { ytPlayer?.pauseVideo(); } catch {}
       setIsYouTubeMode(false);
@@ -397,28 +396,20 @@ export const MobileMusicPlayer = () => {
     setDriveTitle(title);
     setDriveCover(cover || '');
 
-    try {
-      // Mostra que está carregando no nome
-      setDriveTitle(`⏳ ${title}`);
-      const blobUrl = await getDriveAudioBlobUrl(fileId);
-      setDriveTitle(title);
-
-      if (audioRef.current) {
-        // Revoga blob anterior se existir
-        if (audioRef.current.src?.startsWith('blob:')) {
-          URL.revokeObjectURL(audioRef.current.src);
-        }
-        audioRef.current.src = blobUrl;
-        audioRef.current.play().catch(err => {
-          if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
-            console.error('Drive play error:', err);
-            setDriveTitle(`❌ Erro ao tocar: ${title}`);
-          }
-        });
+    if (audioRef.current) {
+      // Revoga blob anterior se existir
+      if (audioRef.current.src?.startsWith('blob:')) {
+        URL.revokeObjectURL(audioRef.current.src);
       }
-    } catch (err: any) {
-      console.error('Drive download error:', err);
-      setDriveTitle(`❌ ${title} (erro ao carregar)`);
+      // Usa a URL do proxy diretamente — o browser faz streaming progressivo
+      const proxyUrl = `/.netlify/functions/drive-proxy?id=${fileId}`;
+      audioRef.current.src = proxyUrl;
+      audioRef.current.play().catch(err => {
+        if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+          console.error('Drive play error:', err);
+          setDriveTitle(`❌ Erro: ${title}`);
+        }
+      });
     }
   };
 

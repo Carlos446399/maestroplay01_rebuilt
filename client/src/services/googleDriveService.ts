@@ -1,8 +1,3 @@
-/**
- * googleDriveService - Lista arquivos de áudio de uma pasta pública do
- * Google Drive usando a Drive API v3, incluindo subpastas recursivamente.
- */
-
 const GOOGLE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
 
 export interface DriveAudioFile {
@@ -31,50 +26,41 @@ const AUDIO_MIME_QUERY = [
   "mimeType='audio/webm'",
 ].join(' or ');
 
-/**
- * Lista todas as subpastas diretas de uma pasta do Drive.
- */
-const listSubFolders = async (folderId: string): Promise<Array<{id: string; name: string}>> => {
-  const q = `'${folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-  const url =
-    `https://www.googleapis.com/drive/v3/files` +
-    `?q=${encodeURIComponent(q)}` +
-    `&fields=files(id,name)` +
-    `&pageSize=100` +
-    `&key=${GOOGLE_API_KEY}`;
+const driveGet = async (params: Record<string, string>) => {
+  const qs = new URLSearchParams({ ...params, key: GOOGLE_API_KEY }).toString();
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?${qs}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `Erro Drive API (${res.status})`);
+  }
+  return res.json();
+};
 
-  const response = await fetch(url);
-  if (!response.ok) return [];
-  const data = await response.json();
+/** Lista subpastas diretas de uma pasta */
+const listFolders = async (parentId: string): Promise<Array<{ id: string; name: string }>> => {
+  const data = await driveGet({
+    q: `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: 'files(id,name)',
+    pageSize: '100',
+  });
   return data.files || [];
 };
 
-/**
- * Lista arquivos de áudio em uma pasta específica (sem recursão).
- */
-const listAudioInFolder = async (
+/** Lista arquivos de áudio em uma pasta */
+const listAudio = async (
   folderId: string,
   folderName: string,
   pageToken?: string
-): Promise<DriveFilesResult> => {
-  const q = `'${folderId}' in parents and (${AUDIO_MIME_QUERY}) and trashed=false`;
-  let url =
-    `https://www.googleapis.com/drive/v3/files` +
-    `?q=${encodeURIComponent(q)}` +
-    `&fields=nextPageToken,files(id,name,mimeType,thumbnailLink,size)` +
-    `&pageSize=100` +
-    `&orderBy=name` +
-    `&key=${GOOGLE_API_KEY}`;
+): Promise<{ files: DriveAudioFile[]; nextPageToken?: string }> => {
+  const params: Record<string, string> = {
+    q: `'${folderId}' in parents and (${AUDIO_MIME_QUERY}) and trashed=false`,
+    fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink,size)',
+    pageSize: '200',
+    orderBy: 'name',
+  };
+  if (pageToken) params.pageToken = pageToken;
 
-  if (pageToken) url += `&pageToken=${pageToken}`;
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Erro ao listar arquivos (${response.status})`);
-  }
-
-  const data = await response.json();
+  const data = await driveGet(params);
   return {
     files: (data.files || []).map((f: DriveAudioFile) => ({ ...f, folderName })),
     nextPageToken: data.nextPageToken,
@@ -82,66 +68,51 @@ const listAudioInFolder = async (
 };
 
 /**
- * Lista arquivos de áudio em uma pasta e em todas as suas subpastas
- * (recursão de 2 níveis para cobrir a estrutura da pasta de músicas).
+ * Lista TODAS as músicas da pasta e suas subpastas.
+ * Estratégia:
+ *  1. Busca subpastas da raiz
+ *  2. Para cada subpasta, busca os áudios
+ *  3. Retorna tudo junto ordenado por nome
  */
 export const listDriveAudioFiles = async (
   folderId: string,
-  pageToken?: string
+  _pageToken?: string
 ): Promise<DriveFilesResult> => {
-  // Busca arquivos na raiz
-  const rootResult = await listAudioInFolder(folderId, '', pageToken);
+  // Busca em paralelo: raiz + todas as subpastas
+  const [rootResult, subFolders] = await Promise.all([
+    listAudio(folderId, ''),
+    listFolders(folderId),
+  ]);
 
-  // Se já há resultados na raiz (ou pageToken indica continuação), retorna
-  if (rootResult.files.length > 0 || pageToken) {
-    return rootResult;
-  }
+  const allFiles: DriveAudioFile[] = [...rootResult.files];
 
-  // Se raiz está vazia, busca nas subpastas
-  const subFolders = await listSubFolders(folderId);
-
-  if (subFolders.length === 0) {
-    return { files: [] };
-  }
-
-  // Busca em todas as subpastas em paralelo
-  const subResults = await Promise.allSettled(
-    subFolders.map(folder => listAudioInFolder(folder.id, folder.name))
-  );
-
-  const allFiles: DriveAudioFile[] = [];
-
-  for (const result of subResults) {
-    if (result.status === 'fulfilled') {
-      allFiles.push(...result.value.files);
+  if (subFolders.length > 0) {
+    const subResults = await Promise.allSettled(
+      subFolders.map(folder => listAudio(folder.id, folder.name))
+    );
+    for (const result of subResults) {
+      if (result.status === 'fulfilled') {
+        allFiles.push(...result.value.files);
+      }
     }
   }
 
-  // Ordena por nome
-  allFiles.sort((a, b) => a.name.localeCompare(b.name));
+  // Ordena: por nome da pasta, depois por nome do arquivo
+  allFiles.sort((a, b) => {
+    const folderCmp = (a.folderName || '').localeCompare(b.folderName || '');
+    if (folderCmp !== 0) return folderCmp;
+    return a.name.localeCompare(b.name);
+  });
 
   return { files: allFiles };
 };
 
-/**
- * Retorna a URL de stream direto de um arquivo do Drive.
- */
 export const getDriveStreamUrl = (fileId: string): string =>
   `https://docs.google.com/uc?export=download&id=${fileId}`;
 
-/**
- * Retorna a thumbnail de um arquivo do Drive.
- */
-export const getDriveThumbnail = (file: DriveAudioFile): string | undefined => {
-  if (file.thumbnailLink) {
-    return file.thumbnailLink.replace('=s220', '=s400');
-  }
-  return undefined;
-};
+export const getDriveThumbnail = (file: DriveAudioFile): string | undefined =>
+  file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : undefined;
 
-/**
- * Formata o tamanho em bytes para exibição.
- */
 export const formatFileSize = (bytes?: string): string => {
   if (!bytes) return '';
   const n = parseInt(bytes, 10);

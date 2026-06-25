@@ -401,8 +401,8 @@ export const MobileMusicPlayer = () => {
       if (audioRef.current.src?.startsWith('blob:')) {
         URL.revokeObjectURL(audioRef.current.src);
       }
-      // URL direta de download público do Drive (sem proxy)
-      const proxyUrl = `https://drive.google.com/uc?export=download&id=${fileId}&confirm=t`;
+      // Netlify Function como proxy (confirmada deployada)
+      const proxyUrl = `/.netlify/functions/drive-proxy?id=${fileId}`;
       audioRef.current.src = proxyUrl;
       audioRef.current.play().catch(err => {
         if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {

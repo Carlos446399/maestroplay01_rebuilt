@@ -399,7 +399,8 @@ export const MobileMusicPlayer = () => {
     // Chama a Netlify Function via fetch e cria blob URL local
     // (evita qualquer problema de redirect/roteamento do SPA)
     try {
-      const res = await fetch(`/.netlify/functions/drive-proxy?id=${fileId}`);
+      // Edge Function com streaming — sem limite de tamanho
+      const res = await fetch(`/api/drive-proxy?id=${fileId}`);
       if (!res.ok) throw new Error(`Erro ${res.status}`);
       const blob = await res.blob();
       if (blob.size === 0) throw new Error('Arquivo vazio');

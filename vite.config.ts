@@ -218,11 +218,11 @@ const plugins = [
       cleanupOutdatedCaches: true,
       maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
       globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf,eot,mp3,wav,m4a,ogg}'],
-      navigateFallbackDenylist: [/^\/\.netlify\//],
+      navigateFallbackDenylist: [/^\/\.netlify\//, /^\/api\//],
       runtimeCaching: [
         {
           // Netlify Functions - nunca cachear
-          urlPattern: /^\/\.netlify\/functions\//,
+          urlPattern: /^\/\.netlify\/functions\/|^\/api\/drive-proxy/,
           handler: 'NetworkOnly',
         },
         {

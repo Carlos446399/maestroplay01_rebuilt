@@ -7,6 +7,12 @@
   command = "pnpm dev"
   port = 3000
 
+# Edge Function para proxy do Drive (streaming sem limite de tamanho)
+# DEVE vir antes do catch-all do SPA
+[[edge_functions]]
+  path = "/api/drive-proxy"
+  function = "drive-proxy"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -79,6 +79,7 @@ export const MobileMusicPlayer = () => {
   const [isDriveOpen, setIsDriveOpen] = useState(false);
   const [isDriveMode, setIsDriveMode] = useState(false);
   const [driveFileId, setDriveFileId] = useState('');
+  const driveAudioRef = useRef<HTMLAudioElement>(null);
   const [driveTitle, setDriveTitle] = useState('');
   const [driveCover, setDriveCover] = useState('');
   const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
@@ -382,28 +383,27 @@ export const MobileMusicPlayer = () => {
     mediaSessionTrack
   );
 
-  // Toca um arquivo de áudio do Google Drive via proxy Netlify Function.
-  // Usa a URL do proxy diretamente no <audio> para streaming progressivo
-  // (não precisa baixar o arquivo inteiro antes de tocar).
   const handleDrivePlay = (fileId: string, title: string, cover?: string) => {
     if (isYouTubeMode) {
       try { ytPlayer?.pauseVideo(); } catch {}
       setIsYouTubeMode(false);
       setYtPlaying(false);
     }
+    // Para o audio principal (que está no Web Audio Graph do equalizador)
+    if (audioRef.current) audioRef.current.pause();
+
     setIsDriveMode(true);
     setDriveFileId(fileId);
     setDriveTitle(title);
     setDriveCover(cover || '');
 
-    // Usa a URL da Edge Function diretamente no <audio>
-    // Streaming progressivo — começa a tocar sem baixar tudo
-    if (audioRef.current) {
-      if (audioRef.current.src?.startsWith('blob:')) {
-        URL.revokeObjectURL(audioRef.current.src);
-      }
-      audioRef.current.src = `/api/drive-proxy?id=${fileId}`;
-      audioRef.current.play().catch(err => {
+    // Usa elemento <audio> SEPARADO do Web Audio Graph do equalizador.
+    // O audioRef principal tem createMediaElementSource conectado, o que
+    // bloqueia reprodução de URLs externas por causa de CORS/taint.
+    if (driveAudioRef.current) {
+      driveAudioRef.current.src = `/api/drive-proxy?id=${fileId}`;
+      driveAudioRef.current.volume = 1;
+      driveAudioRef.current.play().catch(err => {
         if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
           console.error('Drive play error:', err);
           setDriveTitle(`❌ ${title}`);
@@ -609,7 +609,13 @@ export const MobileMusicPlayer = () => {
       <audio 
         ref={audioRef} 
         preload="metadata"
-        crossOrigin="anonymous"
+        className="hidden"
+      />
+
+      {/* Elemento de áudio separado para Google Drive — fora do Web Audio Graph */}
+      <audio
+        ref={driveAudioRef}
+        preload="none"
         className="hidden"
       />
 

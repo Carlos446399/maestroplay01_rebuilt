@@ -3,18 +3,22 @@
 
 const https = require('https');
 
-const GOOGLE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
-
-function fetchFollowRedirects(url, depth = 0) {
+function fetchUrl(url, depth = 0) {
   return new Promise((resolve, reject) => {
     if (depth > 10) return reject(new Error('Too many redirects'));
-    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+    const options = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36',
+        'Accept': '*/*',
+      }
+    };
+    const req = https.get(url, options, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         const next = res.headers.location.startsWith('http')
           ? res.headers.location
           : new URL(res.headers.location, url).toString();
         res.resume();
-        fetchFollowRedirects(next, depth + 1).then(resolve).catch(reject);
+        fetchUrl(next, depth + 1).then(resolve).catch(reject);
         return;
       }
       resolve(res);
@@ -39,37 +43,60 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'ID inválido' };
   }
 
-  // Tenta via API key primeiro, depois URL pública
+  // Tenta múltiplas URLs em ordem
   const urls = [
-    `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${GOOGLE_API_KEY}`,
     `https://drive.google.com/uc?export=download&id=${id}&confirm=t`,
+    `https://drive.google.com/uc?export=download&id=${id}`,
+    `https://docs.google.com/uc?export=download&id=${id}&confirm=t`,
   ];
+
+  const errors = [];
 
   for (const url of urls) {
     try {
-      const res = await fetchFollowRedirects(url);
+      console.log(`Tentando: ${url}`);
+      const res = await fetchUrl(url);
+      console.log(`Status: ${res.statusCode}, Content-Type: ${res.headers['content-type']}`);
+
       if (res.statusCode === 200) {
-        const body = await readStream(res);
         const contentType = res.headers['content-type'] || 'audio/mpeg';
+        
+        // Verifica se é realmente áudio (não HTML de erro)
+        if (contentType.includes('text/html')) {
+          const body = await readStream(res);
+          errors.push(`URL retornou HTML: ${url}`);
+          console.log('Resposta HTML (primeiros 200 chars):', body.toString().substring(0, 200));
+          continue;
+        }
+
+        const body = await readStream(res);
         return {
           statusCode: 200,
           headers: {
             'Content-Type': contentType,
             'Access-Control-Allow-Origin': '*',
             'Cache-Control': 'public, max-age=3600',
+            'Content-Length': body.length.toString(),
           },
           body: body.toString('base64'),
           isBase64Encoded: true,
         };
+      } else {
+        const body = await readStream(res);
+        errors.push(`Status ${res.statusCode} para ${url}: ${body.toString().substring(0, 100)}`);
       }
     } catch (err) {
-      console.error('Tentativa falhou:', url, err.message);
+      errors.push(`Erro em ${url}: ${err.message}`);
+      console.error(err);
     }
   }
 
   return {
     statusCode: 502,
-    body: JSON.stringify({ error: 'Não foi possível baixar o arquivo' }),
-    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ error: 'Todas as tentativas falharam', details: errors }),
+    headers: { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
   };
 };

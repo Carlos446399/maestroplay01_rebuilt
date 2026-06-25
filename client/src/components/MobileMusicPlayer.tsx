@@ -495,6 +495,7 @@ export const MobileMusicPlayer = () => {
     setDriveFileId(fileId);
     setDriveTitle(title);
     setDriveCover(cover || '');
+    setIsDriveOpen(false); // Fecha o painel ao iniciar reprodução
 
     if (driveAudioRef.current) {
       driveAudioRef.current.src = `/api/drive-proxy?id=${fileId}`;

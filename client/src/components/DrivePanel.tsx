@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronDown, ChevronRight, Music2, Loader2, AlertCircle, HardDrive, ArrowLeft, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Music2, Loader2, AlertCircle, HardDrive, ArrowLeft, Search, X, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   listFolderContents,
@@ -10,6 +10,7 @@ import {
   AUDIO_MIME_TYPES,
   DriveItem,
 } from '@/services/googleDriveService';
+import { favoritesStorage } from '@/services/favoritesStorage';
 
 const ROOT_FOLDER_ID = '1zqRZc6TRZkQafTOhCokzyD6HUWpTQusx';
 
@@ -30,6 +31,27 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [driveFavorites, setDriveFavorites] = useState<Set<string>>(new Set());
+
+  // Carregar favoritos do Drive ao montar
+  useEffect(() => {
+    const stored = favoritesStorage.getAll();
+    setDriveFavorites(new Set(stored.filter(f => f.id.startsWith('drive-')).map(f => f.id)));
+  }, []);
+
+  const toggleDriveFavorite = (file: DriveItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const title = file.name.replace(/\.[^/.]+$/, '');
+    const cover = getDriveThumbnail(file);
+    const updated = favoritesStorage.toggle({
+      id: `drive-${file.id}`,
+      name: title,
+      cover,
+      type: 'youtube',
+      youtubeId: file.id,
+    });
+    setDriveFavorites(new Set(updated.filter(f => f.id.startsWith('drive-')).map(f => f.id)));
+  };
 
   const currentFolder = breadcrumb[breadcrumb.length - 1];
 
@@ -260,6 +282,20 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
                           <p className="text-[10px] text-gray-400">{formatFileSize(file.size)}</p>
                         )}
                       </div>
+                      <button
+                        onClick={(e) => toggleDriveFavorite(file, e)}
+                        className="p-1 flex-shrink-0"
+                      >
+                        <Star
+                          size={16}
+                          className={cn(
+                            'transition-colors',
+                            driveFavorites.has(`drive-${file.id}`)
+                              ? 'text-red-500 fill-red-500'
+                              : 'text-gray-300'
+                          )}
+                        />
+                      </button>
                       <span className="text-[10px] text-gray-300 flex-shrink-0">{index + 1}</span>
                     </div>
                   );

@@ -758,6 +758,12 @@ export const MobileMusicPlayer = () => {
         favorites={savedSongs}
         onClose={() => setIsSavedSongsOpen(false)}
         onSelect={(favorite) => {
+          // Favoritos do Drive (id começa com 'drive-')
+          if (favorite.id.startsWith('drive-') && favorite.youtubeId) {
+            handleDrivePlay(favorite.youtubeId, favorite.name, favorite.cover);
+            return;
+          }
+
           if (favorite.type === 'youtube' && favorite.youtubeId) {
             handleYouTubePlayWrapper(favorite.youtubeId, favorite.name, favorite.cover || '');
             return;

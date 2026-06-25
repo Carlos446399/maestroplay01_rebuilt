@@ -1,123 +1,126 @@
 import { Radio } from '@/types/music';
 
 export const radioStations: Radio[] = [
+  // === BRASILEIRAS ===
   {
-    id: 'pop-rock-80s',
-    name: 'Pop Rock Anos 80',
-    url: 'https://stream.knbcdn.com.br/pop-rock-anos-80/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&h=200&fit=crop',
-    genre: 'Pop Rock'
+    id: 'jovem-pan',
+    name: 'Jovem Pan FM',
+    url: 'https://stream.jovempan.com.br/jovempanfm',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Jovem_Pan_logo.svg/200px-Jovem_Pan_logo.svg.png',
+    genre: 'Pop/Rock'
   },
   {
-    id: 'gospel-hits',
-    name: 'Gospel Top Hits',
-    url: 'https://stream.knbcdn.com.br/gospel-top-hits/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
-    genre: 'Gospel'
+    id: 'mix-fm',
+    name: 'Mix FM São Paulo',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFM_SPAAC',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/MixFM.svg/200px-MixFM.svg.png',
+    genre: 'Pop'
   },
   {
-    id: 'forro-hits',
-    name: 'Estouradas do Forró',
-    url: 'https://stream.knbcdn.com.br/estouradas-do-forro/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=200&h=200&fit=crop',
-    genre: 'Forró'
+    id: 'antenna1',
+    name: 'Antena 1',
+    url: 'https://antena1.crossradio.com.br/stream/1/',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Antena_1_logo.svg/200px-Antena_1_logo.svg.png',
+    genre: 'Romântica'
   },
   {
-    id: 'funcional-hit',
-    name: 'Funcional Hit',
-    url: 'https://stream.knbcdn.com.br/funcional-hit/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=200&h=200&fit=crop',
-    genre: 'Hits'
+    id: 'radio-globo',
+    name: 'Rádio Globo',
+    url: 'https://15963.live.streamtheworld.com/RADIO_GLOBO_SP.mp3',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/R%C3%A1dio_Globo_logo.png/200px-R%C3%A1dio_Globo_logo.png',
+    genre: 'Esporte/Notícias'
   },
   {
-    id: 'mpb-mix',
-    name: 'MPB Mix',
-    url: 'https://stream.knbcdn.com.br/mpb-mix/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=200&h=200&fit=crop',
-    genre: 'MPB'
-  },
-  {
-    id: 'kboing-fm',
-    name: 'Kboing FM',
-    url: 'https://stream.knbcdn.com.br/kboing-fm/kbostream-hd/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&h=200&fit=crop',
-    genre: 'Rádio'
-  },
-  {
-    id: 'funk',
-    name: 'Funk',
-    url: 'https://stream.knbcdn.com.br/funk/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=200&h=200&fit=crop',
-    genre: 'Funk'
-  },
-  {
-    id: 'pagode-90s',
-    name: 'Pagode Anos 90',
-    url: 'https://stream.knbcdn.com.br/pagode-anos-90/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
-    genre: 'Pagode'
-  },
-  {
-    id: 'hip-hop',
-    name: 'Hip Hop 2020',
-    url: 'https://stream.knbcdn.com.br/playlist-hip-hop-2020/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&h=200&fit=crop',
-    genre: 'Hip Hop'
-  },
-  {
-    id: 'reggae',
-    name: 'Reggae Essentials',
-    url: 'https://stream.knbcdn.com.br/reggae-essentials/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=200&h=200&fit=crop',
-    genre: 'Reggae'
-  },
-  {
-    id: 'axe',
-    name: 'Axé Anos 90 e 2000',
-    url: 'https://stream.knbcdn.com.br/axe-anos-90-e-2000/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=200&h=200&fit=crop',
-    genre: 'Axé'
-  },
-  {
-    id: 'jazz',
-    name: 'Jazz Instrumental',
-    url: 'https://stream.knbcdn.com.br/jazz-instrumental/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=200&h=200&fit=crop',
-    genre: 'Jazz'
-  },
-  {
-    id: 'punk-rock',
-    name: 'Punk Rock',
-    url: 'https://stream.knbcdn.com.br/punk-rock/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&h=200&fit=crop',
-    genre: 'Punk Rock'
-  },
-  {
-    id: 'top-brasil',
-    name: 'Top Brasil',
-    url: 'https://stream.knbcdn.com.br/top-brasil/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=200&h=200&fit=crop',
-    genre: 'Nacional'
-  },
-  {
-    id: 'sertanejo',
-    name: 'Hits Sertanejo',
-    url: 'https://stream.knbcdn.com.br/hits-sertanejo/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
+    id: 'band-fm',
+    name: 'Band FM',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_BAND_FMAAC',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Band_FM_logo.svg/200px-Band_FM_logo.svg.png',
     genre: 'Sertanejo'
   },
   {
-    id: 'rock-metal',
-    name: 'Rock Metal',
-    url: 'https://stream.knbcdn.com.br/rock-metal/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&h=200&fit=crop',
-    genre: 'Rock/Metal'
+    id: 'transamérica',
+    name: 'Transamérica',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/TRANSAMERICA_SPAAC',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Transamérica_FM_logo.svg/200px-Transamérica_FM_logo.svg.png',
+    genre: 'Pop'
   },
   {
-    id: 'romanticas',
-    name: 'Românticas',
-    url: 'https://stream.knbcdn.com.br/romanticas/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=200&h=200&fit=crop',
-    genre: 'Romântica'
-  }
+    id: 'metropolitana',
+    name: 'Metropolitana FM',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/METRO_FMAAC',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Metropolitana_FM_logo.svg/200px-Metropolitana_FM_logo.svg.png',
+    genre: 'Rock'
+  },
+  {
+    id: 'itatiaia',
+    name: 'Itatiaia',
+    url: 'https://cast2.hoost.com.br:7088/stream',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Itatiaia_logo.svg/200px-Itatiaia_logo.svg.png',
+    genre: 'Notícias'
+  },
+
+  // === INTERNACIONAIS ===
+  {
+    id: 'bbc-radio1',
+    name: 'BBC Radio 1',
+    url: 'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/BBC_Radio_1_2021.svg/200px-BBC_Radio_1_2021.svg.png',
+    genre: 'Pop Internacional'
+  },
+  {
+    id: 'bbc-radio2',
+    name: 'BBC Radio 2',
+    url: 'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_two',
+    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/BBC_Radio_2_2021.svg/200px-BBC_Radio_2_2021.svg.png',
+    genre: 'Clássicos'
+  },
+  {
+    id: 'lofi-hip-hop',
+    name: 'Lo-Fi Hip Hop',
+    url: 'https://lofi.stream.laut.fm/lofi',
+    cover: 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=200&h=200&fit=crop',
+    genre: 'Lo-Fi'
+  },
+  {
+    id: 'jazz-fm',
+    name: 'Jazz FM',
+    url: 'https://jazz-wr02.ice.infomaniak.ch/jazz-wr02-128.mp3',
+    cover: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=200&h=200&fit=crop',
+    genre: 'Jazz'
+  },
+  {
+    id: 'classical',
+    name: 'Classical Radio',
+    url: 'https://live.musopen.org:8085/streamvbr0',
+    cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=200&h=200&fit=crop',
+    genre: 'Clássica'
+  },
+  {
+    id: 'reggae-radio',
+    name: 'Reggae Radio',
+    url: 'https://reggae.stream.laut.fm/reggae',
+    cover: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=200&h=200&fit=crop',
+    genre: 'Reggae'
+  },
+  {
+    id: 'rock-radio',
+    name: 'Rock Antenne',
+    url: 'https://stream.rockantenne.de/rockantenne/stream/mp3',
+    cover: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=200&h=200&fit=crop',
+    genre: 'Rock'
+  },
+  {
+    id: 'dance-fm',
+    name: 'Dance FM',
+    url: 'https://dance.stream.laut.fm/dance',
+    cover: 'https://images.unsplash.com/photo-1571266028243-d220c6a6dd32?w=200&h=200&fit=crop',
+    genre: 'Dance/Eletrônica'
+  },
+  {
+    id: 'hits-radio',
+    name: 'Hits Radio',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/HITS_RADIO_AAAC',
+    cover: 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=200&h=200&fit=crop',
+    genre: 'Hits'
+  },
 ];

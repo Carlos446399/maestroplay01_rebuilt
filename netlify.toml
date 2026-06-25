@@ -7,6 +7,25 @@
   command = "pnpm dev"
   port = 3000
 
+# Proxy para Google Drive — DEVE vir antes do catch-all do SPA
+[[redirects]]
+  from = "/drive-proxy"
+  to = "/.netlify/functions/drive-proxy"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/drive-proxy/*"
+  to = "/.netlify/functions/drive-proxy"
+  status = 200
+  force = true
+
+# SPA catch-all
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 [[headers]]
   for = "/sw.js"
   [headers.values]

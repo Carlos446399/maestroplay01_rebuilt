@@ -393,23 +393,34 @@ export const MobileMusicPlayer = () => {
     }
     setIsDriveMode(true);
     setDriveFileId(fileId);
-    setDriveTitle(title);
+    setDriveTitle(`⏳ ${title}`);
     setDriveCover(cover || '');
 
-    if (audioRef.current) {
-      // Revoga blob anterior se existir
-      if (audioRef.current.src?.startsWith('blob:')) {
-        URL.revokeObjectURL(audioRef.current.src);
-      }
-      // Proxy via redirect do Netlify (/drive-proxy → function)
-      const proxyUrl = `/drive-proxy?id=${fileId}`;
-      audioRef.current.src = proxyUrl;
-      audioRef.current.play().catch(err => {
-        if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
-          console.error('Drive play error:', err);
-          setDriveTitle(`❌ Erro: ${title}`);
+    // Chama a Netlify Function via fetch e cria blob URL local
+    // (evita qualquer problema de redirect/roteamento do SPA)
+    try {
+      const res = await fetch(`/.netlify/functions/drive-proxy?id=${fileId}`);
+      if (!res.ok) throw new Error(`Erro ${res.status}`);
+      const blob = await res.blob();
+      if (blob.size === 0) throw new Error('Arquivo vazio');
+      const blobUrl = URL.createObjectURL(blob);
+      setDriveTitle(title);
+
+      if (audioRef.current) {
+        if (audioRef.current.src?.startsWith('blob:')) {
+          URL.revokeObjectURL(audioRef.current.src);
         }
-      });
+        audioRef.current.src = blobUrl;
+        audioRef.current.play().catch(err => {
+          if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+            console.error('Drive play error:', err);
+            setDriveTitle(`❌ ${title}`);
+          }
+        });
+      }
+    } catch (err: any) {
+      console.error('Drive fetch error:', err);
+      setDriveTitle(`❌ ${title} — ${err.message}`);
     }
   };
 

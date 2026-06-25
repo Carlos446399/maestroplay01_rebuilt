@@ -1,1 +1,3 @@
+/drive-proxy /.netlify/functions/drive-proxy 200
+/drive-proxy/* /.netlify/functions/drive-proxy/:splat 200
 /* /index.html 200

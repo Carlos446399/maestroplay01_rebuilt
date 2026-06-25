@@ -401,8 +401,8 @@ export const MobileMusicPlayer = () => {
       if (audioRef.current.src?.startsWith('blob:')) {
         URL.revokeObjectURL(audioRef.current.src);
       }
-      // Netlify Function como proxy (confirmada deployada)
-      const proxyUrl = `/.netlify/functions/drive-proxy?id=${fileId}`;
+      // Proxy via redirect do Netlify (/drive-proxy → function)
+      const proxyUrl = `/drive-proxy?id=${fileId}`;
       audioRef.current.src = proxyUrl;
       audioRef.current.play().catch(err => {
         if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {

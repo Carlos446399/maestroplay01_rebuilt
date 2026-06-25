@@ -218,7 +218,13 @@ const plugins = [
       cleanupOutdatedCaches: true,
       maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
       globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf,eot,mp3,wav,m4a,ogg}'],
+      navigateFallbackDenylist: [/^\/\.netlify\//],
       runtimeCaching: [
+        {
+          // Netlify Functions - nunca cachear
+          urlPattern: /^\/\.netlify\/functions\//,
+          handler: 'NetworkOnly',
+        },
         {
           urlPattern: /^blob:.*/i,
           handler: 'CacheFirst',

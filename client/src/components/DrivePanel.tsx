@@ -18,7 +18,7 @@ interface BreadcrumbItem { id: string; name: string; }
 interface DrivePanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onPlaySong: (fileId: string, title: string, cover?: string) => void;
+  onPlaySong: (fileId: string, title: string, cover?: string, playlist?: Array<{id: string; name: string; cover?: string}>, index?: number) => void;
 }
 
 export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => {
@@ -76,7 +76,14 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
     const title = file.name.replace(/\.[^/.]+$/, '');
     const cover = getDriveThumbnail(file);
     setPlayingId(file.id);
-    onPlaySong(file.id, title, cover);
+    // Passa a lista completa de músicas para navegação próxima/anterior
+    const playlist = filteredAudio.map(f => ({
+      id: f.id,
+      name: f.name.replace(/\.[^/.]+$/, ''),
+      cover: getDriveThumbnail(f),
+    }));
+    const index = filteredAudio.findIndex(f => f.id === file.id);
+    onPlaySong(file.id, title, cover, playlist, index);
   };
 
   const folders = items.filter(i => i.mimeType === FOLDER_MIME);

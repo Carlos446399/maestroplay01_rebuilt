@@ -82,6 +82,12 @@ export const MobileMusicPlayer = () => {
   const driveAudioRef = useRef<HTMLAudioElement>(null);
   const [driveTitle, setDriveTitle] = useState('');
   const [driveCover, setDriveCover] = useState('');
+  const [drivePlaying, setDrivePlaying] = useState(false);
+  const [driveCurrentTime, setDriveCurrentTime] = useState(0);
+  const [driveDuration, setDriveDuration] = useState(0);
+  // Lista de músicas atual do Drive para navegação próxima/anterior
+  const drivePlaylistRef = useRef<Array<{id: string; name: string; cover?: string}>>([]);
+  const driveCurrentIndexRef = useRef(0);
   const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
   const [isPlayerLocked, setIsPlayerLocked] = useState(false);
   const [lockUnlockTimer, setLockUnlockTimer] = useState<NodeJS.Timeout | null>(null);
@@ -108,6 +114,46 @@ export const MobileMusicPlayer = () => {
   useEffect(() => { ytPlaylistRef.current = ytPlaylist; }, [ytPlaylist]);
   useEffect(() => { ytCurrentIndexRef.current = ytCurrentIndex; }, [ytCurrentIndex]);
   useEffect(() => { repeatRef.current = repeat; }, [repeat]);
+
+  // Sincronizar eventos do elemento <audio> do Drive com o estado do player
+  useEffect(() => {
+    const audio = driveAudioRef.current;
+    if (!audio) return;
+
+    const onPlay = () => setDrivePlaying(true);
+    const onPause = () => setDrivePlaying(false);
+    const onTimeUpdate = () => setDriveCurrentTime(audio.currentTime);
+    const onDurationChange = () => setDriveDuration(audio.duration || 0);
+    const onEnded = () => {
+      setDrivePlaying(false);
+      // Avança para próxima música do Drive automaticamente
+      const playlist = drivePlaylistRef.current;
+      const currentIndex = driveCurrentIndexRef.current;
+      if (playlist.length > 1 && currentIndex < playlist.length - 1) {
+        const next = playlist[currentIndex + 1];
+        driveCurrentIndexRef.current = currentIndex + 1;
+        setDriveTitle(next.name);
+        setDriveCover(next.cover || '');
+        setDriveFileId(next.id);
+        audio.src = `/api/drive-proxy?id=${next.id}`;
+        audio.play().catch(console.error);
+      }
+    };
+
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('durationchange', onDurationChange);
+    audio.addEventListener('ended', onEnded);
+
+    return () => {
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('durationchange', onDurationChange);
+      audio.removeEventListener('ended', onEnded);
+    };
+  }, []);
 
   // Carregar músicas salvas (favoritos) do localStorage
   useEffect(() => {
@@ -226,7 +272,13 @@ export const MobileMusicPlayer = () => {
   };
 
   const handleTogglePlay = () => {
-    if (isYouTubeMode && ytPlayer) {
+    if (isDriveMode && driveAudioRef.current) {
+      if (drivePlaying) {
+        driveAudioRef.current.pause();
+      } else {
+        driveAudioRef.current.play().catch(console.error);
+      }
+    } else if (isYouTubeMode && ytPlayer) {
       if (ytPlaying) {
         ytPlayer.pauseVideo();
       } else {
@@ -238,7 +290,10 @@ export const MobileMusicPlayer = () => {
   };
 
   const handleSeek = (time: number) => {
-    if (isYouTubeMode && ytPlayer) {
+    if (isDriveMode && driveAudioRef.current) {
+      driveAudioRef.current.currentTime = time;
+      setDriveCurrentTime(time);
+    } else if (isYouTubeMode && ytPlayer) {
       ytPlayer.seekTo(time, true);
       setYtCurrentTime(time);
     } else {
@@ -299,6 +354,23 @@ export const MobileMusicPlayer = () => {
   };
 
   const handleNextTrack = () => {
+    if (isDriveMode && driveAudioRef.current) {
+      const playlist = drivePlaylistRef.current;
+      const idx = driveCurrentIndexRef.current;
+      if (playlist.length > 1 && idx < playlist.length - 1) {
+        const next = playlist[idx + 1];
+        driveCurrentIndexRef.current = idx + 1;
+        setDriveTitle(next.name);
+        setDriveCover(next.cover || '');
+        setDriveFileId(next.id);
+        driveAudioRef.current.src = `/api/drive-proxy?id=${next.id}`;
+        driveAudioRef.current.play().catch(console.error);
+      } else {
+        driveAudioRef.current.currentTime = 0;
+        driveAudioRef.current.play().catch(console.error);
+      }
+      return;
+    }
     if (isYouTubeMode && ytPlayer) {
       if (ytPlaylist.length > 1) {
         const nextIndex = (ytCurrentIndex + 1) % ytPlaylist.length;
@@ -309,7 +381,6 @@ export const MobileMusicPlayer = () => {
         ytPlayer.loadVideoById(nextVideo.id);
         setYtPlaying(true);
       } else if (ytPlayer.seekTo) {
-        // Sem playlist: reinicia a música atual
         ytPlayer.seekTo(0, true);
         ytPlayer.playVideo();
         setYtPlaying(true);
@@ -320,6 +391,23 @@ export const MobileMusicPlayer = () => {
   };
 
   const handlePreviousTrack = () => {
+    if (isDriveMode && driveAudioRef.current) {
+      const playlist = drivePlaylistRef.current;
+      const idx = driveCurrentIndexRef.current;
+      if (playlist.length > 1 && idx > 0) {
+        const prev = playlist[idx - 1];
+        driveCurrentIndexRef.current = idx - 1;
+        setDriveTitle(prev.name);
+        setDriveCover(prev.cover || '');
+        setDriveFileId(prev.id);
+        driveAudioRef.current.src = `/api/drive-proxy?id=${prev.id}`;
+        driveAudioRef.current.play().catch(console.error);
+      } else {
+        driveAudioRef.current.currentTime = 0;
+        driveAudioRef.current.play().catch(console.error);
+      }
+      return;
+    }
     if (isYouTubeMode && ytPlayer) {
       if (ytPlaylist.length > 1 && ytCurrentIndex > 0) {
         const prevIndex = ytCurrentIndex - 1;
@@ -345,9 +433,9 @@ export const MobileMusicPlayer = () => {
   // Determine what's currently showing
   const displayName = isDriveMode ? driveTitle : isYouTubeMode ? ytTitle : (currentSource === 'tracks' ? currentTrack?.name : currentRadio?.name) || 'Nenhuma música';
   const displayCover = isDriveMode ? (driveCover || defaultCover) : isYouTubeMode ? ytThumbnail : (currentSource === 'tracks' ? currentTrack?.cover : currentRadio?.cover) || defaultCover;
-  const displayPlaying = isDriveMode ? true : isYouTubeMode ? ytPlaying : isPlaying;
-  const displayTime = isYouTubeMode ? ytCurrentTime : currentTime;
-  const displayDuration = isYouTubeMode ? ytDuration : duration;
+  const displayPlaying = isDriveMode ? drivePlaying : isYouTubeMode ? ytPlaying : isPlaying;
+  const displayTime = isDriveMode ? driveCurrentTime : isYouTubeMode ? ytCurrentTime : currentTime;
+  const displayDuration = isDriveMode ? driveDuration : isYouTubeMode ? ytDuration : duration;
   const currentMedia = currentSource === 'tracks' ? currentTrack : currentRadio;
 
   // Ativar reprodução em segundo plano e manter tela ligada (considera YouTube também)
@@ -383,23 +471,31 @@ export const MobileMusicPlayer = () => {
     mediaSessionTrack
   );
 
-  const handleDrivePlay = (fileId: string, title: string, cover?: string) => {
+  const handleDrivePlay = (
+    fileId: string,
+    title: string,
+    cover?: string,
+    playlist?: Array<{id: string; name: string; cover?: string}>,
+    index?: number
+  ) => {
     if (isYouTubeMode) {
       try { ytPlayer?.pauseVideo(); } catch {}
       setIsYouTubeMode(false);
       setYtPlaying(false);
     }
-    // Para o audio principal (que está no Web Audio Graph do equalizador)
     if (audioRef.current) audioRef.current.pause();
+
+    // Salva a playlist para navegação próxima/anterior
+    if (playlist && playlist.length > 0) {
+      drivePlaylistRef.current = playlist;
+      driveCurrentIndexRef.current = index ?? 0;
+    }
 
     setIsDriveMode(true);
     setDriveFileId(fileId);
     setDriveTitle(title);
     setDriveCover(cover || '');
 
-    // Usa elemento <audio> SEPARADO do Web Audio Graph do equalizador.
-    // O audioRef principal tem createMediaElementSource conectado, o que
-    // bloqueia reprodução de URLs externas por causa de CORS/taint.
     if (driveAudioRef.current) {
       driveAudioRef.current.src = `/api/drive-proxy?id=${fileId}`;
       driveAudioRef.current.volume = 1;

@@ -385,7 +385,7 @@ export const MobileMusicPlayer = () => {
   // Toca um arquivo de áudio do Google Drive via proxy Netlify Function.
   // Usa a URL do proxy diretamente no <audio> para streaming progressivo
   // (não precisa baixar o arquivo inteiro antes de tocar).
-  const handleDrivePlay = async (fileId: string, title: string, cover?: string) => {
+  const handleDrivePlay = (fileId: string, title: string, cover?: string) => {
     if (isYouTubeMode) {
       try { ytPlayer?.pauseVideo(); } catch {}
       setIsYouTubeMode(false);
@@ -393,35 +393,22 @@ export const MobileMusicPlayer = () => {
     }
     setIsDriveMode(true);
     setDriveFileId(fileId);
-    setDriveTitle(`⏳ ${title}`);
+    setDriveTitle(title);
     setDriveCover(cover || '');
 
-    // Chama a Netlify Function via fetch e cria blob URL local
-    // (evita qualquer problema de redirect/roteamento do SPA)
-    try {
-      // Edge Function com streaming — sem limite de tamanho
-      const res = await fetch(`/api/drive-proxy?id=${fileId}`);
-      if (!res.ok) throw new Error(`Erro ${res.status}`);
-      const blob = await res.blob();
-      if (blob.size === 0) throw new Error('Arquivo vazio');
-      const blobUrl = URL.createObjectURL(blob);
-      setDriveTitle(title);
-
-      if (audioRef.current) {
-        if (audioRef.current.src?.startsWith('blob:')) {
-          URL.revokeObjectURL(audioRef.current.src);
-        }
-        audioRef.current.src = blobUrl;
-        audioRef.current.play().catch(err => {
-          if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
-            console.error('Drive play error:', err);
-            setDriveTitle(`❌ ${title}`);
-          }
-        });
+    // Usa a URL da Edge Function diretamente no <audio>
+    // Streaming progressivo — começa a tocar sem baixar tudo
+    if (audioRef.current) {
+      if (audioRef.current.src?.startsWith('blob:')) {
+        URL.revokeObjectURL(audioRef.current.src);
       }
-    } catch (err: any) {
-      console.error('Drive fetch error:', err);
-      setDriveTitle(`❌ ${title} — ${err.message}`);
+      audioRef.current.src = `/api/drive-proxy?id=${fileId}`;
+      audioRef.current.play().catch(err => {
+        if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+          console.error('Drive play error:', err);
+          setDriveTitle(`❌ ${title}`);
+        }
+      });
     }
   };
 

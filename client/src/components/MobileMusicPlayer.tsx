@@ -21,6 +21,7 @@ import { SavedArtistsCarousel } from './SavedArtistsCarousel';
 import { ArtistsPanel } from './ArtistsPanel';
 import { SavedSongsPanel } from './SavedSongsPanel';
 import { DrivePanel } from './DrivePanel';
+import { DiscoverPanel } from './DiscoverPanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 import { getDrivePreviewUrl } from '@/services/googleDriveService';
 
@@ -66,6 +67,7 @@ export const MobileMusicPlayer = () => {
     : radios[currentRadioIndex];
 
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
+  const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [isLocalPlaylistOpen, setIsLocalPlaylistOpen] = useState(false);
   const [isRadioOpen, setIsRadioOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -627,7 +629,7 @@ export const MobileMusicPlayer = () => {
         onFavoritesList={() => setIsFavoritesListOpen(true)}
         onAddMusic={handleAddMusic}
         onRadio={() => setIsRadioOpen(true)}
-        onPlaylist={() => setIsPlaylistOpen(true)}
+        onPlaylist={() => setIsDiscoverOpen(true)}
         onArtists={() => setIsArtistsPanelOpen(true)}
         onDrive={() => setIsDriveOpen(true)}
         isFavorite={
@@ -802,6 +804,13 @@ export const MobileMusicPlayer = () => {
         isOpen={isDriveOpen}
         onClose={() => setIsDriveOpen(false)}
         onPlaySong={handleDrivePlay}
+      />
+
+      {/* Discover Panel — artistas e playlists estilo Deezer */}
+      <DiscoverPanel
+        isOpen={isDiscoverOpen}
+        onClose={() => setIsDiscoverOpen(false)}
+        onPlayPlaylist={handlePlayPlaylist}
       />
     </div>
   );

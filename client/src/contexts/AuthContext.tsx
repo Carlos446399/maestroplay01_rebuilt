@@ -11,7 +11,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 // Para criar: console.cloud.google.com → APIs → Credenciais → Criar credencial → ID do cliente OAuth 2.0
 // Tipo: Aplicativo da Web
 // Origens JS autorizadas: https://maestroxpp.netlify.app
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '537890558416-b2paavkc8r5rgov1t0idseh1s3vit25j.apps.googleusercontent.com';
 
 export interface GoogleUser {
   id: string;

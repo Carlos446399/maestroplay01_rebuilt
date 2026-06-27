@@ -188,10 +188,16 @@ export const MobileMusicPlayer = () => {
   }, [ytPlaying, ytPlayer]);
 
   const handleYouTubePlay = (videoId: string, title: string, thumbnail: string) => {
-    // Pause local audio
+    // Para TODOS os outros players antes de iniciar YouTube
     if (audioRef.current) {
       audioRef.current.pause();
     }
+    if (driveAudioRef.current) {
+      driveAudioRef.current.pause();
+      driveAudioRef.current.src = '';
+    }
+    setIsDriveMode(false);
+    setDrivePlaying(false);
     
     const newVideo = { id: videoId, title, thumbnail };
     setYtPlaylist([newVideo]);
@@ -340,19 +346,23 @@ export const MobileMusicPlayer = () => {
   };
 
   const handlePlayPlaylist = (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => {
+    // Para TODOS os outros players
     if (audioRef.current) {
       audioRef.current.pause();
     }
+    if (driveAudioRef.current) {
+      driveAudioRef.current.pause();
+      driveAudioRef.current.src = '';
+    }
+    setIsDriveMode(false);
+    setDrivePlaying(false);
+
+    const startVideo = songs[startIndex];
+    // Usa handleYouTubePlay para garantir que o player é criado se não existir
+    handleYouTubePlay(startVideo.id, startVideo.title, startVideo.thumbnail);
+    // Depois atualiza a playlist completa
     setYtPlaylist(songs);
     setYtCurrentIndex(startIndex);
-    const startVideo = songs[startIndex];
-    setIsYouTubeMode(true);
-    setYtTitle(startVideo.title);
-    setYtThumbnail(startVideo.thumbnail);
-    setYtPlaying(true);
-    if (ytPlayer) {
-      ytPlayer.loadVideoById(startVideo.id);
-    }
   };
 
   const handleNextTrack = () => {
@@ -480,11 +490,14 @@ export const MobileMusicPlayer = () => {
     playlist?: Array<{id: string; name: string; cover?: string}>,
     index?: number
   ) => {
-    if (isYouTubeMode) {
-      try { ytPlayer?.pauseVideo(); } catch {}
-      setIsYouTubeMode(false);
-      setYtPlaying(false);
+    // Para TODOS os outros players
+    if (ytPlayer) {
+      try {
+        ytPlayer.stopVideo();
+      } catch {}
     }
+    setIsYouTubeMode(false);
+    setYtPlaying(false);
     if (audioRef.current) audioRef.current.pause();
 
     // Salva a playlist para navegação próxima/anterior

@@ -497,24 +497,24 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
 
   return (
     <div className={cn(
-      'fixed left-0 w-full max-h-[80vh] z-10 transition-all duration-300 ease-in-out',
+      'fixed left-0 w-full max-h-[80vh] z-30 transition-all duration-300 ease-in-out',
       'bg-white border-t-2 border-gray-300 flex flex-col pb-2',
       isOpen ? 'bottom-0' : '-bottom-full'
-    )}>
-      <div className="flex justify-center pt-2 pb-2">
+    )}> 
+      <div className="flex items-center justify-between px-4 pt-2 pb-2 border-b border-gray-100">
+        <h2 className="text-sm font-bold text-gray-800">🎤 Artistas Mundiais</h2>
         <button
           onClick={onClose}
-          className="text-red-600 hover:text-red-700 transition-colors"
+          className="text-red-500 hover:text-red-600 transition-colors p-1"
         >
-          <ChevronDown size={28} />
+          <ChevronDown size={26} />
         </button>
       </div>
 
       <div className="flex flex-col h-full overflow-hidden">
         {/* Header */}
         <div className="px-4 pt-2 pb-2">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-black">🎤 Artistas Mundiais</h2>
+          <div className="flex items-center justify-end mb-3">
             <button
               onClick={() => {
                 setIsArtistSearchOpen(true);

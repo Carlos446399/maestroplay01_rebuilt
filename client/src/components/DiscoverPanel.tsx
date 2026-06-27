@@ -80,6 +80,35 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
     }
   }, [loadingArtist, onPlayPlaylist, onClose]);
 
+  const GENRE_PLAYLISTS = [
+    { label: 'Top Sertanejo', query: 'top sertanejo 2024', color: 'from-yellow-500 to-orange-500', emoji: '🤠' },
+    { label: 'Funk Hits', query: 'funk hits brasil 2024', color: 'from-purple-600 to-pink-600', emoji: '🎵' },
+    { label: 'Reggaeton', query: 'reggaeton hits 2024', color: 'from-green-500 to-teal-600', emoji: '💃' },
+    { label: 'Pop Mundial', query: 'pop internacional hits 2024', color: 'from-blue-500 to-purple-600', emoji: '🌍' },
+    { label: 'Hip-Hop', query: 'hip hop hits 2024', color: 'from-gray-700 to-gray-900', emoji: '🎤' },
+    { label: 'MPB Clássicos', query: 'MPB classicos brasileiros', color: 'from-amber-600 to-yellow-600', emoji: '🎹' },
+    { label: 'Rock Brasil', query: 'rock brasileiro classicos', color: 'from-red-600 to-orange-700', emoji: '🎸' },
+    { label: 'Lo-Fi Relax', query: 'lofi chill relax study', color: 'from-indigo-500 to-purple-700', emoji: '☕' },
+  ];
+
+  const handleGenrePlay = useCallback(async (query: string, label: string) => {
+    if (loadingArtist) return;
+    setLoadingArtist(label);
+    try {
+      const results = await searchYouTube(query);
+      if (results.items.length > 0) {
+        onPlayPlaylist(results.items.map(i => ({
+          id: i.id, title: i.title, thumbnail: i.thumbnail
+        })), 0);
+        onClose();
+      }
+    } catch (err) {
+      console.error('Erro ao carregar gênero:', err);
+    } finally {
+      setLoadingArtist(null);
+    }
+  }, [loadingArtist, onPlayPlaylist, onClose]);
+
   const artists = activeTab === 'brasil' ? BRAZILIAN_ARTISTS : INTERNATIONAL_ARTISTS;
 
   return (
@@ -99,13 +128,13 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
       </div>
 
       {/* Tabs */}
-      <div className="flex px-4 pt-2 pb-1 gap-2">
+      <div className="flex px-4 pt-3 pb-2 gap-3">
         <button
           onClick={() => setActiveTab('brasil')}
           className={cn(
-            'flex-1 py-1.5 rounded-full text-xs font-bold transition-all',
+            'flex-1 py-3 rounded-2xl text-sm font-black transition-all shadow-sm',
             activeTab === 'brasil'
-              ? 'bg-gradient-to-r from-green-500 to-yellow-500 text-white shadow-sm'
+              ? 'bg-gradient-to-r from-green-500 to-yellow-500 text-white shadow-green-200'
               : 'bg-gray-100 text-gray-500'
           )}
         >
@@ -114,9 +143,9 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
         <button
           onClick={() => setActiveTab('internacional')}
           className={cn(
-            'flex-1 py-1.5 rounded-full text-xs font-bold transition-all',
+            'flex-1 py-3 rounded-2xl text-sm font-black transition-all shadow-sm',
             activeTab === 'internacional'
-              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm'
+              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-blue-200'
               : 'bg-gray-100 text-gray-500'
           )}
         >
@@ -178,44 +207,22 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
 
         {/* Seção de playlists rápidas */}
         <div className="mt-4">
-          <p className="text-xs font-bold text-gray-700 mb-2 px-1">🔥 Playlists por gênero</p>
+          <p className="text-xs font-bold text-gray-700 mb-3 px-1">🔥 Playlists por gênero</p>
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {[
-              { label: 'Top Sertanejo', query: 'top sertanejo 2024', color: 'from-yellow-500 to-orange-500', emoji: '🤠' },
-              { label: 'Funk Hits', query: 'funk hits brasil 2024', color: 'from-purple-600 to-pink-600', emoji: '🎵' },
-              { label: 'Reggaeton', query: 'reggaeton hits 2024', color: 'from-green-500 to-teal-600', emoji: '💃' },
-              { label: 'Pop Mundial', query: 'pop internacional hits 2024', color: 'from-blue-500 to-purple-600', emoji: '🌍' },
-              { label: 'Hip-Hop', query: 'hip hop hits 2024', color: 'from-gray-700 to-gray-900', emoji: '🎤' },
-              { label: 'MPB Clássicos', query: 'MPB classicos brasileiros', color: 'from-amber-600 to-yellow-600', emoji: '🎹' },
-              { label: 'Rock Brasil', query: 'rock brasileiro classicos', color: 'from-red-600 to-orange-700', emoji: '🎸' },
-              { label: 'Lo-Fi Relax', query: 'lofi chill relax study', color: 'from-indigo-500 to-purple-700', emoji: '☕' },
-            ].map((playlist) => (
+            {GENRE_PLAYLISTS.map((playlist) => (
               <button
                 key={playlist.label}
-                onClick={async () => {
-                  if (loadingArtist) return;
-                  setLoadingArtist(playlist.label);
-                  try {
-                    const results = await searchYouTube(playlist.query);
-                    if (results.items.length > 0) {
-                      onPlayPlaylist(results.items.map(i => ({
-                        id: i.id, title: i.title, thumbnail: i.thumbnail
-                      })), 0);
-                      onClose();
-                    }
-                  } finally {
-                    setLoadingArtist(null);
-                  }
-                }}
-                disabled={loadingArtist === playlist.label}
+                onClick={() => handleGenrePlay(playlist.query, playlist.label)}
+                disabled={!!loadingArtist}
                 className={cn(
-                  'flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-white text-xs font-bold',
-                  `bg-gradient-to-r ${playlist.color}`
+                  'flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-xs font-bold transition-all',
+                  `bg-gradient-to-r ${playlist.color}`,
+                  loadingArtist === playlist.label ? 'opacity-80' : 'opacity-100'
                 )}
               >
                 {loadingArtist === playlist.label
-                  ? <Loader2 size={12} className="animate-spin" />
-                  : <span>{playlist.emoji}</span>
+                  ? <Loader2 size={14} className="animate-spin" />
+                  : <span className="text-base">{playlist.emoji}</span>
                 }
                 {playlist.label}
               </button>

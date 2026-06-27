@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const GOOGLE_CLIENT_ID = '537890558416-b2paavkc8r5rgov1t0idseh1s3vit25j.apps.googleusercontent.com';
 const USER_STORAGE_KEY = 'maestroplay_user';
@@ -27,19 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch { return null; }
   });
   const [isLoading, setIsLoading] = useState(false);
-  const gsiReady = useRef(false);
-
-  // Carregar Google Identity Services script
-  useEffect(() => {
-    if (document.getElementById('google-gsi')) return;
-    const s = document.createElement('script');
-    s.id = 'google-gsi';
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.async = true;
-    s.defer = true;
-    s.onload = () => { gsiReady.current = true; };
-    document.head.appendChild(s);
-  }, []);
 
   const handleToken = useCallback((credential: string) => {
     try {
@@ -59,55 +46,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Escuta mensagem de retorno do popup OAuth
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === 'google-auth-token' && e.data.id_token) {
+        handleToken(e.data.id_token);
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [handleToken]);
+
   const signIn = useCallback(() => {
     setIsLoading(true);
-    const attempt = () => {
-      const g = (window as any).google;
-      if (!g?.accounts?.id) {
-        setTimeout(attempt, 500);
-        return;
-      }
-      g.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (r: any) => handleToken(r.credential),
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      g.accounts.id.prompt((n: any) => {
-        if (n.isNotDisplayed() || n.isSkippedMoment()) {
-          // Fallback: usar OAuth popup
-          const params = new URLSearchParams({
-            client_id: GOOGLE_CLIENT_ID,
-            redirect_uri: `${window.location.origin}/auth/callback`,
-            response_type: 'token',
-            scope: 'openid profile email',
-            prompt: 'select_account',
-          });
-          // Usa o One Tap via link direto
-          const url = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-          const popup = window.open(url, 'google-auth', 'width=500,height=600');
-          
-          // Ouvir mensagem de callback
-          const handler = (e: MessageEvent) => {
-            if (e.origin !== window.location.origin) return;
-            if (e.data?.type === 'google-auth' && e.data.credential) {
-              handleToken(e.data.credential);
-              window.removeEventListener('message', handler);
-              popup?.close();
-            }
-          };
-          window.addEventListener('message', handler);
+    // Abre popup OAuth puro — sem Google One Tap (que causa insertBefore)
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: `${window.location.origin}`,
+      response_type: 'id_token',
+      scope: 'openid profile email',
+      nonce: Math.random().toString(36),
+      prompt: 'select_account',
+    });
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    const w = 480, h = 600;
+    const left = (screen.width - w) / 2;
+    const top = (screen.height - h) / 2;
+    const popup = window.open(url, 'google-login', `width=${w},height=${h},left=${left},top=${top}`);
+
+    // Verificar quando o popup fecha e extrair o token do hash
+    const timer = setInterval(() => {
+      try {
+        if (!popup || popup.closed) {
+          clearInterval(timer);
           setIsLoading(false);
+          return;
         }
-      });
-    };
-    attempt();
+        const hash = popup.location.hash;
+        if (hash && hash.includes('id_token')) {
+          const params = new URLSearchParams(hash.substring(1));
+          const idToken = params.get('id_token');
+          if (idToken) {
+            handleToken(idToken);
+            popup.close();
+            clearInterval(timer);
+          }
+        }
+      } catch {
+        // Cross-origin — ainda carregando
+      }
+    }, 300);
   }, [handleToken]);
 
   const signOut = useCallback(() => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
-    try { (window as any).google?.accounts?.id?.disableAutoSelect(); } catch {}
   }, []);
 
   return (

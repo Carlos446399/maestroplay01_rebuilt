@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const ProfileButton = () => {
-  const { user, isLoading, isConfigured, signIn, signOut } = useAuth();
+  const { user, isLoading, signIn, signOut } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
 
   if (user) {

@@ -1,34 +1,20 @@
 import { Radio } from '@/types/music';
 
 export const radioStations: Radio[] = [
-  // === BRASILEIRAS ===
+  // === BRASILEIRAS — URLs testadas e confiáveis ===
   {
     id: 'jovem-pan',
     name: 'Jovem Pan FM',
-    url: 'https://stream.jovempan.com.br/jovempanfm',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOVEM_PAN_FMAAC',
     cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Jovem_Pan_logo.svg/200px-Jovem_Pan_logo.svg.png',
     genre: 'Pop/Rock'
   },
   {
     id: 'mix-fm',
-    name: 'Mix FM São Paulo',
+    name: 'Mix FM',
     url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFM_SPAAC',
     cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/MixFM.svg/200px-MixFM.svg.png',
     genre: 'Pop'
-  },
-  {
-    id: 'antenna1',
-    name: 'Antena 1',
-    url: 'https://antena1.crossradio.com.br/stream/1/',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Antena_1_logo.svg/200px-Antena_1_logo.svg.png',
-    genre: 'Romântica'
-  },
-  {
-    id: 'radio-globo',
-    name: 'Rádio Globo',
-    url: 'https://15963.live.streamtheworld.com/RADIO_GLOBO_SP.mp3',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/R%C3%A1dio_Globo_logo.png/200px-R%C3%A1dio_Globo_logo.png',
-    genre: 'Esporte/Notícias'
   },
   {
     id: 'band-fm',
@@ -51,15 +37,8 @@ export const radioStations: Radio[] = [
     cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Metropolitana_FM_logo.svg/200px-Metropolitana_FM_logo.svg.png',
     genre: 'Rock'
   },
-  {
-    id: 'itatiaia',
-    name: 'Itatiaia',
-    url: 'https://cast2.hoost.com.br:7088/stream',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Itatiaia_logo.svg/200px-Itatiaia_logo.svg.png',
-    genre: 'Notícias'
-  },
 
-  // === INTERNACIONAIS ===
+  // === INTERNACIONAIS — URLs sem HLS (mp3 direto) ===
   {
     id: 'bbc-radio1',
     name: 'BBC Radio 1',
@@ -75,14 +54,14 @@ export const radioStations: Radio[] = [
     genre: 'Clássicos'
   },
   {
-    id: 'lofi-hip-hop',
+    id: 'lofi',
     name: 'Lo-Fi Hip Hop',
     url: 'https://lofi.stream.laut.fm/lofi',
     cover: 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=200&h=200&fit=crop',
     genre: 'Lo-Fi'
   },
   {
-    id: 'jazz-fm',
+    id: 'jazz',
     name: 'Jazz FM',
     url: 'https://jazz-wr02.ice.infomaniak.ch/jazz-wr02-128.mp3',
     cover: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=200&h=200&fit=crop',
@@ -96,31 +75,45 @@ export const radioStations: Radio[] = [
     genre: 'Clássica'
   },
   {
-    id: 'reggae-radio',
+    id: 'reggae',
     name: 'Reggae Radio',
     url: 'https://reggae.stream.laut.fm/reggae',
     cover: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=200&h=200&fit=crop',
     genre: 'Reggae'
   },
   {
-    id: 'rock-radio',
+    id: 'rock-antenne',
     name: 'Rock Antenne',
     url: 'https://stream.rockantenne.de/rockantenne/stream/mp3',
     cover: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=200&h=200&fit=crop',
     genre: 'Rock'
   },
   {
-    id: 'dance-fm',
+    id: 'dance',
     name: 'Dance FM',
     url: 'https://dance.stream.laut.fm/dance',
     cover: 'https://images.unsplash.com/photo-1571266028243-d220c6a6dd32?w=200&h=200&fit=crop',
     genre: 'Dance/Eletrônica'
   },
   {
-    id: 'hits-radio',
-    name: 'Hits Radio',
-    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/HITS_RADIO_AAAC',
-    cover: 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=200&h=200&fit=crop',
-    genre: 'Hits'
+    id: 'edm',
+    name: 'EDM Radio',
+    url: 'https://eu9.fastcast4u.com/proxy/jamz?mp=/1',
+    cover: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=200&h=200&fit=crop',
+    genre: 'EDM'
+  },
+  {
+    id: 'gospel',
+    name: 'Rádio Gospel',
+    url: 'https://cast1.totemsound.com/stream/10022/stream.mp3',
+    cover: 'https://images.unsplash.com/photo-1445375011782-2384686778a0?w=200&h=200&fit=crop',
+    genre: 'Gospel'
+  },
+  {
+    id: 'mpb',
+    name: 'MPB FM',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_MPB_FMAAC',
+    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
+    genre: 'MPB'
   },
 ];

@@ -689,6 +689,8 @@ export const MobileMusicPlayer = () => {
       <RadioPanel
         isOpen={isRadioOpen}
         radios={radios}
+        currentRadioIndex={currentRadioIndex}
+        isPlaying={isPlaying && currentSource === 'radios'}
         onClose={() => setIsRadioOpen(false)}
         onRadioSelect={handlePlayRadio}
       />
@@ -762,7 +764,7 @@ export const MobileMusicPlayer = () => {
       {/* Botão flutuante: Músicas Salvas */}
       <button
         onClick={() => setIsSavedSongsOpen(true)}
-        className="fixed top-20 right-4 z-40 w-12 h-12 flex items-center justify-center rounded-lg bg-black/80 backdrop-blur-sm border border-gray-700 hover:border-gray-500 transition-all duration-300"
+        className="fixed top-20 right-4 z-20 w-12 h-12 flex items-center justify-center rounded-lg bg-black/80 backdrop-blur-sm border border-gray-700 hover:border-gray-500 transition-all duration-300"
         title="Músicas Salvas"
       >
         <Star size={20} className={savedSongs.length > 0 ? 'text-red-500' : 'text-gray-400'} />

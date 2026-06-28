@@ -32,21 +32,22 @@ export const LocalPlaylistPanel = ({
 
   return (
     <div className={cn(
-      "fixed left-0 w-full max-h-[60vh] z-10 transition-all duration-300 ease-in-out",
-      "bg-white border-t-2 border-gray-300 flex flex-col pb-2",
+      "fixed left-0 w-full max-h-[60vh] z-30 transition-all duration-300 ease-in-out",
+      "bg-white border-t-2 border-gray-200 flex flex-col pb-2",
       isOpen ? "bottom-0" : "-bottom-full"
     )}>
-      <div className="flex justify-center pt-2 pb-2">
+      <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-gray-100">
+        <span className="text-sm font-black text-gray-800">🔍 Pesquisar músicas</span>
         <button
           onClick={onClose}
-          className="text-red-600 hover:text-red-700 transition-colors"
+          className="text-red-500 hover:text-red-600 transition-colors p-1"
         >
-          <ChevronDown size={28} />
+          <ChevronDown size={26} />
         </button>
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-2 mx-4 mt-4 bg-white">
+      <div className="flex items-center gap-2 mx-4 mt-3 bg-white">
         <Input
           type="text"
           placeholder="Buscar música local..."

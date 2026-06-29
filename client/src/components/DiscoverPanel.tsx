@@ -66,6 +66,66 @@ interface DiscoverPanelProps {
   onPlayPlaylist: (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => void;
 }
 
+// Card de artista salvo com imagem do YouTube
+const SavedArtistCard = ({
+  artist,
+  loadingArtist,
+  onOpen,
+}: {
+  artist: {id: string; name: string; genre: string; image?: string};
+  loadingArtist: string | null;
+  onOpen: (a: {id: string; name: string; genre: string; image?: string}) => void;
+}) => {
+  const [thumb, setThumb] = useState<string | undefined>(artist.image);
+  const isLoading = loadingArtist === artist.id;
+
+  // Buscar thumbnail do canal se não tiver imagem
+  useEffect(() => {
+    if (thumb) return;
+    const GOOGLE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
+    fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=1&q=${encodeURIComponent(artist.name)}&key=${GOOGLE_API_KEY}`)
+      .then(r => r.json())
+      .then(d => {
+        const img = d.items?.[0]?.snippet?.thumbnails?.medium?.url;
+        if (img) setThumb(img);
+      })
+      .catch(() => {});
+  }, [artist.name, thumb]);
+
+  return (
+    <button
+      onClick={() => onOpen(artist)}
+      disabled={isLoading}
+      className="relative rounded-2xl overflow-hidden text-left bg-gray-900"
+      style={{ height: '120px' }}
+    >
+      {/* Imagem de fundo */}
+      {thumb ? (
+        <img src={thumb} alt={artist.name} className="absolute inset-0 w-full h-full object-cover opacity-70" />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600" />
+      )}
+      {/* Overlay escuro */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+      <div className="absolute inset-0 p-3 flex flex-col justify-end">
+        <p className="text-white font-black text-sm leading-tight truncate">{artist.name}</p>
+        <p className="text-white/70 text-[10px] mt-0.5">{artist.genre}</p>
+        <div className="flex items-center gap-1.5 mt-1.5">
+          {isLoading ? (
+            <Loader2 size={12} className="text-white animate-spin" />
+          ) : (
+            <Music2 size={12} className="text-white/80" />
+          )}
+          <span className="text-white/70 text-[9px]">
+            {isLoading ? 'Carregando...' : 'Ver músicas'}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+};
+
 interface ArtistSongsView {
   artist: ArtistCard;
   songs: YouTubeResult[];
@@ -75,14 +135,32 @@ interface ArtistSongsView {
 
 export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanelProps) => {
   const [loadingArtist, setLoadingArtist] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'brasil' | 'internacional'>('brasil');
-  // Visão de músicas do artista (null = lista de artistas)
+  const [activeTab, setActiveTab] = useState<'salvos' | 'brasil' | 'internacional'>('salvos');
   const [artistView, setArtistView] = useState<ArtistSongsView | null>(null);
   const songsListRef = useRef<HTMLDivElement>(null);
 
-  // Ao fechar, resetar para lista de artistas
+  // Artistas salvos do localStorage (do ArtistsPanel)
+  const [savedArtists, setSavedArtists] = useState<Array<{id: string; name: string; genre: string; image?: string; country?: string}>>([]);
+
   useEffect(() => {
-    if (!isOpen) setArtistView(null);
+    if (!isOpen) return;
+    try {
+      const raw = localStorage.getItem('savedArtists');
+      if (raw) {
+        const ids: string[] = JSON.parse(raw);
+        // Buscar dados completos de cada artista salvo
+        // Os artistas salvos podem vir do ArtistsPanel (com image) ou do DiscoverPanel
+        const allArtistsMap: Record<string, {id: string; name: string; genre: string; image?: string; country?: string}> = {};
+        [...BRAZILIAN_ARTISTS, ...INTERNATIONAL_ARTISTS].forEach(a => {
+          allArtistsMap[a.id] = { id: a.id, name: a.name, genre: a.genre };
+        });
+        // Tentar recuperar artistas salvos com dados extras do localStorage
+        const savedData = ids.map(id => allArtistsMap[id] || { id, name: id, genre: '' });
+        setSavedArtists(savedData);
+      } else {
+        setSavedArtists([]);
+      }
+    } catch { setSavedArtists([]); }
   }, [isOpen]);
 
   // Abrir artista — carrega primeira página de músicas
@@ -137,7 +215,7 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
   // Scroll infinito nos cards de artistas
   const artistsListRef = useRef<HTMLDivElement>(null);
   const [visibleArtists, setVisibleArtists] = useState(8);
-  const allArtists = activeTab === 'brasil' ? BRAZILIAN_ARTISTS : INTERNATIONAL_ARTISTS;
+  const allArtists = activeTab === 'brasil' ? BRAZILIAN_ARTISTS : activeTab === 'internacional' ? INTERNATIONAL_ARTISTS : [];
   const displayedArtists = allArtists.slice(0, visibleArtists);
 
   const handleArtistsScroll = useCallback(() => {
@@ -284,32 +362,76 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
           onScroll={handleArtistsScroll}
         >
           {/* Tabs */}
-          <div className="flex px-4 pt-3 pb-2 gap-3 flex-shrink-0">
+          <div className="flex px-3 pt-3 pb-2 gap-2 flex-shrink-0">
+            <button
+              onClick={() => setActiveTab('salvos')}
+              className={cn(
+                'flex-1 py-2.5 rounded-2xl text-xs font-black transition-all',
+                activeTab === 'salvos'
+                  ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-500'
+              )}
+            >
+              ⭐ Salvos
+            </button>
             <button
               onClick={() => setActiveTab('brasil')}
               className={cn(
-                'flex-1 py-3 rounded-2xl text-sm font-black transition-all',
+                'flex-1 py-2.5 rounded-2xl text-xs font-black transition-all',
                 activeTab === 'brasil'
                   ? 'bg-gradient-to-r from-green-500 to-yellow-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-500'
               )}
             >
-              🇧🇷 Brasileiros
+              🇧🇷 Brasil
             </button>
             <button
               onClick={() => setActiveTab('internacional')}
               className={cn(
-                'flex-1 py-3 rounded-2xl text-sm font-black transition-all',
+                'flex-1 py-2.5 rounded-2xl text-xs font-black transition-all',
                 activeTab === 'internacional'
                   ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-500'
               )}
             >
-              🌍 Internacionais
+              🌍 Mundial
             </button>
           </div>
 
-          {/* Grid de artistas */}
+          {/* Aba Salvos — artistas salvos do ArtistsPanel com card e imagem */}
+          {activeTab === 'salvos' && (
+            <div className="flex-1 overflow-y-auto px-3 pb-4">
+              {savedArtists.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <span className="text-4xl">⭐</span>
+                  <p className="text-xs text-gray-500 text-center">
+                    Nenhum artista salvo ainda.{'\n'}
+                    Vá em Artistas Mundiais e toque + para salvar.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  {savedArtists.map((artist) => (
+                    <SavedArtistCard
+                      key={artist.id}
+                      artist={artist}
+                      loadingArtist={loadingArtist}
+                      onOpen={(a) => handleArtistOpen({
+                        id: a.id,
+                        name: a.name,
+                        genre: a.genre || '',
+                        emoji: '🎵',
+                        gradient: 'from-purple-600 to-pink-600',
+                      })}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Grid de artistas Brasil/Internacional */}
+          {activeTab !== 'salvos' && (<>
           <div className="grid grid-cols-2 gap-3 px-3 pb-2">
             {displayedArtists.map((artist) => (
               <button
@@ -382,6 +504,7 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
               ))}
             </div>
           </div>
+          </>)}
         </div>
       )}
     </div>

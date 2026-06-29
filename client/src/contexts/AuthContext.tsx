@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
 const GOOGLE_CLIENT_ID = '537890558416-b2paavkc8r5rgov1t0idseh1s3vit25j.apps.googleusercontent.com';
 const USER_STORAGE_KEY = 'maestroplay_user';
@@ -13,7 +13,8 @@ export interface GoogleUser {
 interface AuthContextType {
   user: GoogleUser | null;
   isLoading: boolean;
-  signIn: () => void;
+  showLoginButton: boolean;
+  setShowLoginButton: (v: boolean) => void;
   signOut: () => void;
 }
 
@@ -27,10 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch { return null; }
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoginButton, setShowLoginButton] = useState(false);
+  const initialized = useRef(false);
 
-  const handleToken = useCallback((credential: string) => {
+  const handleCredential = useCallback((response: { credential: string }) => {
     try {
-      const payload = JSON.parse(atob(credential.split('.')[1]));
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
       const u: GoogleUser = {
         id: payload.sub,
         name: payload.name,
@@ -39,73 +42,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       setUser(u);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u));
+      setShowLoginButton(false);
     } catch (e) {
-      console.error('Erro no login:', e);
+      console.error('Login error:', e);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Escuta mensagem de retorno do popup OAuth
+  // Inicializar Google Identity Services
   useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin) return;
-      if (e.data?.type === 'google-auth-token' && e.data.id_token) {
-        handleToken(e.data.id_token);
-      }
+    if (initialized.current) return;
+
+    const init = () => {
+      if (!(window as any).google?.accounts?.id) return;
+      initialized.current = true;
+      (window as any).google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredential,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        use_fedcm_for_prompt: false,
+      });
     };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, [handleToken]);
 
-  const signIn = useCallback(() => {
-    setIsLoading(true);
-    // Abre popup OAuth puro — sem Google One Tap (que causa insertBefore)
-    const params = new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: `${window.location.origin}`,
-      response_type: 'id_token',
-      scope: 'openid profile email',
-      nonce: Math.random().toString(36),
-      prompt: 'select_account',
-    });
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-    const w = 480, h = 600;
-    const left = (screen.width - w) / 2;
-    const top = (screen.height - h) / 2;
-    const popup = window.open(url, 'google-login', `width=${w},height=${h},left=${left},top=${top}`);
+    // Se já carregou
+    if ((window as any).google?.accounts?.id) {
+      init();
+      return;
+    }
 
-    // Verificar quando o popup fecha e extrair o token do hash
-    const timer = setInterval(() => {
-      try {
-        if (!popup || popup.closed) {
-          clearInterval(timer);
-          setIsLoading(false);
-          return;
+    // Carregar script
+    const existing = document.getElementById('google-gsi');
+    if (!existing) {
+      const script = document.createElement('script');
+      script.id = 'google-gsi';
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = init;
+      document.head.appendChild(script);
+    } else {
+      const checkInterval = setInterval(() => {
+        if ((window as any).google?.accounts?.id) {
+          clearInterval(checkInterval);
+          init();
         }
-        const hash = popup.location.hash;
-        if (hash && hash.includes('id_token')) {
-          const params = new URLSearchParams(hash.substring(1));
-          const idToken = params.get('id_token');
-          if (idToken) {
-            handleToken(idToken);
-            popup.close();
-            clearInterval(timer);
-          }
-        }
-      } catch {
-        // Cross-origin — ainda carregando
-      }
-    }, 300);
-  }, [handleToken]);
+      }, 200);
+      return () => clearInterval(checkInterval);
+    }
+  }, [handleCredential]);
+
+  // Renderizar botão do Google quando showLoginButton=true
+  useEffect(() => {
+    if (!showLoginButton || user) return;
+
+    const tryRender = () => {
+      const el = document.getElementById('google-signin-container');
+      if (!el || !(window as any).google?.accounts?.id) return false;
+      (window as any).google.accounts.id.renderButton(el, {
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        locale: 'pt-BR',
+      });
+      return true;
+    };
+
+    if (!tryRender()) {
+      const t = setTimeout(tryRender, 500);
+      return () => clearTimeout(t);
+    }
+  }, [showLoginButton, user]);
 
   const signOut = useCallback(() => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
+    try { (window as any).google?.accounts?.id?.disableAutoSelect(); } catch {}
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, showLoginButton, setShowLoginButton, signOut }}>
       {children}
     </AuthContext.Provider>
   );

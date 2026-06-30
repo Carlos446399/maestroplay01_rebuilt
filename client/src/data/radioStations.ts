@@ -1,119 +1,165 @@
 import { Radio } from '@/types/music';
 
 export const radioStations: Radio[] = [
-  // === BRASILEIRAS — URLs testadas e confiáveis ===
   {
-    id: 'jovem-pan',
-    name: 'Jovem Pan FM',
-    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOVEM_PAN_FMAAC',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Jovem_Pan_logo.svg/200px-Jovem_Pan_logo.svg.png',
-    genre: 'Pop/Rock'
+    id: 'romanticas',
+    name: 'Românticas',
+    url: 'https://stream.knbcdn.com.br/romanticas/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=200&h=200&fit=crop',
+    genre: 'Românticas'
   },
   {
-    id: 'mix-fm',
-    name: 'Mix FM',
-    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFM_SPAAC',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/MixFM.svg/200px-MixFM.svg.png',
-    genre: 'Pop'
-  },
-  {
-    id: 'band-fm',
-    name: 'Band FM',
-    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_BAND_FMAAC',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Band_FM_logo.svg/200px-Band_FM_logo.svg.png',
+    id: 'hits-sertanejo',
+    name: 'Hits Sertanejo',
+    url: 'https://stream.knbcdn.com.br/hits-sertanejo/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1605648916319-cf082f7926cc?w=200&h=200&fit=crop',
     genre: 'Sertanejo'
   },
   {
-    id: 'transamérica',
-    name: 'Transamérica',
-    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/TRANSAMERICA_SPAAC',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Transamérica_FM_logo.svg/200px-Transamérica_FM_logo.svg.png',
-    genre: 'Pop'
+    id: 'rock-metal',
+    name: 'Rock & Metal',
+    url: 'https://stream.knbcdn.com.br/rock-metal/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=200&h=200&fit=crop',
+    genre: 'Rock/Metal'
   },
   {
-    id: 'metropolitana',
-    name: 'Metropolitana FM',
-    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/METRO_FMAAC',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Metropolitana_FM_logo.svg/200px-Metropolitana_FM_logo.svg.png',
-    genre: 'Rock'
-  },
-
-  // === INTERNACIONAIS — URLs sem HLS (mp3 direto) ===
-  {
-    id: 'bbc-radio1',
-    name: 'BBC Radio 1',
-    url: 'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/BBC_Radio_1_2021.svg/200px-BBC_Radio_1_2021.svg.png',
+    id: 'top-usa',
+    name: 'Top USA',
+    url: 'https://stream.knbcdn.com.br/top-usa/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=200&h=200&fit=crop',
     genre: 'Pop Internacional'
   },
   {
-    id: 'bbc-radio2',
-    name: 'BBC Radio 2',
-    url: 'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_two',
-    cover: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/BBC_Radio_2_2021.svg/200px-BBC_Radio_2_2021.svg.png',
-    genre: 'Clássicos'
+    id: 'top-brasil',
+    name: 'Top Brasil',
+    url: 'https://stream.knbcdn.com.br/top-brasil/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1518373714866-3f1478910cc0?w=200&h=200&fit=crop',
+    genre: 'Top Brasil'
   },
   {
-    id: 'lofi',
-    name: 'Lo-Fi Hip Hop',
-    url: 'https://lofi.stream.laut.fm/lofi',
-    cover: 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=200&h=200&fit=crop',
-    genre: 'Lo-Fi'
+    id: 'punk-rock',
+    name: 'Punk Rock',
+    url: 'https://stream.knbcdn.com.br/punk-rock/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=200&h=200&fit=crop',
+    genre: 'Punk Rock'
   },
   {
-    id: 'jazz',
-    name: 'Jazz FM',
-    url: 'https://jazz-wr02.ice.infomaniak.ch/jazz-wr02-128.mp3',
+    id: 'festa-infantil',
+    name: 'Festa Infantil',
+    url: 'https://stream.knbcdn.com.br/festa-infantil/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=200&h=200&fit=crop',
+    genre: 'Infantil'
+  },
+  {
+    id: 'jazz-instrumental',
+    name: 'Jazz Instrumental',
+    url: 'https://stream.knbcdn.com.br/jazz-instrumental/playlist.m3u8',
     cover: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=200&h=200&fit=crop',
     genre: 'Jazz'
   },
   {
-    id: 'classical',
-    name: 'Classical Radio',
-    url: 'https://live.musopen.org:8085/streamvbr0',
-    cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=200&h=200&fit=crop',
-    genre: 'Clássica'
+    id: 'baby-hits',
+    name: 'Baby Hits',
+    url: 'https://stream.knbcdn.com.br/baby-hits/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1492725764893-90b379c2b6e7?w=200&h=200&fit=crop',
+    genre: 'Infantil'
   },
   {
-    id: 'reggae',
-    name: 'Reggae Radio',
-    url: 'https://reggae.stream.laut.fm/reggae',
+    id: 'glee-playlist',
+    name: 'Glee Playlist',
+    url: 'https://stream.knbcdn.com.br/glee-playlist/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
+    genre: 'Musicais'
+  },
+  {
+    id: 'themes',
+    name: 'Trilhas & Temas',
+    url: 'https://stream.knbcdn.com.br/themes/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=200&h=200&fit=crop',
+    genre: 'Trilhas Sonoras'
+  },
+  {
+    id: 'reggae-essentials',
+    name: 'Reggae Essentials',
+    url: 'https://stream.knbcdn.com.br/reggae-essentials/playlist.m3u8',
     cover: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=200&h=200&fit=crop',
     genre: 'Reggae'
   },
   {
-    id: 'rock-antenne',
-    name: 'Rock Antenne',
-    url: 'https://stream.rockantenne.de/rockantenne/stream/mp3',
-    cover: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=200&h=200&fit=crop',
-    genre: 'Rock'
+    id: 'axe-anos-90-2000',
+    name: 'Axé Anos 90 e 2000',
+    url: 'https://stream.knbcdn.com.br/axe-anos-90-e-2000/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=200&h=200&fit=crop',
+    genre: 'Axé'
   },
   {
-    id: 'dance',
-    name: 'Dance FM',
-    url: 'https://dance.stream.laut.fm/dance',
+    id: 'dia-publicitario',
+    name: 'Dia do Publicitário',
+    url: 'https://stream.knbcdn.com.br/dia-do-publicitario/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=200&h=200&fit=crop',
+    genre: 'Variedades'
+  },
+  {
+    id: 'hip-hop-2020',
+    name: 'Hip-Hop 2020',
+    url: 'https://stream.knbcdn.com.br/playlist-hip-hop-2020/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=200&h=200&fit=crop',
+    genre: 'Hip-Hop'
+  },
+  {
+    id: 'pagode-anos-90',
+    name: 'Pagode Anos 90',
+    url: 'https://stream.knbcdn.com.br/pagode-anos-90/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&h=200&fit=crop',
+    genre: 'Pagode'
+  },
+  {
+    id: 'funk',
+    name: 'Funk',
+    url: 'https://stream.knbcdn.com.br/funk/playlist.m3u8',
     cover: 'https://images.unsplash.com/photo-1571266028243-d220c6a6dd32?w=200&h=200&fit=crop',
-    genre: 'Dance/Eletrônica'
+    genre: 'Funk'
   },
   {
-    id: 'edm',
-    name: 'EDM Radio',
-    url: 'https://eu9.fastcast4u.com/proxy/jamz?mp=/1',
-    cover: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=200&h=200&fit=crop',
-    genre: 'EDM'
+    id: 'kboing-fm',
+    name: 'Kboing FM',
+    url: 'https://stream.knbcdn.com.br/kboing-fm/kbostream-hd/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=200&h=200&fit=crop',
+    genre: 'Variedades'
   },
   {
-    id: 'gospel',
-    name: 'Rádio Gospel',
-    url: 'https://cast1.totemsound.com/stream/10022/stream.mp3',
+    id: 'mpb-mix',
+    name: 'MPB Mix',
+    url: 'https://stream.knbcdn.com.br/mpb-mix/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=200&h=200&fit=crop',
+    genre: 'MPB'
+  },
+  {
+    id: 'funcional-hit',
+    name: 'Funcional Hit',
+    url: 'https://stream.knbcdn.com.br/funcional-hit/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=200&h=200&fit=crop',
+    genre: 'Treino/Academia'
+  },
+  {
+    id: 'estouradas-forro',
+    name: 'Estouradas do Forró',
+    url: 'https://stream.knbcdn.com.br/estouradas-do-forro/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=200&h=200&fit=crop',
+    genre: 'Forró'
+  },
+  {
+    id: 'pop-rock-anos-80',
+    name: 'Pop Rock Anos 80',
+    url: 'https://stream.knbcdn.com.br/pop-rock-anos-80/playlist.m3u8',
+    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
+    genre: 'Pop Rock'
+  },
+  {
+    id: 'gospel-top-hits',
+    name: 'Gospel Top Hits',
+    url: 'https://stream.knbcdn.com.br/gospel-top-hits/playlist.m3u8',
     cover: 'https://images.unsplash.com/photo-1445375011782-2384686778a0?w=200&h=200&fit=crop',
     genre: 'Gospel'
-  },
-  {
-    id: 'mpb',
-    name: 'MPB FM',
-    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_MPB_FMAAC',
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
-    genre: 'MPB'
   },
 ];

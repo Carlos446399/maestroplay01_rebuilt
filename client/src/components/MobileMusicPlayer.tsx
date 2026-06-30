@@ -723,6 +723,7 @@ export const MobileMusicPlayer = () => {
       <audio 
         ref={audioRef} 
         preload="metadata"
+        crossOrigin="anonymous"
         className="hidden"
       />
 

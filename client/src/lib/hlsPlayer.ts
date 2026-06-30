@@ -59,10 +59,21 @@ export const loadAudioSource = (
       manifestLoadingMaxRetry: 4,
       levelLoadingMaxRetry: 4,
       fragLoadingMaxRetry: 6,
+      xhrSetup: (xhr) => {
+        // Garante modo CORS explícito sem enviar credenciais
+        // (necessário para servidores de streaming que não enviam
+        // Access-Control-Allow-Credentials, mas permitem CORS simples)
+        xhr.withCredentials = false;
+      },
     });
 
     hls.loadSource(url);
     hls.attachMedia(audio);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      console.log('[hlsPlayer] Manifesto HLS carregado com sucesso:', url);
+    });
+
     hls.on(Hls.Events.ERROR, (_event, data) => {
       if (!data.fatal) {
         // Erros não fatais (ex: queda de um fragmento) são tratados

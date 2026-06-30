@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronDown, ChevronRight, Music2, Loader2, AlertCircle, HardDrive, ArrowLeft, Search, X, Star } from 'lucide-react';
+import { ChevronDown, ChevronRight, Music2, Loader2, AlertCircle, HardDrive, ArrowLeft, Search, X, Star, Download, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   listFolderContents,
@@ -11,6 +11,7 @@ import {
   DriveItem,
 } from '@/services/googleDriveService';
 import { favoritesStorage } from '@/services/favoritesStorage';
+import { audioStorage } from '@/services/audioStorage';
 
 const ROOT_FOLDER_ID = '1zqRZc6TRZkQafTOhCokzyD6HUWpTQusx';
 
@@ -32,11 +33,19 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
   const [search, setSearch] = useState('');
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [driveFavorites, setDriveFavorites] = useState<Set<string>>(new Set());
+  const [offlineIds, setOfflineIds] = useState<Set<string>>(new Set());
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
 
-  // Carregar favoritos do Drive ao montar
+  // Carregar favoritos do Drive e músicas offline ao montar
   useEffect(() => {
     const stored = favoritesStorage.getAll();
     setDriveFavorites(new Set(stored.filter(f => f.id.startsWith('drive-')).map(f => f.id)));
+
+    audioStorage.init().then(async () => {
+      const allFiles = await audioStorage.getAllAudioFiles();
+      const offline = new Set(allFiles.filter(f => f.id.startsWith('drive-')).map(f => f.id));
+      setOfflineIds(offline);
+    }).catch(() => {});
   }, []);
 
   const toggleDriveFavorite = (file: DriveItem, e: React.MouseEvent) => {
@@ -51,6 +60,41 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
       youtubeId: file.id,
     });
     setDriveFavorites(new Set(updated.filter(f => f.id.startsWith('drive-')).map(f => f.id)));
+  };
+
+  // Baixa o arquivo de áudio do Drive (via Edge Function) e salva no
+  // IndexedDB para tocar offline, sem precisar de internet depois.
+  const downloadOffline = async (file: DriveItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const offlineId = `drive-${file.id}`;
+
+    if (offlineIds.has(offlineId) || downloadingIds.has(offlineId)) return;
+
+    setDownloadingIds(prev => new Set(prev).add(offlineId));
+    try {
+      const res = await fetch(`/api/drive-proxy?id=${file.id}`);
+      if (!res.ok) throw new Error(`Erro ${res.status}`);
+      const blob = await res.blob();
+      if (blob.size === 0) throw new Error('Arquivo vazio');
+
+      const title = file.name.replace(/\.[^/.]+$/, '');
+      const cover = getDriveThumbnail(file);
+      const audioFile = new File([blob], file.name, { type: blob.type || 'audio/mpeg' });
+
+      await audioStorage.init();
+      await audioStorage.storeAudioFile(offlineId, title, audioFile, cover);
+
+      setOfflineIds(prev => new Set(prev).add(offlineId));
+    } catch (err) {
+      console.error('Erro ao baixar música offline:', err);
+      alert('Não foi possível salvar esta música offline. Tente novamente.');
+    } finally {
+      setDownloadingIds(prev => {
+        const next = new Set(prev);
+        next.delete(offlineId);
+        return next;
+      });
+    }
   };
 
   const currentFolder = breadcrumb[breadcrumb.length - 1];
@@ -282,6 +326,19 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
                           <p className="text-[10px] text-gray-400">{formatFileSize(file.size)}</p>
                         )}
                       </div>
+                      <button
+                        onClick={(e) => downloadOffline(file, e)}
+                        className="p-1 flex-shrink-0"
+                        title={offlineIds.has(`drive-${file.id}`) ? 'Salva offline' : 'Salvar offline'}
+                      >
+                        {downloadingIds.has(`drive-${file.id}`) ? (
+                          <Loader2 size={16} className="text-green-600 animate-spin" />
+                        ) : offlineIds.has(`drive-${file.id}`) ? (
+                          <CheckCircle2 size={16} className="text-green-600" />
+                        ) : (
+                          <Download size={16} className="text-gray-300" />
+                        )}
+                      </button>
                       <button
                         onClick={(e) => toggleDriveFavorite(file, e)}
                         className="p-1 flex-shrink-0"

@@ -39,6 +39,12 @@ export const getSharedAudioGraph = (audioElement: HTMLAudioElement): AudioGraphE
 
   const source = audioContext.createMediaElementSource(audioElement);
 
+  // CRÍTICO: conectar o source ao destination (alto-falantes).
+  // Sem essa conexão, o áudio nunca sai do elemento, mesmo tocando
+  // normalmente (currentTime avança, mas nenhum som é produzido).
+  // Isso afeta TUDO que usa este elemento de áudio: faixas locais e rádios.
+  source.connect(audioContext.destination);
+
   const entry: AudioGraphEntry = { audioContext, source };
   graphMap.set(audioElement, entry);
   return entry;

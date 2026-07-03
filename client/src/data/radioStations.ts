@@ -1,165 +1,113 @@
 import { Radio } from '@/types/music';
 
+/**
+ * Lista de rádios atualizada com links funcionais.
+ * Usamos streams HLS (.m3u8) e MP3 diretos.
+ */
 export const radioStations: Radio[] = [
   {
-    id: 'romanticas',
-    name: 'Românticas',
-    url: 'https://stream.knbcdn.com.br/romanticas/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=200&h=200&fit=crop',
-    genre: 'Românticas'
-  },
-  {
-    id: 'hits-sertanejo',
-    name: 'Hits Sertanejo',
-    url: 'https://stream.knbcdn.com.br/hits-sertanejo/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1605648916319-cf082f7926cc?w=200&h=200&fit=crop',
-    genre: 'Sertanejo'
-  },
-  {
-    id: 'rock-metal',
-    name: 'Rock & Metal',
-    url: 'https://stream.knbcdn.com.br/rock-metal/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=200&h=200&fit=crop',
-    genre: 'Rock/Metal'
-  },
-  {
-    id: 'top-usa',
-    name: 'Top USA',
-    url: 'https://stream.knbcdn.com.br/top-usa/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=200&h=200&fit=crop',
+    id: 'antena-1',
+    name: 'Antena 1 (Hits)',
+    url: 'https://stream.antena1.com.br/stream',
+    cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop',
     genre: 'Pop Internacional'
   },
   {
-    id: 'top-brasil',
-    name: 'Top Brasil',
-    url: 'https://stream.knbcdn.com.br/top-brasil/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1518373714866-3f1478910cc0?w=200&h=200&fit=crop',
-    genre: 'Top Brasil'
+    id: 'jovem-pan-fm',
+    name: 'Jovem Pan FM',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/JP_SP_FMAAC.aac',
+    cover: 'https://images.unsplash.com/photo-1598387181032-a3103a2db5b3?w=400&h=400&fit=crop',
+    genre: 'Pop/Hits'
   },
   {
-    id: 'punk-rock',
-    name: 'Punk Rock',
-    url: 'https://stream.knbcdn.com.br/punk-rock/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=200&h=200&fit=crop',
-    genre: 'Punk Rock'
+    id: 'alpha-fm',
+    name: 'Alpha FM',
+    url: 'https://26433.live.streamtheworld.com/ALPHAFM_SC',
+    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop',
+    genre: 'Adult Contemporary'
   },
   {
-    id: 'festa-infantil',
-    name: 'Festa Infantil',
-    url: 'https://stream.knbcdn.com.br/festa-infantil/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=200&h=200&fit=crop',
-    genre: 'Infantil'
+    id: 'mix-fm',
+    name: 'Mix FM',
+    url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/MIXSP_AAC.aac',
+    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
+    genre: 'Pop/Rock'
   },
   {
-    id: 'jazz-instrumental',
-    name: 'Jazz Instrumental',
-    url: 'https://stream.knbcdn.com.br/jazz-instrumental/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=200&h=200&fit=crop',
-    genre: 'Jazz'
+    id: 'metropolitana-fm',
+    name: 'Metropolitana FM',
+    url: 'https://ice.fabricahost.com.br/metropolitanafm',
+    cover: 'https://images.unsplash.com/photo-1459749411177-042180ce673c?w=400&h=400&fit=crop',
+    genre: 'Pop/Hits'
   },
   {
-    id: 'baby-hits',
-    name: 'Baby Hits',
-    url: 'https://stream.knbcdn.com.br/baby-hits/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1492725764893-90b379c2b6e7?w=200&h=200&fit=crop',
-    genre: 'Infantil'
+    id: 'itapema-fm',
+    name: 'Itapema FM',
+    url: 'https://ice.fabricahost.com.br/itapemafm',
+    cover: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=400&h=400&fit=crop',
+    genre: 'Adult/Jazz/Lounge'
   },
   {
-    id: 'glee-playlist',
-    name: 'Glee Playlist',
-    url: 'https://stream.knbcdn.com.br/glee-playlist/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
-    genre: 'Musicais'
+    id: '89-rock',
+    name: '89 FM A Rádio Rock',
+    url: 'https://ice.fabricahost.com.br/89radiorock',
+    cover: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400&h=400&fit=crop',
+    genre: 'Rock'
   },
   {
-    id: 'themes',
-    name: 'Trilhas & Temas',
-    url: 'https://stream.knbcdn.com.br/themes/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=200&h=200&fit=crop',
-    genre: 'Trilhas Sonoras'
-  },
-  {
-    id: 'reggae-essentials',
-    name: 'Reggae Essentials',
-    url: 'https://stream.knbcdn.com.br/reggae-essentials/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=200&h=200&fit=crop',
-    genre: 'Reggae'
-  },
-  {
-    id: 'axe-anos-90-2000',
-    name: 'Axé Anos 90 e 2000',
-    url: 'https://stream.knbcdn.com.br/axe-anos-90-e-2000/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=200&h=200&fit=crop',
-    genre: 'Axé'
-  },
-  {
-    id: 'dia-publicitario',
-    name: 'Dia do Publicitário',
-    url: 'https://stream.knbcdn.com.br/dia-do-publicitario/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=200&h=200&fit=crop',
-    genre: 'Variedades'
-  },
-  {
-    id: 'hip-hop-2020',
-    name: 'Hip-Hop 2020',
-    url: 'https://stream.knbcdn.com.br/playlist-hip-hop-2020/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=200&h=200&fit=crop',
-    genre: 'Hip-Hop'
-  },
-  {
-    id: 'pagode-anos-90',
-    name: 'Pagode Anos 90',
-    url: 'https://stream.knbcdn.com.br/pagode-anos-90/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&h=200&fit=crop',
-    genre: 'Pagode'
-  },
-  {
-    id: 'funk',
-    name: 'Funk',
-    url: 'https://stream.knbcdn.com.br/funk/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1571266028243-d220c6a6dd32?w=200&h=200&fit=crop',
-    genre: 'Funk'
-  },
-  {
-    id: 'kboing-fm',
-    name: 'Kboing FM',
-    url: 'https://stream.knbcdn.com.br/kboing-fm/kbostream-hd/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=200&h=200&fit=crop',
-    genre: 'Variedades'
-  },
-  {
-    id: 'mpb-mix',
-    name: 'MPB Mix',
-    url: 'https://stream.knbcdn.com.br/mpb-mix/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=200&h=200&fit=crop',
+    id: 'nova-brasil-fm',
+    name: 'Nova Brasil FM',
+    url: 'https://ice.fabricahost.com.br/novabrasilfm',
+    cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=400&fit=crop',
     genre: 'MPB'
   },
   {
-    id: 'funcional-hit',
-    name: 'Funcional Hit',
-    url: 'https://stream.knbcdn.com.br/funcional-hit/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=200&h=200&fit=crop',
-    genre: 'Treino/Academia'
+    id: 'kiss-fm',
+    name: 'Kiss FM',
+    url: 'https://ice.fabricahost.com.br/kissfm',
+    cover: 'https://images.unsplash.com/photo-1526218626217-dc65a29bb444?w=400&h=400&fit=crop',
+    genre: 'Classic Rock'
   },
   {
-    id: 'estouradas-forro',
-    name: 'Estouradas do Forró',
-    url: 'https://stream.knbcdn.com.br/estouradas-do-forro/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=200&h=200&fit=crop',
-    genre: 'Forró'
+    id: 'band-news-fm',
+    name: 'Band News FM',
+    url: 'https://ice.fabricahost.com.br/bandnewsfm_sp',
+    cover: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400&h=400&fit=crop',
+    genre: 'Notícias'
   },
   {
-    id: 'pop-rock-anos-80',
-    name: 'Pop Rock Anos 80',
-    url: 'https://stream.knbcdn.com.br/pop-rock-anos-80/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
-    genre: 'Pop Rock'
+    id: 'cbn-sp',
+    name: 'CBN São Paulo',
+    url: 'https://ice.fabricahost.com.br/cbnsp',
+    cover: 'https://images.unsplash.com/photo-1557833161-0b41f755a2d6?w=400&h=400&fit=crop',
+    genre: 'Notícias/Esportes'
   },
   {
-    id: 'gospel-top-hits',
-    name: 'Gospel Top Hits',
-    url: 'https://stream.knbcdn.com.br/gospel-top-hits/playlist.m3u8',
-    cover: 'https://images.unsplash.com/photo-1445375011782-2384686778a0?w=200&h=200&fit=crop',
-    genre: 'Gospel'
+    id: 'gazeta-fm',
+    name: 'Gazeta FM',
+    url: 'https://ice.fabricahost.com.br/gazetafm',
+    cover: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop',
+    genre: 'Popular/Hits'
   },
+  {
+    id: 'transcontinental-fm',
+    name: 'Transcontinental FM',
+    url: 'https://ice.fabricahost.com.br/transcontinentalfm',
+    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop',
+    genre: 'Pagode/Samba'
+  },
+  {
+    id: 'nativa-fm',
+    name: 'Nativa FM',
+    url: 'https://ice.fabricahost.com.br/nativafm_sp',
+    cover: 'https://images.unsplash.com/photo-1605648916319-cf082f7926cc?w=400&h=400&fit=crop',
+    genre: 'Sertanejo/Romântico'
+  },
+  {
+    id: 'band-fm',
+    name: 'Band FM',
+    url: 'https://ice.fabricahost.com.br/bandfm_sp',
+    cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&h=400&fit=crop',
+    genre: 'Popular/Hits'
+  }
 ];

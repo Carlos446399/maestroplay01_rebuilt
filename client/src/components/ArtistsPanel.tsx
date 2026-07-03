@@ -636,7 +636,7 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
                       <div
                         key={song.id}
                         className="p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors flex items-center gap-2 cursor-pointer"
-                        onClick={() => onPlayPlaylist?.(artistSongs, index) || onPlaySong?.(song.id, song.title, song.thumbnail)}
+                        onClick={() => onPlayPlaylist ? onPlayPlaylist(artistSongs, index) : onPlaySong?.(song.id, song.title, song.thumbnail)}
                       >
                         <img
                           src={song.thumbnail}

@@ -59,7 +59,7 @@ export const SavedSongsPanel = ({
                 className="w-full h-full rounded object-cover"
               />
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
-                {favorite.id.startsWith('drive-') ? (
+                {favorite.type === 'drive' || favorite.id.startsWith('drive-') ? (
                   <HardDrive size={10} className="text-green-600" />
                 ) : favorite.type === 'youtube' ? (
                   <Youtube size={10} className="text-red-600" />
@@ -75,7 +75,7 @@ export const SavedSongsPanel = ({
                 {favorite.name}
               </span>
               <span className="text-[10px] text-gray-500">
-                {favorite.id.startsWith('drive-') ? 'Google Drive' : favorite.type === 'youtube' ? 'YouTube' : favorite.type === 'radio' ? 'Rádio' : 'Arquivo Local'}
+                {favorite.type === 'drive' || favorite.id.startsWith('drive-') ? 'Google Drive' : favorite.type === 'youtube' ? 'YouTube' : favorite.type === 'radio' ? 'Rádio' : 'Arquivo Local'}
               </span>
             </div>
             <button

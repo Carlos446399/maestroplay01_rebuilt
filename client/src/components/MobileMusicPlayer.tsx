@@ -599,7 +599,7 @@ export const MobileMusicPlayer = () => {
           {displayName}
         </div>
         <div className="text-[10px] text-muted-foreground mt-0.5">
-          {isYouTubeMode ? '🎵 YouTube' : currentSource === 'radios' ? 'Rádio Online' : 'Artista'}
+          {isDriveMode ? '💾 Google Drive' : isYouTubeMode ? '🎵 YouTube' : currentSource === 'radios' ? 'Rádio Online' : 'Artista'}
         </div>
       </div>
 
@@ -776,8 +776,8 @@ export const MobileMusicPlayer = () => {
         favorites={savedSongs}
         onClose={() => setIsSavedSongsOpen(false)}
         onSelect={(favorite) => {
-          // Favoritos do Drive (id começa com 'drive-')
-          if (favorite.id.startsWith('drive-') && favorite.youtubeId) {
+          // Favoritos do Drive (type === 'drive' ou id começa com 'drive-' para retrocompatibilidade)
+          if ((favorite.type === 'drive' || favorite.id.startsWith('drive-')) && favorite.youtubeId) {
             handleDrivePlay(favorite.youtubeId, favorite.name, favorite.cover);
             return;
           }

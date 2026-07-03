@@ -56,7 +56,7 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
       id: `drive-${file.id}`,
       name: title,
       cover,
-      type: 'youtube',
+      type: 'drive',
       youtubeId: file.id,
     });
     setDriveFavorites(new Set(updated.filter(f => f.id.startsWith('drive-')).map(f => f.id)));

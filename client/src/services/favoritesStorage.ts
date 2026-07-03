@@ -2,15 +2,14 @@
  * favoritesStorage - Gerencia a lista de músicas favoritas/salvas,
  * persistida em localStorage para sobreviver a reloads e fechamentos do app.
  *
- * Suporta tanto faixas locais/rádios (Track/Radio com `id`) quanto músicas
- * tocadas via YouTube (que não fazem parte de `tracks`/`radios`).
+ * Suporta faixas locais, rádios, músicas do YouTube e arquivos do Google Drive.
  */
 
 export interface FavoriteSong {
   id: string;
   name: string;
   cover?: string;
-  type: 'local' | 'radio' | 'youtube';
+  type: 'local' | 'radio' | 'youtube' | 'drive';
   /** Para músicas do YouTube: o videoId usado para reproduzir */
   youtubeId?: string;
   addedAt: number;

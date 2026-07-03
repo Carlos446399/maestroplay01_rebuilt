@@ -15,6 +15,14 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const initializationDoneRef = useRef(false);
+  // Flag para interromper o loop de animação de dentro do próprio callback
+  const isPlayingRef = useRef(isPlaying);
+
+  // Mantém a ref sincronizada com a prop para que o loop de animação
+  // sempre leia o valor mais recente sem precisar ser recriado.
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -50,11 +58,20 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
 
     // Draw circular visualizer
     const draw = () => {
+      // Para o loop imediatamente se a reprodução foi interrompida
+      if (!isPlayingRef.current) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        animationIdRef.current = null;
+        return;
+      }
+
       const canvas = canvasRef.current;
       if (!canvas || !analyserRef.current || !dataArrayRef.current) {
-        if (isPlaying && audio && !audio.paused) {
-          animationIdRef.current = requestAnimationFrame(draw);
-        }
+        animationIdRef.current = requestAnimationFrame(draw);
         return;
       }
 
@@ -107,9 +124,7 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
 
       ctx.shadowColor = 'transparent';
 
-      if (isPlaying && audio && !audio.paused) {
-        animationIdRef.current = requestAnimationFrame(draw);
-      }
+      animationIdRef.current = requestAnimationFrame(draw);
     };
 
     // Only initialize and draw when actually playing
@@ -121,13 +136,28 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
         audioContextRef.current.resume().catch(e => console.warn('Could not resume AudioContext', e));
       }
 
-      draw();
+      // Cancela qualquer frame pendente antes de iniciar um novo loop
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+      animationIdRef.current = requestAnimationFrame(draw);
+    } else if (!isPlaying && animationIdRef.current) {
+      // Cancela o loop imediatamente ao pausar
+      cancelAnimationFrame(animationIdRef.current);
+      animationIdRef.current = null;
+      // Limpa o canvas
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
     }
 
     return () => {
       // Clean up animation frame
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
+        animationIdRef.current = null;
       }
     };
   }, [isPlaying, audioRef]);

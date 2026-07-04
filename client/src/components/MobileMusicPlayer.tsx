@@ -24,6 +24,7 @@ import { DrivePanel } from './DrivePanel';
 import { DiscoverPanel } from './DiscoverPanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 import { getDrivePreviewUrl } from '@/services/googleDriveService';
+import { audioStorage } from '@/services/audioStorage';
 
 declare global {
   interface Window {
@@ -90,6 +91,9 @@ export const MobileMusicPlayer = () => {
   // Lista de músicas atual do Drive para navegação próxima/anterior
   const drivePlaylistRef = useRef<Array<{id: string; name: string; cover?: string}>>([]);
   const driveCurrentIndexRef = useRef(0);
+  // URL de blob criada a partir de uma cópia offline (IndexedDB). Guardamos
+  // para poder liberar a memória (revokeObjectURL) ao trocar de música.
+  const driveBlobUrlRef = useRef<string | null>(null);
   const [isArtistsPanelOpen, setIsArtistsPanelOpen] = useState(false);
   const [isPlayerLocked, setIsPlayerLocked] = useState(false);
   const [lockUnlockTimer, setLockUnlockTimer] = useState<NodeJS.Timeout | null>(null);
@@ -137,8 +141,10 @@ export const MobileMusicPlayer = () => {
         setDriveTitle(next.name);
         setDriveCover(next.cover || '');
         setDriveFileId(next.id);
-        audio.src = `/api/drive-proxy?id=${next.id}`;
-        audio.play().catch(console.error);
+        resolveDriveSrc(next.id).then(src => {
+          audio.src = src;
+          audio.play().catch(console.error);
+        });
       }
     };
 
@@ -375,8 +381,11 @@ export const MobileMusicPlayer = () => {
         setDriveTitle(next.name);
         setDriveCover(next.cover || '');
         setDriveFileId(next.id);
-        driveAudioRef.current.src = `/api/drive-proxy?id=${next.id}`;
-        driveAudioRef.current.play().catch(console.error);
+        const audioEl = driveAudioRef.current;
+        resolveDriveSrc(next.id).then(src => {
+          audioEl.src = src;
+          audioEl.play().catch(console.error);
+        });
       } else {
         driveAudioRef.current.currentTime = 0;
         driveAudioRef.current.play().catch(console.error);
@@ -412,8 +421,11 @@ export const MobileMusicPlayer = () => {
         setDriveTitle(prev.name);
         setDriveCover(prev.cover || '');
         setDriveFileId(prev.id);
-        driveAudioRef.current.src = `/api/drive-proxy?id=${prev.id}`;
-        driveAudioRef.current.play().catch(console.error);
+        const audioEl = driveAudioRef.current;
+        resolveDriveSrc(prev.id).then(src => {
+          audioEl.src = src;
+          audioEl.play().catch(console.error);
+        });
       } else {
         driveAudioRef.current.currentTime = 0;
         driveAudioRef.current.play().catch(console.error);
@@ -483,7 +495,28 @@ export const MobileMusicPlayer = () => {
     mediaSessionTrack
   );
 
-  const handleDrivePlay = (
+  // Resolve a URL de reprodução de uma música do Drive: se já existe uma
+  // cópia salva offline (IndexedDB), usa ela (funciona sem internet e evita
+  // baixar de novo desnecessariamente); senão, usa o proxy de streaming.
+  const resolveDriveSrc = async (fileId: string): Promise<string> => {
+    try {
+      await audioStorage.init();
+      const stored = await audioStorage.getAudioFile(`drive-${fileId}`);
+      if (stored) {
+        if (driveBlobUrlRef.current) {
+          audioStorage.revokeBlobUrl(driveBlobUrlRef.current);
+        }
+        const blobUrl = audioStorage.createBlobUrl(stored.file);
+        driveBlobUrlRef.current = blobUrl;
+        return blobUrl;
+      }
+    } catch (err) {
+      console.warn('Erro ao checar cópia offline, usando streaming:', err);
+    }
+    return `/api/drive-proxy?id=${fileId}`;
+  };
+
+  const handleDrivePlay = async (
     fileId: string,
     title: string,
     cover?: string,
@@ -513,9 +546,20 @@ export const MobileMusicPlayer = () => {
     setIsDriveOpen(false); // Fecha o painel ao iniciar reprodução
 
     if (driveAudioRef.current) {
-      driveAudioRef.current.src = `/api/drive-proxy?id=${fileId}`;
-      driveAudioRef.current.volume = 1;
-      driveAudioRef.current.play().catch(err => {
+      const audio = driveAudioRef.current;
+      if (!navigator.onLine) {
+        // Sem internet: só toca se já tivermos essa música salva offline.
+        const src = await resolveDriveSrc(fileId);
+        if (src.startsWith('/api/')) {
+          setDriveTitle(`📡 ${title} (offline — não baixada)`);
+          return;
+        }
+        audio.src = src;
+      } else {
+        audio.src = await resolveDriveSrc(fileId);
+      }
+      audio.volume = 1;
+      audio.play().catch(err => {
         if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
           console.error('Drive play error:', err);
           setDriveTitle(`❌ ${title}`);

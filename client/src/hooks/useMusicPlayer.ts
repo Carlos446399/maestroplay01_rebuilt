@@ -8,6 +8,9 @@ export const useMusicPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const [radioError, setRadioError] = useState<string | null>(null);
+  // Conta quantas estações falharam em sequência ao tentar auto-avançar,
+  // para evitar loop infinito caso todas as rádios estejam indisponíveis.
+  const radioSkipAttemptsRef = useRef(0);
   const [state, setState] = useState<MusicPlayerState>({
     tracks: [],
     radios: radioStations,
@@ -171,11 +174,19 @@ export const useMusicPlayer = () => {
     }
   }, [state.tracks]);
 
-  const playRadio = useCallback((index: number) => {
+  const playRadioRef = useRef<(index: number, isAutoSkip?: boolean) => void>(() => {});
+
+  const playRadio = useCallback((index: number, isAutoSkip: boolean = false) => {
     if (index < 0 || index >= state.radios.length) return;
-    
+
     const radio = state.radios[index];
-    
+
+    // Reseta o contador de tentativas sempre que o usuário escolhe uma
+    // estação manualmente; mantém o contador durante auto-skips em cadeia.
+    if (!isAutoSkip) {
+      radioSkipAttemptsRef.current = 0;
+    }
+
     setState(prev => ({ 
       ...prev, 
       currentRadioIndex: index, 
@@ -183,13 +194,27 @@ export const useMusicPlayer = () => {
       currentSource: 'radios',
       isPlaying: true
     }));
-    
+
+    const tryNextStation = (message: string) => {
+      radioSkipAttemptsRef.current += 1;
+      // Se já tentamos passar por todas as estações sem sucesso, paramos
+      // e mostramos o erro em vez de continuar pulando infinitamente.
+      if (radioSkipAttemptsRef.current >= state.radios.length) {
+        radioSkipAttemptsRef.current = 0;
+        setRadioError('Nenhuma rádio está disponível no momento. Tente novamente mais tarde.');
+        setState(prev => ({ ...prev, isPlaying: false }));
+        return;
+      }
+      setRadioError(`${message} Pulando para a próxima estação...`);
+      const nextIndex = (index + 1) % state.radios.length;
+      playRadioRef.current(nextIndex, true);
+    };
+
     if (audioRef.current) {
       setRadioError(null);
       loadAudioSource(audioRef.current, radio.url, {
         onFatalError: (message) => {
-          setRadioError(message);
-          setState(prev => ({ ...prev, isPlaying: false }));
+          tryNextStation(message);
         },
       });
       requestAnimationFrame(() => {
@@ -197,14 +222,17 @@ export const useMusicPlayer = () => {
           audioRef.current.play().catch(err => {
             if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
               console.error('Play error:', err);
-              setRadioError('Não foi possível tocar esta rádio.');
-              setState(prev => ({ ...prev, isPlaying: false }));
+              tryNextStation('Não foi possível tocar esta rádio.');
             }
           });
         }
       });
     }
   }, [state.radios]);
+
+  useEffect(() => {
+    playRadioRef.current = playRadio;
+  }, [playRadio]);
 
   const play = useCallback(() => {
     if (audioRef.current) {

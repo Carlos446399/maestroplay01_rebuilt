@@ -13,6 +13,12 @@
   path = "/api/drive-proxy"
   function = "drive-proxy"
 
+# Edge Function para proxy da listagem de pastas/arquivos do Drive
+# (mantém a API key apenas no servidor)
+[[edge_functions]]
+  path = "/api/drive-list"
+  function = "drive-list"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -7,11 +7,19 @@
  * — esse era o motivo das rádios não funcionarem. Para esses navegadores,
  * usamos hls.js para fazer o "demuxing" do stream e alimentar o elemento via
  * Media Source Extensions.
+ *
+ * hls.js é carregado dinamicamente (code-splitting) para não pesar no bundle
+ * inicial de quem nunca usa rádios — só é baixado quando alguém toca uma
+ * estação HLS pela primeira vez.
  */
 
-import Hls from 'hls.js';
+import type Hls from 'hls.js';
 
 let activeHls: Hls | null = null;
+// Token que identifica a chamada de loadAudioSource mais recente. Usado para
+// evitar que uma importação assíncrona "atrasada" de hls.js configure o
+// player depois que o usuário já trocou de estação (condição de corrida).
+let loadToken = 0;
 
 const isHlsUrl = (url: string) => /\.m3u8(\?.*)?$/i.test(url);
 
@@ -29,6 +37,8 @@ export const loadAudioSource = (
   url: string,
   callbacks?: LoadAudioSourceCallbacks
 ) => {
+  const currentToken = ++loadToken;
+
   // Limpar instância anterior do hls.js, se houver
   if (activeHls) {
     activeHls.destroy();
@@ -50,8 +60,19 @@ export const loadAudioSource = (
     return;
   }
 
-  if (Hls.isSupported()) {
-    const hls = new Hls({
+  import('hls.js').then(({ default: HlsLib }) => {
+    // Se o usuário já trocou de faixa/rádio enquanto o hls.js carregava,
+    // não faz nada — a chamada mais recente já assumiu o controle.
+    if (currentToken !== loadToken) return;
+
+    if (!HlsLib.isSupported()) {
+      // Último recurso: tenta tocar direto (pode não funcionar em todos os navegadores)
+      audio.removeAttribute('data-hls');
+      audio.src = url;
+      return;
+    }
+
+    const hls = new HlsLib({
       // Configuração mais tolerante para rádios ao vivo
       enableWorker: true,
       lowLatencyMode: true,
@@ -70,11 +91,14 @@ export const loadAudioSource = (
     hls.loadSource(url);
     hls.attachMedia(audio);
 
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+    hls.on(HlsLib.Events.MANIFEST_PARSED, () => {
       console.log('[hlsPlayer] Manifesto HLS carregado com sucesso:', url);
+      // Garante que a reprodução comece assim que o manifesto estiver pronto,
+      // já que o play() inicial pode ter ocorrido antes do hls.js anexar o media.
+      audio.play().catch(() => {});
     });
 
-    hls.on(Hls.Events.ERROR, (_event, data) => {
+    hls.on(HlsLib.Events.ERROR, (_event, data) => {
       if (!data.fatal) {
         // Erros não fatais (ex: queda de um fragmento) são tratados
         // internamente pelo hls.js, não precisam de ação aqui.
@@ -83,29 +107,29 @@ export const loadAudioSource = (
 
       console.error('Erro fatal no stream HLS:', data);
       switch (data.type) {
-        case Hls.ErrorTypes.NETWORK_ERROR:
+        case HlsLib.ErrorTypes.NETWORK_ERROR:
           try {
             hls.startLoad();
           } catch {
             hls.destroy();
-            activeHls = null;
+            if (activeHls === hls) activeHls = null;
             callbacks?.onFatalError?.(
               'Não foi possível conectar a esta rádio. Verifique sua conexão ou tente outra estação.'
             );
           }
           break;
-        case Hls.ErrorTypes.MEDIA_ERROR:
+        case HlsLib.ErrorTypes.MEDIA_ERROR:
           try {
             hls.recoverMediaError();
           } catch {
             hls.destroy();
-            activeHls = null;
+            if (activeHls === hls) activeHls = null;
             callbacks?.onFatalError?.('Erro ao reproduzir esta rádio. Tente outra estação.');
           }
           break;
         default:
           hls.destroy();
-          activeHls = null;
+          if (activeHls === hls) activeHls = null;
           callbacks?.onFatalError?.('Esta rádio está indisponível no momento.');
           break;
       }
@@ -113,12 +137,12 @@ export const loadAudioSource = (
 
     audio.setAttribute('data-hls', 'true');
     activeHls = hls;
-    return;
-  }
-
-  // Último recurso: tenta tocar direto (pode não funcionar em todos os navegadores)
-  audio.removeAttribute('data-hls');
-  audio.src = url;
+  }).catch((err) => {
+    console.error('[hlsPlayer] Falha ao carregar hls.js:', err);
+    if (currentToken === loadToken) {
+      callbacks?.onFatalError?.('Não foi possível carregar o player de rádio. Verifique sua conexão.');
+    }
+  });
 };
 
 /**

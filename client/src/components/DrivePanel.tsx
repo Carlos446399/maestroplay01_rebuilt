@@ -107,7 +107,11 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
       const contents = await listFolderContents(folderId);
       setItems(contents);
     } catch (err: any) {
-      setError(err.message || 'Erro ao carregar pasta.');
+      if (!navigator.onLine) {
+        setError('Você está offline. Conecte-se à internet para navegar pelo Drive (músicas já salvas continuam tocando).');
+      } else {
+        setError(err.message || 'Erro ao carregar pasta.');
+      }
     } finally {
       setIsLoading(false);
     }

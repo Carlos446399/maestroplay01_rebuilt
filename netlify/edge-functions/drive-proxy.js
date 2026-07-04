@@ -13,11 +13,11 @@ export default async (request, context) => {
     });
   }
 
-  const GOOGLE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
-  
-  // Tenta múltiplas URLs
+  const GOOGLE_API_KEY = Deno.env.get('GOOGLE_DRIVE_API_KEY');
+
+  // Tenta múltiplas URLs (a primeira só é usada se a API key estiver configurada)
   const urls = [
-    `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${GOOGLE_API_KEY}`,
+    ...(GOOGLE_API_KEY ? [`https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${GOOGLE_API_KEY}`] : []),
     `https://drive.google.com/uc?export=download&id=${id}&confirm=t`,
   ];
 

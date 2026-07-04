@@ -1,5 +1,3 @@
-const GOOGLE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
-
 export interface DriveItem {
   id: string;
   name: string;
@@ -23,30 +21,22 @@ export const AUDIO_MIME_TYPES = new Set([
   'audio/flac', 'audio/aac', 'audio/x-m4a', 'audio/mp4', 'audio/webm',
 ]);
 
-const driveGet = async (params: Record<string, string>) => {
-  const qs = new URLSearchParams({ ...params, key: GOOGLE_API_KEY }).toString();
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?${qs}`);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Erro Drive API (${res.status})`);
-  }
-  return res.json();
-};
-
-/** Lista itens diretos de uma pasta (sem recursão) */
+/**
+ * Lista itens diretos de uma pasta (sem recursão) via proxy Netlify Edge
+ * Function. A API key do Google fica só no servidor — nunca é enviada ao
+ * navegador, evitando exposição no bundle público.
+ */
 export const listFolderContents = async (folderId: string): Promise<DriveItem[]> => {
   const results: DriveItem[] = [];
   let pageToken: string | undefined;
 
   do {
-    const params: Record<string, string> = {
-      q: `'${folderId}' in parents and trashed=false`,
-      fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink,size)',
-      pageSize: '100',
-      orderBy: 'name',
-    };
-    if (pageToken) params.pageToken = pageToken;
-    const data = await driveGet(params);
+    const qs = new URLSearchParams({ folderId, ...(pageToken ? { pageToken } : {}) });
+    const res = await fetch(`/api/drive-list?${qs.toString()}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data?.error || `Erro Drive API (${res.status})`);
+    }
     results.push(...(data.files || []));
     pageToken = data.nextPageToken;
   } while (pageToken);

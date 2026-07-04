@@ -8,7 +8,6 @@ import {
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { AudioVisualizer } from './AudioVisualizer';
 import { ProgressBar } from './ProgressBar';
-// VolumeControl removido por não existir no diretório de componentes
 import { SavedSongsPanel } from './SavedSongsPanel';
 import { DrivePanel } from './DrivePanel';
 import { RadioPanel as RadiosPanel } from './RadioPanel';
@@ -256,7 +255,7 @@ export const MobileMusicPlayer = () => {
     if (isYouTubeMode) return { id: `yt-${ytPlaylist[ytCurrentIndex]?.id}`, name: ytTitle, cover: ytThumbnail, type: 'local' as const, url: '' };
     if (isDriveMode) return { id: `drive-${driveFileId}`, name: driveTitle, cover: driveCover, type: 'local' as const, url: '' };
     return currentSource === 'tracks' ? tracks[currentTrackIndex] : currentRadio;
-  }, [isYouTubeMode, isDriveMode, ytTitle, driveTitle, currentSource, currentTrackIndex, currentRadioIndex]);
+  }, [isYouTubeMode, isDriveMode, ytTitle, driveTitle, currentSource, currentTrackIndex, currentRadioIndex, ytPlaylist, ytCurrentIndex, tracks, currentRadio]);
 
   useMediaSession(
     {
@@ -314,6 +313,12 @@ export const MobileMusicPlayer = () => {
       setSavedSongs(updated);
       setFavorites(new Set(updated.map((f) => f.id)));
     }
+  };
+
+  const handleRemoveFavorite = (id: string) => {
+    const updated = favoritesStorage.remove(id);
+    setSavedSongs(updated);
+    setFavorites(new Set(updated.map((f) => f.id)));
   };
 
   return (
@@ -454,13 +459,18 @@ export const MobileMusicPlayer = () => {
 
       <SavedSongsPanel 
         isOpen={isSavedSongsOpen} 
+        favorites={savedSongs}
         onClose={() => setIsSavedSongsOpen(false)}
-        onPlaySong={(id) => {
-          const idx = tracks.findIndex(t => t.id === id);
-          if (idx !== -1) handlePlayTrack(idx);
-          else if (id.startsWith('yt-')) handleYouTubePlay(id.replace('yt-', ''), 'Carregando...', '');
-          else if (id.startsWith('drive-')) handleDrivePlay(id.replace('drive-', ''), 'Carregando...', '');
+        onSelect={(song) => {
+          if (song.id.startsWith('yt-')) handleYouTubePlay(song.youtubeId!, song.name, song.cover || '');
+          else if (song.id.startsWith('drive-')) handleDrivePlay(song.youtubeId!, song.name, song.cover || '');
+          else {
+            const idx = tracks.findIndex(t => t.id === song.id);
+            if (idx !== -1) handlePlayTrack(idx);
+          }
+          setIsSavedSongsOpen(false);
         }}
+        onRemove={handleRemoveFavorite}
       />
 
       <DrivePanel 
@@ -471,8 +481,14 @@ export const MobileMusicPlayer = () => {
 
       <RadiosPanel 
         isOpen={isRadiosOpen} 
+        radios={radios}
+        currentRadioIndex={currentRadioIndex}
+        isPlaying={isPlaying && currentSource === 'radios'}
         onClose={() => setIsRadiosOpen(false)}
-        onPlayRadio={handlePlayRadio}
+        onRadioSelect={(idx) => {
+          handlePlayRadio(idx);
+          setIsRadiosOpen(false);
+        }}
       />
 
       {radioError && (

@@ -31,7 +31,7 @@ export const RadioPanel = ({
           <RadioIcon size={16} className="text-blue-500" />
           <span className="text-sm font-black text-gray-800">Rádios Online</span>
           <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-            {radios.length} estações
+            {radios?.length || 0} estações
           </span>
         </div>
         <button
@@ -43,7 +43,7 @@ export const RadioPanel = ({
       </div>
 
       <div className="overflow-y-auto flex-1">
-        {radios.map((radio, index) => {
+        {radios?.map((radio, index) => {
           const isActive = index === currentRadioIndex && isPlaying;
           return (
             <div

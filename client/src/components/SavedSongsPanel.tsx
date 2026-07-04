@@ -37,13 +37,13 @@ export const SavedSongsPanel = ({
       </div>
 
       <div className="overflow-y-auto flex-1">
-        {favorites.length === 0 && (
+        {(!favorites || favorites.length === 0) && (
           <div className="text-center py-8 text-gray-500 text-xs bg-white">
             Nenhuma música salva ainda. Toque na estrela ⭐ para salvar uma música aqui.
           </div>
         )}
 
-        {favorites.map((favorite) => (
+        {favorites?.map((favorite) => (
           <div
             key={favorite.id}
             className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors bg-white flex items-center gap-3"

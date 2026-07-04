@@ -1,9 +1,4 @@
-/**
- * Serviço de integração com Google Drive API v3.
- * A chave da API é lida das variáveis de ambiente do Vite.
- */
-
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY || 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
+const GOOGLE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
 
 export interface DriveItem {
   id: string;

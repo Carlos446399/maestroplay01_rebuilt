@@ -48,10 +48,14 @@ export const useMusicPlayer = () => {
         }));
 
         setState(prev => {
+          // Mescla com faixas já presentes no estado (ex: adicionadas antes
+          // deste efeito terminar), evitando duplicatas e não perdendo
+          // faixas adicionadas durante o carregamento.
           const merged = [
             ...loadedTracks,
             ...prev.tracks.filter(t => !loadedTracks.some(lt => lt.id === t.id)),
           ];
+          // Evita estado idêntico re-disparando renders sem necessidade
           if (merged.length === prev.tracks.length && merged.every((t, i) => t.id === prev.tracks[i]?.id)) {
             return prev;
           }
@@ -66,39 +70,85 @@ export const useMusicPlayer = () => {
   }, []);
 
   const addTracks = useCallback(async (files: FileList) => {
-    const audioFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
+    console.log('addTracks called with files:', files);
+    const audioFiles = Array.from(files).filter(file => 
+      file.type.startsWith('audio/')
+    );
+    console.log('Filtered audio files:', audioFiles);
+    
     if (audioFiles.length === 0) return;
     
     setImportProgress({ current: 0, total: audioFiles.length });
     
     try {
       const newTracks: Track[] = [];
+      
       for (let i = 0; i < audioFiles.length; i++) {
         const file = audioFiles[i];
         const id = Math.random().toString(36).substring(7);
         const name = file.name.replace(/\.[^.]+$/, '');
+        
         await audioStorage.storeAudioFile(id, name, file);
-        newTracks.push({
+        
+        const track: Track = {
           id,
           name,
           url: audioStorage.createBlobUrl(file),
           file,
           type: 'local'
-        });
+        };
+        
+        newTracks.push(track);
         setImportProgress({ current: i + 1, total: audioFiles.length });
       }
 
-      setState(prev => ({ ...prev, tracks: [...prev.tracks, ...newTracks] }));
+      setState(prev => ({
+        ...prev,
+        tracks: [...prev.tracks, ...newTracks],
+      }));
+      console.log('Tracks added successfully:', newTracks);
     } catch (error) {
       console.error('Error storing tracks:', error);
+      const newTracks: Track[] = audioFiles.map(file => ({
+        id: Math.random().toString(36).substring(7),
+        name: file.name.replace(/\.[^.]+$/, ''),
+        url: URL.createObjectURL(file),
+        file,
+        type: 'local'
+      }));
+
+      setState(prev => ({
+        ...prev,
+        tracks: [...prev.tracks, ...newTracks],
+      }));
     } finally {
       setTimeout(() => setImportProgress(null), 500);
     }
   }, []);
 
+  const updateTrackCover = useCallback(async (trackId: string, coverFile: File) => {
+    const coverUrl = URL.createObjectURL(coverFile);
+    
+    try {
+      // Update in IndexedDB
+      await audioStorage.updateAudioCover(trackId, coverUrl);
+    } catch (error) {
+      console.error('Error updating cover in storage:', error);
+    }
+    
+    setState(prev => ({
+      ...prev,
+      tracks: prev.tracks.map(track => 
+        track.id === trackId ? { ...track, cover: coverUrl } : track
+      ),
+    }));
+  }, []);
+
   const playTrack = useCallback((index: number) => {
     if (index < 0 || index >= state.tracks.length) return;
+    
     const track = state.tracks[index];
+    
     setState(prev => ({ 
       ...prev, 
       currentTrackIndex: index, 
@@ -106,25 +156,26 @@ export const useMusicPlayer = () => {
       currentSource: 'tracks',
       isPlaying: true
     }));
+    
     if (audioRef.current) {
       loadAudioSource(audioRef.current, track.url);
-      audioRef.current.play().catch(console.error);
+      requestAnimationFrame(() => {
+        if (audioRef.current) {
+          audioRef.current.play().catch(err => {
+            if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+              console.error('Play error:', err);
+            }
+          });
+        }
+      });
     }
   }, [state.tracks]);
 
-  const nextTrack = useCallback(() => {
-    if (state.currentSource === 'tracks' && state.tracks.length > 0) {
-      const nextIndex = (state.currentTrackIndex + 1) % state.tracks.length;
-      playTrack(nextIndex);
-    } else if (state.currentSource === 'radios' && state.radios.length > 0) {
-      const nextIndex = (state.currentRadioIndex + 1) % state.radios.length;
-      playRadio(nextIndex);
-    }
-  }, [state.currentSource, state.tracks.length, state.radios.length, state.currentTrackIndex, state.currentRadioIndex, playTrack]);
-
   const playRadio = useCallback((index: number) => {
     if (index < 0 || index >= state.radios.length) return;
+    
     const radio = state.radios[index];
+    
     setState(prev => ({ 
       ...prev, 
       currentRadioIndex: index, 
@@ -137,22 +188,23 @@ export const useMusicPlayer = () => {
       setRadioError(null);
       loadAudioSource(audioRef.current, radio.url, {
         onFatalError: (message) => {
-          console.warn(`Radio error: ${message}. Tying next station...`);
-          setRadioError(`Rádio indisponível: ${radio.name}. Tentando próxima...`);
-          setTimeout(() => {
-            setRadioError(null);
-            nextTrack(); // Tratamento automático: tenta a próxima rádio
-          }, 2000);
+          setRadioError(message);
+          setState(prev => ({ ...prev, isPlaying: false }));
         },
       });
-      audioRef.current.play().catch(err => {
-        if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
-          console.error('Play error:', err);
-          nextTrack();
+      requestAnimationFrame(() => {
+        if (audioRef.current) {
+          audioRef.current.play().catch(err => {
+            if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+              console.error('Play error:', err);
+              setRadioError('Não foi possível tocar esta rádio.');
+              setState(prev => ({ ...prev, isPlaying: false }));
+            }
+          });
         }
       });
     }
-  }, [state.radios, nextTrack]);
+  }, [state.radios]);
 
   const play = useCallback(() => {
     if (audioRef.current) {
@@ -174,13 +226,26 @@ export const useMusicPlayer = () => {
       pause();
     } else {
       if (state.currentTrackIndex === -1 && state.currentRadioIndex === -1) {
-        if (state.tracks.length > 0) playTrack(0);
-        else if (state.radios.length > 0) playRadio(0);
+        if (state.tracks.length > 0) {
+          playTrack(0);
+        } else if (state.radios.length > 0) {
+          playRadio(0);
+        }
       } else {
         play();
       }
     }
-  }, [state.isPlaying, state.currentTrackIndex, state.currentRadioIndex, state.tracks.length, state.radios.length, play, pause, playTrack, playRadio]);
+  }, [state.isPlaying, state.currentTrackIndex, state.currentRadioIndex, state.tracks.length, play, pause, playTrack, playRadio]);
+
+  const nextTrack = useCallback(() => {
+    if (state.currentSource === 'tracks' && state.tracks.length > 0) {
+      const nextIndex = (state.currentTrackIndex + 1) % state.tracks.length;
+      playTrack(nextIndex);
+    } else if (state.currentSource === 'radios' && state.radios.length > 0) {
+      const nextIndex = (state.currentRadioIndex + 1) % state.radios.length;
+      playRadio(nextIndex);
+    }
+  }, [state.currentSource, state.tracks.length, state.radios.length, state.currentTrackIndex, state.currentRadioIndex, playTrack, playRadio]);
 
   const previousTrack = useCallback(() => {
     if (state.currentSource === 'tracks' && state.tracks.length > 0) {
@@ -201,7 +266,9 @@ export const useMusicPlayer = () => {
 
   const setVolume = useCallback((volume: number) => {
     const clampedVolume = Math.max(0, Math.min(1, volume));
-    if (audioRef.current) audioRef.current.volume = clampedVolume;
+    if (audioRef.current) {
+      audioRef.current.volume = clampedVolume;
+    }
     setState(prev => ({ ...prev, volume: clampedVolume }));
   }, []);
 
@@ -218,11 +285,24 @@ export const useMusicPlayer = () => {
 
     const handleTimeUpdate = () => updateCurrentTime();
     const handleEnded = () => {
+      setState(prev => ({ ...prev, isPlaying: false }));
       if (state.repeat === 'one') {
-        if (state.currentSource === 'tracks') playTrack(state.currentTrackIndex);
-        else playRadio(state.currentRadioIndex);
-      } else {
+        if (state.currentSource === 'tracks') {
+          playTrack(state.currentTrackIndex);
+        } else {
+          playRadio(state.currentRadioIndex);
+        }
+      } else if (state.repeat === 'all') {
         nextTrack();
+      } else {
+        // repeat === 'off': avança, mas para no fim da lista
+        const isLastTrack = state.currentSource === 'tracks'
+          ? state.currentTrackIndex >= state.tracks.length - 1
+          : state.currentRadioIndex >= state.radios.length - 1;
+
+        if (!isLastTrack) {
+          nextTrack();
+        }
       }
     };
     const handlePlay = () => setState(prev => ({ ...prev, isPlaying: true }));
@@ -241,8 +321,11 @@ export const useMusicPlayer = () => {
     };
   }, [state.repeat, state.currentTrackIndex, state.currentRadioIndex, state.currentSource, nextTrack, playTrack, playRadio, updateCurrentTime]);
 
+  // Limpar instância do hls.js ao desmontar o player
   useEffect(() => {
-    return () => destroyActiveHls();
+    return () => {
+      destroyActiveHls();
+    };
   }, []);
 
   return {
@@ -252,6 +335,7 @@ export const useMusicPlayer = () => {
     clearRadioError: () => setRadioError(null),
     audioRef,
     addTracks,
+    updateTrackCover,
     playTrack,
     playRadio,
     play,

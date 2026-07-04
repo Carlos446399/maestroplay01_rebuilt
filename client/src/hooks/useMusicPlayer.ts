@@ -176,10 +176,14 @@ export const useMusicPlayer = () => {
 
   const playRadioRef = useRef<(index: number, isAutoSkip?: boolean) => void>(() => {});
 
+  const radioLoadAttemptRef = useRef(0);
+  const radioTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const playRadio = useCallback((index: number, isAutoSkip: boolean = false) => {
     if (index < 0 || index >= state.radios.length) return;
 
     const radio = state.radios[index];
+    const attemptId = ++radioLoadAttemptRef.current;
 
     // Reseta o contador de tentativas sempre que o usuário escolhe uma
     // estação manualmente; mantém o contador durante auto-skips em cadeia.
@@ -195,7 +199,18 @@ export const useMusicPlayer = () => {
       isPlaying: true
     }));
 
+    if (radioTimeoutRef.current) {
+      clearTimeout(radioTimeoutRef.current);
+      radioTimeoutRef.current = null;
+    }
+
     const tryNextStation = (message: string) => {
+      // Ignora se essa tentativa já foi substituída por outra mais recente
+      if (attemptId !== radioLoadAttemptRef.current) return;
+      if (radioTimeoutRef.current) {
+        clearTimeout(radioTimeoutRef.current);
+        radioTimeoutRef.current = null;
+      }
       radioSkipAttemptsRef.current += 1;
       // Se já tentamos passar por todas as estações sem sucesso, paramos
       // e mostramos o erro em vez de continuar pulando infinitamente.
@@ -212,6 +227,14 @@ export const useMusicPlayer = () => {
 
     if (audioRef.current) {
       setRadioError(null);
+
+      // Se a rádio não começar a tocar de verdade em 12s (manifesto travado,
+      // CORS bloqueando o stream, etc.), trata como falha e pula — evita
+      // ficar "carregando" para sempre sem nenhum feedback.
+      radioTimeoutRef.current = setTimeout(() => {
+        tryNextStation('Demorou demais para conectar a esta rádio.');
+      }, 12000);
+
       loadAudioSource(audioRef.current, radio.url, {
         onFatalError: (message) => {
           tryNextStation(message);
@@ -232,8 +255,18 @@ export const useMusicPlayer = () => {
           });
         },
       });
+
+      // Assim que o áudio realmente começar a tocar, cancela o timeout
+      const onPlaying = () => {
+        if (attemptId === radioLoadAttemptRef.current && radioTimeoutRef.current) {
+          clearTimeout(radioTimeoutRef.current);
+          radioTimeoutRef.current = null;
+        }
+      };
+      audioRef.current.addEventListener('playing', onPlaying, { once: true });
     }
   }, [state.radios]);
+
 
   useEffect(() => {
     playRadioRef.current = playRadio;

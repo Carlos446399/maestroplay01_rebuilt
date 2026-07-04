@@ -15,7 +15,7 @@ export default async (request, context) => {
     });
   }
 
-  const apiKey = Deno.env.get('GOOGLE_DRIVE_API_KEY');
+  const apiKey = Netlify.env.get('GOOGLE_DRIVE_API_KEY');
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'Serviço não configurado (API key ausente)' }), {
       status: 500,

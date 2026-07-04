@@ -13,7 +13,7 @@ export default async (request, context) => {
     });
   }
 
-  const GOOGLE_API_KEY = Deno.env.get('GOOGLE_DRIVE_API_KEY');
+  const GOOGLE_API_KEY = Netlify.env.get('GOOGLE_DRIVE_API_KEY');
   const rangeHeader = request.headers.get('Range');
 
   // Tenta múltiplas URLs (a primeira só é usada se a API key estiver configurada)

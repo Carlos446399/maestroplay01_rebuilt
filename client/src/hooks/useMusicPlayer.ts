@@ -216,16 +216,21 @@ export const useMusicPlayer = () => {
         onFatalError: (message) => {
           tryNextStation(message);
         },
-      });
-      requestAnimationFrame(() => {
-        if (audioRef.current) {
-          audioRef.current.play().catch(err => {
-            if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
-              console.error('Play error:', err);
-              tryNextStation('Não foi possível tocar esta rádio.');
+        onSourceReady: () => {
+          // Só tentamos dar play() quando a fonte realmente está pronta
+          // (evita tentar tocar um <audio> ainda sem fonte nenhuma enquanto
+          // o hls.js carrega, que era a causa da intermitência).
+          requestAnimationFrame(() => {
+            if (audioRef.current) {
+              audioRef.current.play().catch(err => {
+                if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+                  console.error('Play error:', err);
+                  tryNextStation('Não foi possível tocar esta rádio.');
+                }
+              });
             }
           });
-        }
+        },
       });
     }
   }, [state.radios]);

@@ -26,6 +26,15 @@ const isHlsUrl = (url: string) => /\.m3u8(\?.*)?$/i.test(url);
 export interface LoadAudioSourceCallbacks {
   /** Chamado quando o stream encontra um erro fatal e não pode ser recuperado */
   onFatalError?: (message: string) => void;
+  /**
+   * Chamado assim que a fonte de áudio está pronta para receber play().
+   * Para fontes síncronas (arquivo comum, HLS nativo do Safari) dispara
+   * imediatamente. Para HLS via hls.js (carregado sob demanda) dispara
+   * depois que o hls.js termina de carregar e anexar a mídia — evita
+   * chamar play() num <audio> ainda sem fonte nenhuma, o que antes causava
+   * falhas intermitentes (parecia que a rádio "às vezes não funcionava").
+   */
+  onSourceReady?: () => void;
 }
 
 /**
@@ -48,6 +57,7 @@ export const loadAudioSource = (
   if (!isHlsUrl(url)) {
     audio.removeAttribute('data-hls');
     audio.src = url;
+    callbacks?.onSourceReady?.();
     return;
   }
 
@@ -57,8 +67,16 @@ export const loadAudioSource = (
   if (canPlayNativeHls) {
     audio.removeAttribute('data-hls');
     audio.src = url;
+    callbacks?.onSourceReady?.();
     return;
   }
+
+  // A partir daqui a fonte NÃO está pronta de forma síncrona: o hls.js
+  // ainda precisa ser baixado e anexado. Limpa qualquer fonte anterior
+  // imediatamente para não deixar a estação antiga tocando por engano
+  // enquanto a nova carrega.
+  audio.removeAttribute('src');
+  audio.load();
 
   import('hls.js').then(({ default: HlsLib }) => {
     // Se o usuário já trocou de faixa/rádio enquanto o hls.js carregava,
@@ -69,6 +87,7 @@ export const loadAudioSource = (
       // Último recurso: tenta tocar direto (pode não funcionar em todos os navegadores)
       audio.removeAttribute('data-hls');
       audio.src = url;
+      callbacks?.onSourceReady?.();
       return;
     }
 
@@ -91,10 +110,15 @@ export const loadAudioSource = (
     hls.loadSource(url);
     hls.attachMedia(audio);
 
+    audio.setAttribute('data-hls', 'true');
+    activeHls = hls;
+    // A mídia já está anexada; agora é seguro que o chamador tente play().
+    callbacks?.onSourceReady?.();
+
     hls.on(HlsLib.Events.MANIFEST_PARSED, () => {
       console.log('[hlsPlayer] Manifesto HLS carregado com sucesso:', url);
       // Garante que a reprodução comece assim que o manifesto estiver pronto,
-      // já que o play() inicial pode ter ocorrido antes do hls.js anexar o media.
+      // já que o play() inicial pode ter ocorrido antes do manifesto carregar.
       audio.play().catch(() => {});
     });
 
@@ -134,9 +158,6 @@ export const loadAudioSource = (
           break;
       }
     });
-
-    audio.setAttribute('data-hls', 'true');
-    activeHls = hls;
   }).catch((err) => {
     console.error('[hlsPlayer] Falha ao carregar hls.js:', err);
     if (currentToken === loadToken) {

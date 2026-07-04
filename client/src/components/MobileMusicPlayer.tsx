@@ -116,10 +116,28 @@ export const MobileMusicPlayer = () => {
   const ytPlaylistRef = useRef(ytPlaylist);
   const ytCurrentIndexRef = useRef(ytCurrentIndex);
   const repeatRef = useRef(repeat);
+  const isShuffleRef = useRef(isShuffle);
 
   useEffect(() => { ytPlaylistRef.current = ytPlaylist; }, [ytPlaylist]);
   useEffect(() => { ytCurrentIndexRef.current = ytCurrentIndex; }, [ytCurrentIndex]);
   useEffect(() => { repeatRef.current = repeat; }, [repeat]);
+  useEffect(() => { isShuffleRef.current = isShuffle; }, [isShuffle]);
+
+  // Toca a música do Drive num índice específico da playlist atual,
+  // atualizando estado, ref de índice e resolvendo offline/streaming.
+  const playDriveAtIndex = (audio: HTMLAudioElement, idx: number) => {
+    const playlist = drivePlaylistRef.current;
+    const item = playlist[idx];
+    if (!item) return;
+    driveCurrentIndexRef.current = idx;
+    setDriveTitle(item.name);
+    setDriveCover(item.cover || '');
+    setDriveFileId(item.id);
+    resolveDriveSrc(item.id).then(src => {
+      audio.src = src;
+      audio.play().catch(console.error);
+    });
+  };
 
   // Sincronizar eventos do elemento <audio> do Drive com o estado do player
   useEffect(() => {
@@ -132,19 +150,39 @@ export const MobileMusicPlayer = () => {
     const onDurationChange = () => setDriveDuration(audio.duration || 0);
     const onEnded = () => {
       setDrivePlaying(false);
-      // Avança para próxima música do Drive automaticamente
       const playlist = drivePlaylistRef.current;
       const currentIndex = driveCurrentIndexRef.current;
-      if (playlist.length > 1 && currentIndex < playlist.length - 1) {
-        const next = playlist[currentIndex + 1];
-        driveCurrentIndexRef.current = currentIndex + 1;
-        setDriveTitle(next.name);
-        setDriveCover(next.cover || '');
-        setDriveFileId(next.id);
-        resolveDriveSrc(next.id).then(src => {
-          audio.src = src;
+
+      // Repetir uma música: reinicia a mesma faixa, ignora playlist/shuffle
+      if (repeatRef.current === 'one') {
+        audio.currentTime = 0;
+        audio.play().catch(console.error);
+        return;
+      }
+
+      if (playlist.length <= 1) {
+        // Só uma música na playlist: com "repetir tudo" recomeça ela mesma
+        if (repeatRef.current === 'all') {
+          audio.currentTime = 0;
           audio.play().catch(console.error);
-        });
+        }
+        return;
+      }
+
+      if (isShuffleRef.current) {
+        let nextIndex = currentIndex;
+        while (nextIndex === currentIndex) {
+          nextIndex = Math.floor(Math.random() * playlist.length);
+        }
+        playDriveAtIndex(audio, nextIndex);
+        return;
+      }
+
+      if (currentIndex < playlist.length - 1) {
+        playDriveAtIndex(audio, currentIndex + 1);
+      } else if (repeatRef.current === 'all') {
+        // Chegou ao fim da playlist: com "repetir tudo" volta pro início
+        playDriveAtIndex(audio, 0);
       }
     };
 
@@ -373,22 +411,27 @@ export const MobileMusicPlayer = () => {
 
   const handleNextTrack = () => {
     if (isDriveMode && driveAudioRef.current) {
+      const audio = driveAudioRef.current;
       const playlist = drivePlaylistRef.current;
       const idx = driveCurrentIndexRef.current;
-      if (playlist.length > 1 && idx < playlist.length - 1) {
-        const next = playlist[idx + 1];
-        driveCurrentIndexRef.current = idx + 1;
-        setDriveTitle(next.name);
-        setDriveCover(next.cover || '');
-        setDriveFileId(next.id);
-        const audioEl = driveAudioRef.current;
-        resolveDriveSrc(next.id).then(src => {
-          audioEl.src = src;
-          audioEl.play().catch(console.error);
-        });
+      if (playlist.length > 1) {
+        if (isShuffle) {
+          let nextIndex = idx;
+          while (nextIndex === idx) {
+            nextIndex = Math.floor(Math.random() * playlist.length);
+          }
+          playDriveAtIndex(audio, nextIndex);
+        } else if (idx < playlist.length - 1) {
+          playDriveAtIndex(audio, idx + 1);
+        } else if (repeat === 'all') {
+          playDriveAtIndex(audio, 0);
+        } else {
+          audio.currentTime = 0;
+          audio.play().catch(console.error);
+        }
       } else {
-        driveAudioRef.current.currentTime = 0;
-        driveAudioRef.current.play().catch(console.error);
+        audio.currentTime = 0;
+        audio.play().catch(console.error);
       }
       return;
     }
@@ -413,22 +456,27 @@ export const MobileMusicPlayer = () => {
 
   const handlePreviousTrack = () => {
     if (isDriveMode && driveAudioRef.current) {
+      const audio = driveAudioRef.current;
       const playlist = drivePlaylistRef.current;
       const idx = driveCurrentIndexRef.current;
-      if (playlist.length > 1 && idx > 0) {
-        const prev = playlist[idx - 1];
-        driveCurrentIndexRef.current = idx - 1;
-        setDriveTitle(prev.name);
-        setDriveCover(prev.cover || '');
-        setDriveFileId(prev.id);
-        const audioEl = driveAudioRef.current;
-        resolveDriveSrc(prev.id).then(src => {
-          audioEl.src = src;
-          audioEl.play().catch(console.error);
-        });
+      if (playlist.length > 1) {
+        if (isShuffle) {
+          let prevIndex = idx;
+          while (prevIndex === idx) {
+            prevIndex = Math.floor(Math.random() * playlist.length);
+          }
+          playDriveAtIndex(audio, prevIndex);
+        } else if (idx > 0) {
+          playDriveAtIndex(audio, idx - 1);
+        } else if (repeat === 'all') {
+          playDriveAtIndex(audio, playlist.length - 1);
+        } else {
+          audio.currentTime = 0;
+          audio.play().catch(console.error);
+        }
       } else {
-        driveAudioRef.current.currentTime = 0;
-        driveAudioRef.current.play().catch(console.error);
+        audio.currentTime = 0;
+        audio.play().catch(console.error);
       }
       return;
     }
@@ -583,7 +631,17 @@ export const MobileMusicPlayer = () => {
   const handleFavorite = () => {
     let favoriteSong: Omit<FavoriteSong, 'addedAt'> | null = null;
 
-    if (isYouTubeMode) {
+    if (isDriveMode) {
+      if (driveFileId) {
+        favoriteSong = {
+          id: `drive-${driveFileId}`,
+          name: driveTitle,
+          cover: driveCover,
+          type: 'drive',
+          youtubeId: driveFileId, // reaproveita o campo para guardar o fileId do Drive
+        };
+      }
+    } else if (isYouTubeMode) {
       const current = ytPlaylist[ytCurrentIndex];
       const videoId = current?.id || (ytPlaylist.length === 1 ? ytPlaylist[0]?.id : undefined);
       if (videoId) {
@@ -690,14 +748,16 @@ export const MobileMusicPlayer = () => {
         onArtists={() => setIsArtistsPanelOpen(true)}
         onDrive={() => setIsDriveOpen(true)}
         isFavorite={
-          isYouTubeMode
-            ? (() => {
-                const current = ytPlaylist[ytCurrentIndex] || ytPlaylist[0];
-                return current ? favorites.has(`yt-${current.id}`) : false;
-              })()
-            : currentMedia
-              ? favorites.has(currentMedia.id)
-              : false
+          isDriveMode
+            ? favorites.has(`drive-${driveFileId}`)
+            : isYouTubeMode
+              ? (() => {
+                  const current = ytPlaylist[ytCurrentIndex] || ytPlaylist[0];
+                  return current ? favorites.has(`yt-${current.id}`) : false;
+                })()
+              : currentMedia
+                ? favorites.has(currentMedia.id)
+                : false
         }
         isLocked={isPlayerLocked}
         onToggleLock={handleToggleLock}

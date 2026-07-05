@@ -163,10 +163,13 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
     } catch { setSavedArtists([]); }
   }, [isOpen]);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   // Abrir artista — carrega primeira página de músicas
   const handleArtistOpen = useCallback(async (artist: ArtistCard) => {
     if (loadingArtist) return;
     setLoadingArtist(artist.id);
+    setLoadError(null);
     try {
       const results = await searchYouTube(`${artist.name} músicas`);
       setArtistView({
@@ -175,8 +178,9 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
         nextPageToken: results.nextPageToken || undefined,
         isLoadingMore: false,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao carregar músicas:', err);
+      setLoadError(err?.message || 'Erro ao carregar músicas deste artista.');
     } finally {
       setLoadingArtist(null);
     }
@@ -235,14 +239,16 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
   const handleGenrePlay = useCallback(async (query: string, label: string) => {
     if (loadingArtist) return;
     setLoadingArtist(label);
+    setLoadError(null);
     try {
       const results = await searchYouTube(query);
       if (results.items.length > 0) {
         onPlayPlaylist(results.items.map(i => ({ id: i.id, title: i.title, thumbnail: i.thumbnail })), 0);
         onClose();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao carregar gênero:', err);
+      setLoadError(err?.message || 'Erro ao carregar músicas deste gênero.');
     } finally {
       setLoadingArtist(null);
     }
@@ -280,6 +286,12 @@ export const DiscoverPanel = ({ isOpen, onClose, onPlayPlaylist }: DiscoverPanel
           <ChevronDown size={26} />
         </button>
       </div>
+
+      {loadError && (
+        <div className="mx-4 mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg flex-shrink-0">
+          <p className="text-[11px] text-red-600">{loadError}</p>
+        </div>
+      )}
 
       {/* Visão de músicas do artista */}
       {artistView ? (

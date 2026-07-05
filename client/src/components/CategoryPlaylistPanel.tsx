@@ -63,8 +63,8 @@ export const CategoryPlaylistPanel = ({
         category.query
       );
       setPlaylist(result);
-    } catch (err) {
-      setError('Erro ao carregar playlist da categoria');
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao carregar playlist da categoria');
       console.error(err);
     } finally {
       setLoading(false);

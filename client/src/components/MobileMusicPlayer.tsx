@@ -21,6 +21,7 @@ import { SavedArtistsCarousel } from './SavedArtistsCarousel';
 import { ArtistsPanel } from './ArtistsPanel';
 import { SavedSongsPanel } from './SavedSongsPanel';
 import { DrivePanel } from './DrivePanel';
+import { DriveFoldersCarousel } from './DriveFoldersCarousel';
 import { DiscoverPanel } from './DiscoverPanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 import { getDrivePreviewUrl } from '@/services/googleDriveService';
@@ -774,6 +775,8 @@ export const MobileMusicPlayer = () => {
             setIsCategoryPlaylistOpen(true);
           }}
         />
+
+        <DriveFoldersCarousel onPlayFolder={handleDrivePlay} />
       </div>
 
       <LocalPlaylistPanel

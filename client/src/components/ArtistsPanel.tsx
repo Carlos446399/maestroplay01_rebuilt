@@ -648,49 +648,6 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
                           <p className="text-[10px] text-gray-600">{song.artist}</p>
                         </div>
 
-                        {/* Download Button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (savedIds.has(song.id)) {
-                              toast.info('Esta música já está salva offline');
-                              return;
-                            }
-                            if (downloadingIds[song.id]) return;
-
-                            toast.promise(
-                              youtubeDownloader.saveForOffline(
-                                song.id,
-                                song.title,
-                                song.thumbnail,
-                                (p) => setDownloadingIds(prev => ({ ...prev, [song.id]: p }))
-                              ),
-                              {
-                                loading: 'Preparando download...',
-                                success: () => {
-                                  setSavedIds(prev => new Set(prev).add(song.id));
-                                  setDownloadingIds(prev => {
-                                    const next = { ...prev };
-                                    delete next[song.id];
-                                    return next;
-                                  });
-                                  return 'Música salva offline!';
-                                },
-                                error: 'Erro ao salvar música'
-                              }
-                            );
-                          }}
-                          className="p-1 rounded transition-all duration-200"
-                        >
-                          {downloadingIds[song.id] ? (
-                            <Loader2 className="animate-spin text-red-600" size={14} />
-                          ) : savedIds.has(song.id) ? (
-                            <CheckCircle2 className="text-green-600" size={14} />
-                          ) : (
-                            <Download className="text-red-600" size={14} />
-                          )}
-                        </button>
-
                         <Play size={14} className="text-red-600 flex-shrink-0" />
                       </div>
                     ))}

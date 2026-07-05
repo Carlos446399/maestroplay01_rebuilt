@@ -81,6 +81,7 @@ export const MobileMusicPlayer = () => {
   const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
   const [isDriveOpen, setIsDriveOpen] = useState(false);
+  const [driveJumpFolder, setDriveJumpFolder] = useState<{ id: string; name: string } | null>(null);
   const [isDriveMode, setIsDriveMode] = useState(false);
   const [driveFileId, setDriveFileId] = useState('');
   const driveAudioRef = useRef<HTMLAudioElement>(null);
@@ -776,7 +777,12 @@ export const MobileMusicPlayer = () => {
           }}
         />
 
-        <DriveFoldersCarousel onPlayFolder={handleDrivePlay} />
+        <DriveFoldersCarousel
+          onOpenFolder={(folder) => {
+            setDriveJumpFolder(folder);
+            setIsDriveOpen(true);
+          }}
+        />
       </div>
 
       <LocalPlaylistPanel
@@ -929,8 +935,12 @@ export const MobileMusicPlayer = () => {
       {/* Google Drive Panel */}
       <DrivePanel
         isOpen={isDriveOpen}
-        onClose={() => setIsDriveOpen(false)}
+        onClose={() => {
+          setIsDriveOpen(false);
+          setDriveJumpFolder(null);
+        }}
         onPlaySong={handleDrivePlay}
+        initialFolder={driveJumpFolder}
       />
 
       {/* Discover Panel — artistas e playlists estilo Deezer */}

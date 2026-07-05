@@ -21,9 +21,11 @@ interface DrivePanelProps {
   isOpen: boolean;
   onClose: () => void;
   onPlaySong: (fileId: string, title: string, cover?: string, playlist?: Array<{id: string; name: string; cover?: string}>, index?: number) => void;
+  /** Se fornecido, o painel abre já dentro dessa subpasta em vez da raiz */
+  initialFolder?: { id: string; name: string } | null;
 }
 
-export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => {
+export const DrivePanel = ({ isOpen, onClose, onPlaySong, initialFolder }: DrivePanelProps) => {
   const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([
     { id: ROOT_FOLDER_ID, name: 'Google Drive' }
   ]);
@@ -117,12 +119,20 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong }: DrivePanelProps) => 
     }
   }, []);
 
-  // Carrega raiz ao abrir pela primeira vez
+  // Ao abrir: se veio uma pasta específica (ex: card do carrossel na tela
+  // inicial), pula direto pra ela; senão carrega a raiz normalmente.
   useEffect(() => {
-    if (isOpen && breadcrumb.length === 1 && items.length === 0 && !isLoading) {
+    if (!isOpen) return;
+    if (initialFolder) {
+      setBreadcrumb([
+        { id: ROOT_FOLDER_ID, name: 'Google Drive' },
+        { id: initialFolder.id, name: cleanFolderName(initialFolder.name) },
+      ]);
+      loadFolder(initialFolder.id);
+    } else if (breadcrumb.length === 1 && items.length === 0 && !isLoading) {
       loadFolder(ROOT_FOLDER_ID);
     }
-  }, [isOpen]);
+  }, [isOpen, initialFolder?.id]);
 
   const openFolder = (folder: DriveItem) => {
     setBreadcrumb(prev => [...prev, { id: folder.id, name: cleanFolderName(folder.name) }]);

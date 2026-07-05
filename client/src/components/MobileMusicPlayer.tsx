@@ -720,7 +720,7 @@ export const MobileMusicPlayer = () => {
         </div>
       </div>
 
-      <div className="relative w-[35vw] h-[35vw] max-w-[130px] max-h-[130px] mx-auto my-1">
+      <div className="relative w-[58vw] h-[58vw] max-w-[210px] max-h-[210px] mx-auto my-1 flex items-center justify-center">
         <AlbumArt
           src={displayCover}
           alt={displayName}

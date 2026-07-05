@@ -90,7 +90,12 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
 
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
-      const radius = Math.min(centerX, centerY) * 0.7;
+      // Raio base começa numa distância segura FORA da capa do álbum
+      // (que ocupa ~71% do raio total da caixa) e as barras crescem só o
+      // suficiente para nunca tocar a borda externa da caixa nem os
+      // controles abaixo.
+      const radius = Math.min(centerX, centerY) * 0.78;
+      const maxBarLength = Math.min(centerX, centerY) * 0.22;
 
       // Draw circular visualizer bars
       const barCount = dataArrayRef.current.length;
@@ -98,7 +103,8 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
 
       for (let i = 0; i < barCount; i++) {
         const dataPoint = dataArrayRef.current[i];
-        const barHeight = (dataPoint / 255) * radius * 0.6;
+        const intensity = dataPoint / 255;
+        const barHeight = intensity * maxBarLength;
 
         const angle = angleSlice * i - Math.PI / 2;
         const x1 = centerX + Math.cos(angle) * radius;
@@ -106,9 +112,9 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
         const x2 = centerX + Math.cos(angle) * (radius + barHeight);
         const y2 = centerY + Math.sin(angle) * (radius + barHeight);
 
-        // Create gradient for each bar
-        const hue = (i / barCount) * 360;
-        ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+        // Branco sólido, com leve variação de opacidade conforme a
+        // intensidade do som (mais som = mais opaco/brilhante)
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.35 + intensity * 0.65})`;
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
 
@@ -117,15 +123,31 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
         ctx.lineTo(x2, y2);
         ctx.stroke();
 
-        // Add glow effect
-        ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
-        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+        ctx.shadowBlur = 6;
       }
 
       ctx.shadowColor = 'transparent';
 
       animationIdRef.current = requestAnimationFrame(draw);
     };
+
+    // Inicializa/retoma o AudioContext direto no evento real de "play" do
+    // elemento — evita depender só da prop isPlaying (que pode chegar um
+    // instante antes/depois do áudio de fato começar a tocar, causando a
+    // inconsistência de "às vezes aparece, às vezes não").
+    const handleAudioPlay = () => {
+      initAudioContext();
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume().catch(e => console.warn('Could not resume AudioContext', e));
+      }
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+      animationIdRef.current = requestAnimationFrame(draw);
+    };
+    audio.addEventListener('play', handleAudioPlay);
+    audio.addEventListener('playing', handleAudioPlay);
 
     // Only initialize and draw when actually playing
     if (isPlaying && audio && !audio.paused) {
@@ -154,6 +176,8 @@ export const AudioVisualizer = ({ audioRef, isPlaying, isRadio }: AudioVisualize
     }
 
     return () => {
+      audio.removeEventListener('play', handleAudioPlay);
+      audio.removeEventListener('playing', handleAudioPlay);
       // Clean up animation frame
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);

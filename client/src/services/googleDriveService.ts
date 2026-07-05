@@ -44,16 +44,33 @@ export const listFolderContents = async (folderId: string): Promise<DriveItem[]>
   return results;
 };
 
-/** Busca arquivos por nome em todo o Google Drive (não limitado a uma pasta) */
+export const ROOT_FOLDER_ID = '1zqRZc6TRZkQafTOhCokzyD6HUWpTQusx';
+
+/**
+ * Busca músicas por nome dentro do Drive. Uma busca "em todo o Drive" via
+ * API key simples (sem login OAuth) não é suportada pelo Google — só é
+ * possível listar pastas cujo ID já conhecemos. Por isso, percorremos a
+ * pasta raiz e suas subpastas diretas (a estrutura real do seu Drive) e
+ * filtramos os nomes localmente.
+ */
 export const searchDriveFiles = async (query: string): Promise<DriveItem[]> => {
-  if (!query.trim()) return [];
-  const qs = new URLSearchParams({ query });
-  const res = await fetch(`/api/drive-list?${qs.toString()}`);
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data?.error || `Erro Drive API (${res.status})`);
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  const rootItems = await listFolderContents(ROOT_FOLDER_ID);
+  const matches: DriveItem[] = rootItems.filter(
+    i => AUDIO_MIME_TYPES.has(i.mimeType) && i.name.toLowerCase().includes(q)
+  );
+
+  const subfolders = rootItems.filter(i => i.mimeType === FOLDER_MIME);
+  const subResults = await Promise.all(
+    subfolders.map(f => listFolderContents(f.id).catch(() => [] as DriveItem[]))
+  );
+  for (const items of subResults) {
+    matches.push(...items.filter(i => AUDIO_MIME_TYPES.has(i.mimeType) && i.name.toLowerCase().includes(q)));
   }
-  return data.files || [];
+
+  return matches.slice(0, 30);
 };
 
 export const getDriveStreamUrl = (fileId: string): string =>

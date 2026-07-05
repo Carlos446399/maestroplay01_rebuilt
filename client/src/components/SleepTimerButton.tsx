@@ -72,36 +72,42 @@ export const SleepTimerButton = ({ onTimerEnd }: SleepTimerButtonProps) => {
         {endAt ? remainingLabel : 'Soneca'}
       </button>
 
-      {showMenu && (
+      {/* Este menu fica SEMPRE montado no DOM (nunca removido
+          condicionalmente) — apenas escondido via CSS quando showMenu é
+          false. Desmontar/remontar esse tipo de overlay no exato momento
+          de um clique interno já causou crashes de 'removeChild' em
+          outro lugar do app; manter sempre presente evita o problema. */}
+      <div
+        className={cn(
+          "fixed inset-0 z-50 transition-opacity",
+          showMenu ? "opacity-100" : "opacity-0 invisible pointer-events-none"
+        )}
+        onClick={() => setShowMenu(false)}
+      >
         <div
-          className="fixed inset-0 z-50"
-          onClick={() => setShowMenu(false)}
+          className="absolute right-4 top-12 bg-white rounded-xl shadow-2xl p-2 w-40"
+          onClick={e => e.stopPropagation()}
         >
-          <div
-            className="absolute right-4 top-12 bg-white rounded-xl shadow-2xl p-2 w-40"
-            onClick={e => e.stopPropagation()}
-          >
-            <p className="text-[10px] text-gray-500 px-2 pt-1 pb-2 font-semibold">Pausar em...</p>
-            {OPTIONS.map(min => (
-              <button
-                key={min}
-                onClick={() => startTimer(min)}
-                className="w-full text-left px-2 py-1.5 rounded-lg text-sm text-gray-800 hover:bg-purple-50"
-              >
-                {min} minutos
-              </button>
-            ))}
-            {endAt && (
-              <button
-                onClick={cancelTimer}
-                className="w-full text-left px-2 py-1.5 rounded-lg text-sm text-red-600 hover:bg-red-50 mt-1 border-t border-gray-100"
-              >
-                Cancelar temporizador
-              </button>
-            )}
-          </div>
+          <p className="text-[10px] text-gray-500 px-2 pt-1 pb-2 font-semibold">Pausar em...</p>
+          {OPTIONS.map(min => (
+            <button
+              key={min}
+              onClick={() => startTimer(min)}
+              className="w-full text-left px-2 py-1.5 rounded-lg text-sm text-gray-800 hover:bg-purple-50"
+            >
+              {min} minutos
+            </button>
+          ))}
+          {endAt && (
+            <button
+              onClick={cancelTimer}
+              className="w-full text-left px-2 py-1.5 rounded-lg text-sm text-red-600 hover:bg-red-50 mt-1 border-t border-gray-100"
+            >
+              Cancelar temporizador
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -814,7 +814,7 @@ export const MobileMusicPlayer = () => {
 
       {/* Área de Carrosséis com scroll vertical se necessário, mas contida */}
       <div className={cn(
-        "w-full flex-1 overflow-y-auto custom-scrollbar px-2 space-y-2",
+        "w-full flex-1 overflow-y-auto custom-scrollbar px-2 pb-3 space-y-1.5",
         isPlayerLocked && "pointer-events-none opacity-40"
       )}>
         <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />

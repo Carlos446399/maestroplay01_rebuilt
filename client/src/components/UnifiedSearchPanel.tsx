@@ -103,9 +103,14 @@ export const UnifiedSearchPanel = ({ isOpen, onClose, onPlayRadio, onPlayDrive, 
 
       <div className="flex-1 overflow-y-auto px-3 py-2">
         {!query.trim() ? (
-          <p className="text-xs text-gray-400 text-center py-10">
-            Digite algo para buscar em todas as suas fontes de música de uma vez.
-          </p>
+          <div className="text-center py-10">
+            <p className="text-xs text-gray-400 mb-2">
+              Digite algo para buscar em todas as suas fontes de música de uma vez.
+            </p>
+            <p className="text-[10px] text-gray-300">
+              A busca no YouTube consome a cota diária gratuita da API — use com moderação.
+            </p>
+          </div>
         ) : (
           <>
             {/* Rádios */}

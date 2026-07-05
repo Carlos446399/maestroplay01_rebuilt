@@ -40,7 +40,7 @@ export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps
   if (isLoading || error || folders.length === 0) return null;
 
   return (
-    <div className="flex gap-3 px-2 py-1 mt-1 overflow-x-auto custom-scrollbar w-full">
+    <div className="flex gap-2 px-2 py-1 mt-1 overflow-x-auto custom-scrollbar w-full">
       {folders.map((folder) => (
         <button
           key={folder.id}
@@ -67,6 +67,8 @@ export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps
             transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
         </button>
       ))}
+      {/* Espaçador no final para o último card não ficar colado na borda */}
+      <div className="flex-shrink-0 w-1" />
     </div>
   );
 };

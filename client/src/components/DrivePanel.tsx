@@ -37,6 +37,7 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong, initialFolder }: Drive
   const [driveFavorites, setDriveFavorites] = useState<Set<string>>(new Set());
   const [offlineIds, setOfflineIds] = useState<Set<string>>(new Set());
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [downloadAllProgress, setDownloadAllProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Carregar favoritos do Drive e músicas offline ao montar
   useEffect(() => {
@@ -64,13 +65,13 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong, initialFolder }: Drive
     setDriveFavorites(new Set(updated.filter(f => f.id.startsWith('drive-')).map(f => f.id)));
   };
 
-  // Baixa o arquivo de áudio do Drive (via Edge Function) e salva no
-  // IndexedDB para tocar offline, sem precisar de internet depois.
-  const downloadOffline = async (file: DriveItem, e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Baixa um único arquivo do Drive (via Edge Function) e salva no
+  // IndexedDB para tocar offline. Retorna true/false ao invés de mostrar
+  // alerta — quem chama decide como reagir (clique individual mostra
+  // alerta; download em lote só conta os que falharam).
+  const downloadSingleFile = async (file: DriveItem): Promise<boolean> => {
     const offlineId = `drive-${file.id}`;
-
-    if (offlineIds.has(offlineId) || downloadingIds.has(offlineId)) return;
+    if (offlineIds.has(offlineId)) return true;
 
     setDownloadingIds(prev => new Set(prev).add(offlineId));
     try {
@@ -87,15 +88,48 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong, initialFolder }: Drive
       await audioStorage.storeAudioFile(offlineId, title, audioFile, cover);
 
       setOfflineIds(prev => new Set(prev).add(offlineId));
+      return true;
     } catch (err) {
       console.error('Erro ao baixar música offline:', err);
-      alert('Não foi possível salvar esta música offline. Tente novamente.');
+      return false;
     } finally {
       setDownloadingIds(prev => {
         const next = new Set(prev);
         next.delete(offlineId);
         return next;
       });
+    }
+  };
+
+  // Baixa o arquivo de áudio do Drive (via Edge Function) e salva no
+  // IndexedDB para tocar offline, sem precisar de internet depois.
+  const downloadOffline = async (file: DriveItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const offlineId = `drive-${file.id}`;
+    if (offlineIds.has(offlineId) || downloadingIds.has(offlineId)) return;
+
+    const success = await downloadSingleFile(file);
+    if (!success) {
+      alert('Não foi possível salvar esta música offline. Tente novamente.');
+    }
+  };
+
+  // Baixa todas as músicas da pasta atual de uma vez, uma por vez, para
+  // não sobrecarregar a conexão. Mostra progresso enquanto roda.
+  const handleDownloadAll = async () => {
+    const pending = filteredAudio.filter(f => !offlineIds.has(`drive-${f.id}`));
+    if (pending.length === 0 || downloadAllProgress) return;
+
+    setDownloadAllProgress({ current: 0, total: pending.length });
+    let failures = 0;
+    for (let i = 0; i < pending.length; i++) {
+      const ok = await downloadSingleFile(pending[i]);
+      if (!ok) failures++;
+      setDownloadAllProgress({ current: i + 1, total: pending.length });
+    }
+    setDownloadAllProgress(null);
+    if (failures > 0) {
+      alert(`${failures} de ${pending.length} música(s) não puderam ser baixadas. Tente novamente.`);
     }
   };
 
@@ -234,6 +268,41 @@ export const DrivePanel = ({ isOpen, onClose, onPlaySong, initialFolder }: Drive
             <button onClick={() => setSearch('')}>
               <X size={13} className="text-gray-400" />
             </button>
+          )}
+        </div>
+      )}
+
+      {/* Baixar tudo da pasta atual */}
+      {audioFiles.length > 0 && (
+        <div className="px-3 py-2 border-b border-gray-100">
+          {downloadAllProgress ? (
+            <div>
+              <p className="text-[11px] text-gray-500 mb-1">
+                Baixando {downloadAllProgress.current} de {downloadAllProgress.total}...
+              </p>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-500 transition-all duration-300"
+                  style={{ width: `${(downloadAllProgress.current / downloadAllProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            (() => {
+              const pendingCount = filteredAudio.filter(f => !offlineIds.has(`drive-${f.id}`)).length;
+              if (pendingCount === 0) {
+                return <p className="text-[11px] text-green-600 flex items-center gap-1"><CheckCircle2 size={12} /> Todas as músicas desta pasta já estão salvas offline</p>;
+              }
+              return (
+                <button
+                  onClick={handleDownloadAll}
+                  className="flex items-center gap-1.5 text-[11px] font-semibold text-green-700 bg-green-50 px-2.5 py-1.5 rounded-lg hover:bg-green-100 transition-colors"
+                >
+                  <Download size={12} />
+                  Baixar todas ({pendingCount}) para ouvir offline
+                </button>
+              );
+            })()
           )}
         </div>
       )}

@@ -24,9 +24,11 @@ import { SavedSongsPanel } from './SavedSongsPanel';
 import { DrivePanel } from './DrivePanel';
 import { DriveFoldersCarousel } from './DriveFoldersCarousel';
 import { DiscoverPanel } from './DiscoverPanel';
+import { HistoryStatsPanel } from './HistoryStatsPanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 import { getDrivePreviewUrl } from '@/services/googleDriveService';
 import { audioStorage } from '@/services/audioStorage';
+import { recordPlay, addListenSeconds } from '@/services/historyService';
 
 declare global {
   interface Window {
@@ -82,6 +84,7 @@ export const MobileMusicPlayer = () => {
   const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
   const [isDriveOpen, setIsDriveOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [driveJumpFolder, setDriveJumpFolder] = useState<{ id: string; name: string } | null>(null);
   const [isDriveMode, setIsDriveMode] = useState(false);
   const [driveFileId, setDriveFileId] = useState('');
@@ -136,6 +139,7 @@ export const MobileMusicPlayer = () => {
     setDriveTitle(item.name);
     setDriveCover(item.cover || '');
     setDriveFileId(item.id);
+    recordPlay({ id: `drive-${item.id}`, name: item.name, cover: item.cover, source: 'drive' });
     resolveDriveSrc(item.id).then(src => {
       audio.src = src;
       audio.play().catch(console.error);
@@ -376,6 +380,9 @@ export const MobileMusicPlayer = () => {
       driveAudioRef.current.pause();
       setIsDriveMode(false);
     }
+    if (track) {
+      recordPlay({ id: track.id, name: track.name, cover: track.cover, source: 'local' });
+    }
     playTrack(index);
   };
 
@@ -391,6 +398,10 @@ export const MobileMusicPlayer = () => {
       driveAudioRef.current.pause();
       setIsDriveMode(false);
     }
+    const radio = radios[index];
+    if (radio) {
+      recordPlay({ id: radio.id, name: radio.name, cover: radio.cover, source: 'radio' });
+    }
     playRadio(index);
   };
 
@@ -399,6 +410,7 @@ export const MobileMusicPlayer = () => {
     if (audioRef.current) {
       audioRef.current.pause();
     }
+    recordPlay({ id: `yt-${videoId}`, name: title, cover: thumbnail, source: 'youtube' });
     handleYouTubePlay(videoId, title, thumbnail);
   };
 
@@ -519,6 +531,14 @@ export const MobileMusicPlayer = () => {
   const displayName = isDriveMode ? driveTitle : isYouTubeMode ? ytTitle : (currentSource === 'tracks' ? currentTrack?.name : currentRadio?.name) || 'Nenhuma música';
   const displayCover = isDriveMode ? (driveCover || defaultCover) : isYouTubeMode ? ytThumbnail : (currentSource === 'tracks' ? currentTrack?.cover : currentRadio?.cover) || defaultCover;
   const displayPlaying = isDriveMode ? drivePlaying : isYouTubeMode ? ytPlaying : isPlaying;
+
+  // Soma 1 segundo ao tempo total de escuta a cada segundo em que
+  // qualquer modo estiver tocando (faixa local, rádio, Drive ou YouTube).
+  useEffect(() => {
+    if (!displayPlaying) return;
+    const interval = setInterval(() => addListenSeconds(1), 1000);
+    return () => clearInterval(interval);
+  }, [displayPlaying]);
   const displayTime = isDriveMode ? driveCurrentTime : isYouTubeMode ? ytCurrentTime : currentTime;
   const displayDuration = isDriveMode ? driveDuration : isYouTubeMode ? ytDuration : duration;
   const currentMedia = currentSource === 'tracks' ? currentTrack : currentRadio;
@@ -607,6 +627,7 @@ export const MobileMusicPlayer = () => {
     setDriveTitle(title);
     setDriveCover(cover || '');
     setIsDriveOpen(false); // Fecha o painel ao iniciar reprodução
+    recordPlay({ id: `drive-${fileId}`, name: title, cover, source: 'drive' });
 
     if (driveAudioRef.current) {
       const audio = driveAudioRef.current;
@@ -697,7 +718,14 @@ export const MobileMusicPlayer = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-main text-white flex flex-col items-center overflow-hidden pb-4">
-      <MobileHeader />
+      <MobileHeader
+        onSleepTimerEnd={() => {
+          if (audioRef.current) audioRef.current.pause();
+          if (driveAudioRef.current) driveAudioRef.current.pause();
+          if (isYouTubeMode && ytPlayer) ytPlayer.pauseVideo();
+        }}
+        onOpenStats={() => setIsStatsOpen(true)}
+      />
 
       {importProgress && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 animate-fade-in">
@@ -960,6 +988,8 @@ export const MobileMusicPlayer = () => {
         onPlaySong={handleDrivePlay}
         initialFolder={driveJumpFolder}
       />
+
+      <HistoryStatsPanel isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
 
       {/* Discover Panel — artistas e playlists estilo Deezer */}
       <DiscoverPanel

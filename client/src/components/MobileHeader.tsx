@@ -1,7 +1,24 @@
-export const MobileHeader = () => {
+import { BarChart2 } from 'lucide-react';
+import { SleepTimerButton } from './SleepTimerButton';
+
+interface MobileHeaderProps {
+  onSleepTimerEnd: () => void;
+  onOpenStats: () => void;
+}
+
+export const MobileHeader = ({ onSleepTimerEnd, onOpenStats }: MobileHeaderProps) => {
   return (
-    <div className="w-full px-4 py-1 flex justify-between items-center">
+    <div className="w-full px-4 py-1 flex justify-between items-center gap-2">
       <h1 className="text-lg font-bold text-golden tracking-wide">Maestro Play</h1>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onOpenStats}
+          className="p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/20 transition-all"
+        >
+          <BarChart2 size={14} />
+        </button>
+        <SleepTimerButton onTimerEnd={onSleepTimerEnd} />
+      </div>
     </div>
   );
 };

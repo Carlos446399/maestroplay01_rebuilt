@@ -1,15 +1,17 @@
-// Edge Function para proxy da listagem de arquivos do Google Drive.
+// Edge Function para proxy da listagem/busca de arquivos do Google Drive.
 // Mantém a API key apenas no servidor (variável de ambiente), nunca exposta
 // no bundle do navegador.
-// Caminho: /api/drive-list?folderId=FOLDER_ID&pageToken=TOKEN
+// Caminho: /api/drive-list?folderId=FOLDER_ID&pageToken=TOKEN  (lista uma pasta)
+//      ou: /api/drive-list?query=TERMO                          (busca em todo o Drive)
 
 export default async (request, context) => {
   const url = new URL(request.url);
   const folderId = url.searchParams.get('folderId');
+  const query = url.searchParams.get('query');
   const pageToken = url.searchParams.get('pageToken');
 
-  if (!folderId || !/^[a-zA-Z0-9_-]+$/.test(folderId)) {
-    return new Response(JSON.stringify({ error: 'folderId inválido' }), {
+  if (!query && (!folderId || !/^[a-zA-Z0-9_-]+$/.test(folderId))) {
+    return new Response(JSON.stringify({ error: 'folderId ou query são obrigatórios' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -23,10 +25,16 @@ export default async (request, context) => {
     });
   }
 
+  // Busca por nome em todo o Drive, ou lista o conteúdo direto de uma pasta
+  const escapedQuery = query ? query.replace(/'/g, "\\'") : '';
+  const q = query
+    ? `name contains '${escapedQuery}' and trashed=false`
+    : `'${folderId}' in parents and trashed=false`;
+
   const params = new URLSearchParams({
-    q: `'${folderId}' in parents and trashed=false`,
+    q,
     fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink,size)',
-    pageSize: '100',
+    pageSize: query ? '30' : '100',
     orderBy: 'name',
     key: apiKey,
   });

@@ -44,6 +44,18 @@ export const listFolderContents = async (folderId: string): Promise<DriveItem[]>
   return results;
 };
 
+/** Busca arquivos por nome em todo o Google Drive (não limitado a uma pasta) */
+export const searchDriveFiles = async (query: string): Promise<DriveItem[]> => {
+  if (!query.trim()) return [];
+  const qs = new URLSearchParams({ query });
+  const res = await fetch(`/api/drive-list?${qs.toString()}`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.error || `Erro Drive API (${res.status})`);
+  }
+  return data.files || [];
+};
+
 export const getDriveStreamUrl = (fileId: string): string =>
   `https://drive.google.com/uc?export=download&id=${fileId}`;
 

@@ -712,8 +712,9 @@ export const MobileMusicPlayer = () => {
           isPlaying={displayPlaying}
         />
         <AudioVisualizer
-          audioRef={audioRef}
-          isPlaying={isPlaying && !isYouTubeMode}
+          key={isDriveMode ? 'drive-visualizer' : 'main-visualizer'}
+          audioRef={isDriveMode ? driveAudioRef : audioRef}
+          isPlaying={isDriveMode ? drivePlaying : (isPlaying && !isYouTubeMode)}
           isRadio={currentSource === 'radios'}
         />
       </div>
@@ -831,10 +832,13 @@ export const MobileMusicPlayer = () => {
         className="hidden"
       />
 
-      {/* Elemento de áudio separado para Google Drive — fora do Web Audio Graph */}
+      {/* Elemento de áudio separado para Google Drive — fora do grafo principal
+          de tracks/rádio, mas com crossOrigin para o visualizador conseguir
+          ler os dados de frequência (nosso proxy já envia CORS liberado) */}
       <audio
         ref={driveAudioRef}
         preload="none"
+        crossOrigin="anonymous"
         className="hidden"
       />
 

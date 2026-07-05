@@ -370,6 +370,11 @@ export const MobileMusicPlayer = () => {
       setIsYouTubeMode(false);
       setYtPlaying(false);
     }
+    // Stop Drive audio if playing
+    if (isDriveMode && driveAudioRef.current) {
+      driveAudioRef.current.pause();
+      setIsDriveMode(false);
+    }
     playTrack(index);
   };
 
@@ -379,6 +384,11 @@ export const MobileMusicPlayer = () => {
       ytPlayer.stopVideo();
       setIsYouTubeMode(false);
       setYtPlaying(false);
+    }
+    // Stop Drive audio if playing (tocavam por cima um do outro antes desta correção)
+    if (isDriveMode && driveAudioRef.current) {
+      driveAudioRef.current.pause();
+      setIsDriveMode(false);
     }
     playRadio(index);
   };

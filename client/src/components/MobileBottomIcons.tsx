@@ -42,24 +42,30 @@ export const MobileBottomIcons = ({
   const [favAnim, setFavAnim] = useState(false);
 
   const handleFavorite = () => {
+    if (isLocked) return;
     setFavAnim(true);
     onFavorite();
     setTimeout(() => setFavAnim(false), 300);
   };
 
+  // Com o player travado, só o cadeado permanece ativo — todo o resto
+  // fica visualmente apagado e não responde a toques.
+  const lockedClass = isLocked ? 'opacity-30 pointer-events-none' : '';
+
   return (
     <div className="w-[90%] flex justify-between mb-0.5">
       <div className="flex gap-4">
         <Search 
-          className="cursor-pointer text-white hover:text-primary transition-colors" 
+          className={cn("cursor-pointer text-white hover:text-primary transition-colors", lockedClass)}
           size={20} 
-          onClick={onSearch} 
+          onClick={isLocked ? undefined : onSearch} 
         />
         <Star 
           className={cn(
             "cursor-pointer transition-all duration-200",
             isFavorite ? 'text-red-600 fill-red-600' : 'text-white hover:text-primary',
-            favAnim && 'scale-150'
+            favAnim && 'scale-150',
+            lockedClass
           )}
           size={20} 
           onClick={handleFavorite} 
@@ -78,37 +84,37 @@ export const MobileBottomIcons = ({
           />
         )}
         <Music 
-          className="cursor-pointer text-white hover:text-primary transition-colors" 
+          className={cn("cursor-pointer text-white hover:text-primary transition-colors", lockedClass)}
           size={20} 
-          onClick={onFavoritesList} 
+          onClick={isLocked ? undefined : onFavoritesList} 
         />
       </div>
       
       <div className="flex gap-4">
         <HardDrive
-          className="cursor-pointer text-green-400 hover:text-green-300 transition-colors"
+          className={cn("cursor-pointer text-green-400 hover:text-green-300 transition-colors", lockedClass)}
           size={20}
-          onClick={onDrive}
+          onClick={isLocked ? undefined : onDrive}
         />
         <Users
-          className="cursor-pointer text-white hover:text-primary transition-colors" 
+          className={cn("cursor-pointer text-white hover:text-primary transition-colors", lockedClass)}
           size={20} 
-          onClick={onArtists} 
+          onClick={isLocked ? undefined : onArtists} 
         />
         <Plus 
-          className="cursor-pointer text-white hover:text-primary transition-colors" 
+          className={cn("cursor-pointer text-white hover:text-primary transition-colors", lockedClass)}
           size={20} 
-          onClick={onAddMusic} 
+          onClick={isLocked ? undefined : onAddMusic} 
         />
         <Radio 
-          className="cursor-pointer text-white hover:text-primary transition-colors" 
+          className={cn("cursor-pointer text-white hover:text-primary transition-colors", lockedClass)}
           size={20} 
-          onClick={onRadio} 
+          onClick={isLocked ? undefined : onRadio} 
         />
         <Music 
-          className="cursor-pointer text-white hover:text-primary transition-colors" 
+          className={cn("cursor-pointer text-white hover:text-primary transition-colors", lockedClass)}
           size={20} 
-          onClick={onPlaylist} 
+          onClick={isLocked ? undefined : onPlaylist} 
         />
       </div>
     </div>

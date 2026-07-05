@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Hourglass, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useMediaSession } from '@/hooks/useMediaSession';
 import { useBackgroundPlayback } from '@/hooks/useBackgroundPlayback';
@@ -526,9 +527,11 @@ export const MobileMusicPlayer = () => {
   useBackgroundPlayback(displayPlaying);
 
   // Música/rádio "efetiva" para a sessão de mídia (inclui YouTube)
-  const mediaSessionTrack = isYouTubeMode
-    ? { id: `yt-${ytPlaylist[ytCurrentIndex]?.id || ''}`, name: ytTitle, cover: ytThumbnail, type: 'local' as const, url: '' }
-    : currentMedia;
+  const mediaSessionTrack = isDriveMode
+    ? { id: `drive-${driveFileId}`, name: driveTitle, cover: driveCover, type: 'local' as const, url: '' }
+    : isYouTubeMode
+      ? { id: `yt-${ytPlaylist[ytCurrentIndex]?.id || ''}`, name: ytTitle, cover: ytThumbnail, type: 'local' as const, url: '' }
+      : currentMedia;
 
   // Integrar Media Session API para controles na barra de notificações /
   // tela de bloqueio (funciona como "mini player flutuante" do sistema,
@@ -731,13 +734,15 @@ export const MobileMusicPlayer = () => {
         />
       </div>
 
-      <ProgressBar
-        currentTime={displayTime}
-        duration={displayDuration}
-        onSeek={handleSeek}
-        isRadio={currentSource === 'radios'}
-        isYouTube={isYouTubeMode}
-      />
+      <div className={isPlayerLocked ? 'pointer-events-none opacity-50 w-full' : 'w-full'}>
+        <ProgressBar
+          currentTime={displayTime}
+          duration={displayDuration}
+          onSeek={isPlayerLocked ? (() => {}) : handleSeek}
+          isRadio={currentSource === 'radios'}
+          isYouTube={isYouTubeMode}
+        />
+      </div>
 
       <MobileControls
         isPlaying={displayPlaying}
@@ -777,7 +782,10 @@ export const MobileMusicPlayer = () => {
       />
 
       {/* Área de Carrosséis com scroll vertical se necessário, mas contida */}
-      <div className="w-full flex-1 overflow-y-auto custom-scrollbar px-2 space-y-2">
+      <div className={cn(
+        "w-full flex-1 overflow-y-auto custom-scrollbar px-2 space-y-2",
+        isPlayerLocked && "pointer-events-none opacity-40"
+      )}>
         <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />
 
         <CategoryCarousel

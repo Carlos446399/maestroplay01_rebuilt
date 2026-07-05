@@ -68,27 +68,40 @@ export const ProfileButton = () => {
         Entrar
       </button>
 
-      {/* Modal de login com botão real do Google */}
-      {showLoginButton && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowLoginButton(false)}>
-          <div className="bg-white rounded-2xl p-6 mx-4 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-black text-gray-800">Entrar no MaestroPlay</h2>
-              <button onClick={() => setShowLoginButton(false)} className="text-gray-400"><X size={20} /></button>
-            </div>
-            <p className="text-xs text-gray-500 mb-5">Faça login com sua conta Google para salvar suas preferências.</p>
-
-            {/* Container onde o Google renderiza o botão oficial */}
-            <div className="flex justify-center mb-4">
-              <div id="google-signin-container" />
-            </div>
-
-            <p className="text-[10px] text-gray-400 text-center">
-              Ao continuar, você concorda com os termos de uso do MaestroPlay.
-            </p>
+      {/* Modal de login com botão real do Google.
+          IMPORTANTE: este bloco fica SEMPRE montado no DOM (nunca é
+          removido condicionalmente) — apenas escondido via CSS quando
+          showLoginButton é false. O script do Google injeta um iframe
+          dentro de #google-signin-container por fora do React; se a gente
+          desmontar essa árvore (ex: com `{showLoginButton && (...)}`)
+          bem no momento em que o Google termina de processar a escolha de
+          conta, o React tenta remover um nó que o script já alterou por
+          conta própria, e trava com "NotFoundError: removeChild". Manter
+          o elemento sempre presente evita esse conflito. */}
+      <div
+        className={cn(
+          "fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-opacity",
+          showLoginButton ? "opacity-100" : "opacity-0 invisible pointer-events-none"
+        )}
+        onClick={() => setShowLoginButton(false)}
+      >
+        <div className="bg-white rounded-2xl p-6 mx-4 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-black text-gray-800">Entrar no MaestroPlay</h2>
+            <button onClick={() => setShowLoginButton(false)} className="text-gray-400"><X size={20} /></button>
           </div>
+          <p className="text-xs text-gray-500 mb-5">Faça login com sua conta Google para salvar suas preferências.</p>
+
+          {/* Container onde o Google renderiza o botão oficial */}
+          <div className="flex justify-center mb-4">
+            <div id="google-signin-container" />
+          </div>
+
+          <p className="text-[10px] text-gray-400 text-center">
+            Ao continuar, você concorda com os termos de uso do MaestroPlay.
+          </p>
         </div>
-      )}
+      </div>
     </>
   );
 };

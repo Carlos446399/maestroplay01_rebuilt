@@ -5,17 +5,17 @@ import { registerSW } from 'virtual:pwa-register';
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Registra o Service Worker e força a atualização para a versão mais
-// recente automaticamente (combinado com skipWaiting/clientsClaim no
-// vite.config.ts). Isso evita que o app fique "preso" numa versão antiga
-// em cache mesmo após novos deploys.
+// Registra o Service Worker. IMPORTANTE: não forçamos mais um reload
+// imediato quando uma nova versão é detectada (`updateSW(true)`), porque
+// isso podia acontecer bem no meio de uma interação do usuário (um menu
+// sendo aberto, por exemplo) e brigava com o React nesse exato instante,
+// causando crashes de "removeChild" — o app parecia quebrar em lugares
+// aleatórios (login, temporizador, busca...) mas a causa era sempre essa.
+// Agora a nova versão fica pronta em segundo plano e só entra em uso na
+// próxima vez que o app for aberto/recarregado naturalmente.
 if ('serviceWorker' in navigator) {
-  const updateSW = registerSW({
+  registerSW({
     immediate: true,
-    onNeedRefresh() {
-      // Nova versão disponível: ativa imediatamente e recarrega a página
-      updateSW(true);
-    },
     onRegisterError(error) {
       console.error('Erro ao registrar o Service Worker:', error);
     },

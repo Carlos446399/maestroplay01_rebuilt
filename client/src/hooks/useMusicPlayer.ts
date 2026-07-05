@@ -325,7 +325,9 @@ export const useMusicPlayer = () => {
 
   const toggleRepeat = useCallback(() => {
     setState(prev => {
-      const nextRepeat = prev.repeat === 'off' ? 'all' : prev.repeat === 'all' ? 'one' : 'off';
+      // Um clique já repete a música atual; o segundo clique passa para
+      // repetir a playlist inteira; o terceiro desliga.
+      const nextRepeat = prev.repeat === 'off' ? 'one' : prev.repeat === 'one' ? 'all' : 'off';
       return { ...prev, repeat: nextRepeat };
     });
   }, []);

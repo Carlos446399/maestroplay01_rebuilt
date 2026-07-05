@@ -147,6 +147,36 @@ export const useMusicPlayer = () => {
     }));
   }, []);
 
+  // Crossfade (transição suave): refs para controlar o fade de volume
+  // entre uma faixa terminando e a próxima começando.
+  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const FADE_SECONDS = 2.5;
+
+  const stopFade = () => {
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+  };
+
+  const fadeIn = useCallback((targetVolume: number) => {
+    stopFade();
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = 0.05;
+    const steps = 20;
+    const stepTime = (FADE_SECONDS * 1000) / steps;
+    let step = 0;
+    fadeIntervalRef.current = setInterval(() => {
+      step++;
+      const progress = Math.min(1, step / steps);
+      if (audioRef.current) {
+        audioRef.current.volume = 0.05 + (targetVolume - 0.05) * progress;
+      }
+      if (progress >= 1) stopFade();
+    }, stepTime);
+  }, []);
+
   const playTrack = useCallback((index: number) => {
     if (index < 0 || index >= state.tracks.length) return;
     
@@ -164,7 +194,10 @@ export const useMusicPlayer = () => {
       loadAudioSource(audioRef.current, track.url);
       requestAnimationFrame(() => {
         if (audioRef.current) {
-          audioRef.current.play().catch(err => {
+          audioRef.current.play().then(() => {
+            // Crossfade: começa baixinho e sobe suavemente até o volume alvo
+            fadeIn(state.volume);
+          }).catch(err => {
             if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
               console.error('Play error:', err);
             }
@@ -172,7 +205,7 @@ export const useMusicPlayer = () => {
         }
       });
     }
-  }, [state.tracks]);
+  }, [state.tracks, state.volume, fadeIn]);
 
   const playRadioRef = useRef<(index: number, isAutoSkip?: boolean) => void>(() => {});
 
@@ -351,7 +384,18 @@ export const useMusicPlayer = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => updateCurrentTime();
+    const handleTimeUpdate = () => {
+      updateCurrentTime();
+      // Crossfade: perto do fim de uma faixa local, vai reduzindo o volume
+      // suavemente (rádios e streams ao vivo não têm "fim" definido, não
+      // se aplica a eles).
+      if (state.currentSource === 'tracks' && audio.duration && !fadeIntervalRef.current) {
+        const remaining = audio.duration - audio.currentTime;
+        if (remaining > 0 && remaining <= FADE_SECONDS) {
+          audio.volume = Math.max(0.05, state.volume * (remaining / FADE_SECONDS));
+        }
+      }
+    };
     const handleEnded = () => {
       setState(prev => ({ ...prev, isPlaying: false }));
       if (state.repeat === 'one') {

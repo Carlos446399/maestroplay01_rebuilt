@@ -31,7 +31,11 @@ export const SleepTimerButton = ({ onTimerEnd }: SleepTimerButtonProps) => {
     clearTimer();
     const end = Date.now() + minutes * 60 * 1000;
     setEndAt(end);
-    setShowMenu(false);
+    // Adia o fechamento do menu para o próximo tick: fecha-lo no mesmo
+    // instante síncrono do clique (enquanto o toque ainda está sendo
+    // processado pelo navegador) é o que causava o crash de removeChild
+    // em alguns celulares.
+    setTimeout(() => setShowMenu(false), 0);
 
     timeoutRef.current = setTimeout(() => {
       onTimerEnd();
@@ -54,7 +58,7 @@ export const SleepTimerButton = ({ onTimerEnd }: SleepTimerButtonProps) => {
   const cancelTimer = () => {
     clearTimer();
     setEndAt(null);
-    setShowMenu(false);
+    setTimeout(() => setShowMenu(false), 0);
   };
 
   useEffect(() => clearTimer, []);

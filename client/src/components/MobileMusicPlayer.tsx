@@ -25,7 +25,7 @@ import { DrivePanel } from './DrivePanel';
 import { DriveFoldersCarousel } from './DriveFoldersCarousel';
 import { DiscoverPanel } from './DiscoverPanel';
 import { HistoryStatsPanel } from './HistoryStatsPanel';
-import { UnifiedSearchPanel } from './UnifiedSearchPanel';
+import { DriveSearchPanel } from './DriveSearchPanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 import { getDrivePreviewUrl } from '@/services/googleDriveService';
 import { audioStorage } from '@/services/audioStorage';
@@ -86,7 +86,7 @@ export const MobileMusicPlayer = () => {
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
   const [isDriveOpen, setIsDriveOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
-  const [isUnifiedSearchOpen, setIsUnifiedSearchOpen] = useState(false);
+  const [isDriveSearchOpen, setIsDriveSearchOpen] = useState(false);
   const [driveJumpFolder, setDriveJumpFolder] = useState<{ id: string; name: string } | null>(null);
   const [isDriveMode, setIsDriveMode] = useState(false);
   const [driveFileId, setDriveFileId] = useState('');
@@ -727,7 +727,7 @@ export const MobileMusicPlayer = () => {
           if (isYouTubeMode && ytPlayer) ytPlayer.pauseVideo();
         }}
         onOpenStats={() => setIsStatsOpen(true)}
-        onOpenUnifiedSearch={() => setIsUnifiedSearchOpen(true)}
+        onOpenDriveSearch={() => setIsDriveSearchOpen(true)}
       />
 
       {importProgress && (
@@ -994,12 +994,10 @@ export const MobileMusicPlayer = () => {
 
       <HistoryStatsPanel isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
 
-      <UnifiedSearchPanel
-        isOpen={isUnifiedSearchOpen}
-        onClose={() => setIsUnifiedSearchOpen(false)}
-        onPlayRadio={handlePlayRadio}
+      <DriveSearchPanel
+        isOpen={isDriveSearchOpen}
+        onClose={() => setIsDriveSearchOpen(false)}
         onPlayDrive={(fileId, title, cover) => handleDrivePlay(fileId, title, cover)}
-        onPlayYouTube={handleYouTubePlayWrapper}
       />
 
       {/* Discover Panel — artistas e playlists estilo Deezer */}

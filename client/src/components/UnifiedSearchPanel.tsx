@@ -102,102 +102,105 @@ export const UnifiedSearchPanel = ({ isOpen, onClose, onPlayRadio, onPlayDrive, 
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-2">
-        {!query.trim() ? (
-          <div className="text-center py-10">
-            <p className="text-xs text-gray-400 mb-2">
-              Digite algo para buscar em todas as suas fontes de música de uma vez.
+        {/* Ambos os blocos ficam sempre montados no DOM — só a visibilidade
+            muda via CSS. Trocar entre árvores JSX inteiras (uma lista
+            grande de resultados sendo desmontada de uma vez) no exato
+            momento em que o campo de texto ainda está em foco já causou
+            crashes de removeChild; manter tudo montado evita o problema. */}
+        <div className={cn("text-center py-10", query.trim() && "hidden")}>
+          <p className="text-xs text-gray-400 mb-2">
+            Digite algo para buscar em todas as suas fontes de música de uma vez.
+          </p>
+          <p className="text-[10px] text-gray-300">
+            A busca no YouTube consome a cota diária gratuita da API — use com moderação.
+          </p>
+        </div>
+
+        <div className={cn(!query.trim() && "hidden")}>
+          {/* Rádios */}
+          {radioResults.length > 0 && (
+            <div className="mb-4">
+              <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
+                <RadioIcon size={12} /> Rádios
+              </p>
+              {radioResults.map(radio => {
+                const index = radioStations.findIndex(r => r.id === radio.id);
+                return (
+                  <button
+                    key={radio.id}
+                    onClick={() => { onPlayRadio(index); onClose(); }}
+                    className="w-full flex items-center gap-2 py-2 border-b border-gray-50 last:border-0 text-left"
+                  >
+                    <img src={radio.cover} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-800 truncate">{radio.name}</p>
+                      <p className="text-[10px] text-gray-400">{radio.genre}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Drive */}
+          <div className="mb-4">
+            <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
+              <HardDrive size={12} /> Google Drive
+              {isSearchingDrive && <Loader2 size={11} className="animate-spin" />}
             </p>
-            <p className="text-[10px] text-gray-300">
-              A busca no YouTube consome a cota diária gratuita da API — use com moderação.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Rádios */}
-            {radioResults.length > 0 && (
-              <div className="mb-4">
-                <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
-                  <RadioIcon size={12} /> Rádios
+            {driveError && <p className="text-[11px] text-red-500">{driveError}</p>}
+            {!isSearchingDrive && !driveError && driveResults.length === 0 && (
+              <p className="text-[11px] text-gray-400">Nenhum resultado no Drive.</p>
+            )}
+            {driveResults.map(file => (
+              <button
+                key={file.id}
+                onClick={() => { onPlayDrive(file.id, file.name.replace(/\.[^/.]+$/, ''), getDriveThumbnail(file)); onClose(); }}
+                className="w-full flex items-center gap-2 py-2 border-b border-gray-50 last:border-0 text-left"
+              >
+                <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {getDriveThumbnail(file) ? (
+                    <img src={getDriveThumbnail(file)} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Music2 size={14} className="text-green-600" />
+                  )}
+                </div>
+                <p className="flex-1 min-w-0 text-xs font-semibold text-gray-800 truncate">
+                  {file.name.replace(/\.[^/.]+$/, '')}
                 </p>
-                {radioResults.map(radio => {
-                  const index = radioStations.findIndex(r => r.id === radio.id);
-                  return (
-                    <button
-                      key={radio.id}
-                      onClick={() => { onPlayRadio(index); onClose(); }}
-                      className="w-full flex items-center gap-2 py-2 border-b border-gray-50 last:border-0 text-left"
-                    >
-                      <img src={radio.cover} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-gray-800 truncate">{radio.name}</p>
-                        <p className="text-[10px] text-gray-400">{radio.genre}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              </button>
+            ))}
+          </div>
+
+          {/* YouTube */}
+          <div className="mb-4">
+            <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
+              <Youtube size={12} /> YouTube
+              {isSearchingYoutube && <Loader2 size={11} className="animate-spin" />}
+            </p>
+            {youtubeError && <p className="text-[11px] text-red-500">{youtubeError}</p>}
+            {!isSearchingYoutube && !youtubeError && youtubeResults.length === 0 && (
+              <p className="text-[11px] text-gray-400">Nenhum resultado no YouTube.</p>
             )}
+            {youtubeResults.map(video => (
+              <button
+                key={video.id}
+                onClick={() => { onPlayYouTube(video.id, video.title, video.thumbnail); onClose(); }}
+                className="w-full flex items-center gap-2 py-2 border-b border-gray-50 last:border-0 text-left"
+              >
+                <img src={video.thumbnail} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-800 truncate">{video.title}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{video.channelTitle}</p>
+                </div>
+              </button>
+            ))}
+          </div>
 
-            {/* Drive */}
-            <div className="mb-4">
-              <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
-                <HardDrive size={12} /> Google Drive
-                {isSearchingDrive && <Loader2 size={11} className="animate-spin" />}
-              </p>
-              {driveError && <p className="text-[11px] text-red-500">{driveError}</p>}
-              {!isSearchingDrive && !driveError && driveResults.length === 0 && (
-                <p className="text-[11px] text-gray-400">Nenhum resultado no Drive.</p>
-              )}
-              {driveResults.map(file => (
-                <button
-                  key={file.id}
-                  onClick={() => { onPlayDrive(file.id, file.name.replace(/\.[^/.]+$/, ''), getDriveThumbnail(file)); onClose(); }}
-                  className="w-full flex items-center gap-2 py-2 border-b border-gray-50 last:border-0 text-left"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {getDriveThumbnail(file) ? (
-                      <img src={getDriveThumbnail(file)} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <Music2 size={14} className="text-green-600" />
-                    )}
-                  </div>
-                  <p className="flex-1 min-w-0 text-xs font-semibold text-gray-800 truncate">
-                    {file.name.replace(/\.[^/.]+$/, '')}
-                  </p>
-                </button>
-              ))}
-            </div>
-
-            {/* YouTube */}
-            <div className="mb-4">
-              <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
-                <Youtube size={12} /> YouTube
-                {isSearchingYoutube && <Loader2 size={11} className="animate-spin" />}
-              </p>
-              {youtubeError && <p className="text-[11px] text-red-500">{youtubeError}</p>}
-              {!isSearchingYoutube && !youtubeError && youtubeResults.length === 0 && (
-                <p className="text-[11px] text-gray-400">Nenhum resultado no YouTube.</p>
-              )}
-              {youtubeResults.map(video => (
-                <button
-                  key={video.id}
-                  onClick={() => { onPlayYouTube(video.id, video.title, video.thumbnail); onClose(); }}
-                  className="w-full flex items-center gap-2 py-2 border-b border-gray-50 last:border-0 text-left"
-                >
-                  <img src={video.thumbnail} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-800 truncate">{video.title}</p>
-                    <p className="text-[10px] text-gray-400 truncate">{video.channelTitle}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {!hasAnyResult && !isSearchingDrive && !isSearchingYoutube && (
-              <p className="text-xs text-gray-400 text-center py-6">Nenhum resultado encontrado em nenhuma fonte.</p>
-            )}
-          </>
-        )}
+          {!hasAnyResult && !isSearchingDrive && !isSearchingYoutube && (
+            <p className="text-xs text-gray-400 text-center py-6">Nenhum resultado encontrado em nenhuma fonte.</p>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -80,7 +80,7 @@ export const SleepTimerButton = ({ onTimerEnd }: SleepTimerButtonProps) => {
       <div
         className={cn(
           "fixed inset-0 z-50 transition-opacity",
-          showMenu ? "opacity-100" : "opacity-0 invisible pointer-events-none"
+          showMenu ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setShowMenu(false)}
       >

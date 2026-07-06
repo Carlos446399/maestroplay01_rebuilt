@@ -24,9 +24,15 @@ export const DriveSearchPanel = ({ isOpen, onClose, onPlayDrive }: DriveSearchPa
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (!query.trim()) {
-      setResults([]);
-      setError(null);
-      return;
+      // Adia a limpeza da lista de resultados para o próximo tick — fazer
+      // isso no mesmo instante síncrono da digitação (enquanto o campo
+      // ainda está processando o evento/teclado virtual) é o que causava
+      // o crash de inserção/remoção de nós em alguns celulares.
+      const t = setTimeout(() => {
+        setResults([]);
+        setError(null);
+      }, 0);
+      return () => clearTimeout(t);
     }
 
     debounceRef.current = setTimeout(async () => {

@@ -52,13 +52,18 @@ export const SleepTimerButton = ({ onTimerEnd }: SleepTimerButtonProps) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value === 'off') {
+    if (value === 'cancel') {
       clearTimer();
       setEndAt(null);
       setRemainingLabel('');
-    } else {
+    } else if (value !== 'off') {
       startTimer(Number(value));
     }
+    // Reseta o <select> para o valor de placeholder logo em seguida —
+    // ele serve só como um seletor de ação, não deve "guardar" o tempo
+    // escolhido nem ficar atualizando (isso causava o menu nativo do
+    // sistema piscar a cada segundo, já que o texto mudava toda hora).
+    e.target.value = 'off';
   };
 
   useEffect(() => clearTimer, []);
@@ -72,21 +77,23 @@ export const SleepTimerButton = ({ onTimerEnd }: SleepTimerButtonProps) => {
     >
       <Moon size={12} className="pointer-events-none" />
       <span className="pointer-events-none">{endAt ? remainingLabel : 'Soneca'}</span>
-      {/* <select> nativo, invisível, sobreposto por cima do botão inteiro.
-          O sistema operacional/navegador cuida de toda a UI do menu — não
-          há overlay próprio do React para desmontar/remontar. */}
+      {/* <select> nativo nao-controlado: serve só como um seletor de ação
+          (escolher/cancelar), sempre volta pro placeholder depois de cada
+          escolha. O contador regressivo fica isolado no <span> acima,
+          fora do menu — assim o menu nativo nunca precisa ser atualizado
+          a cada segundo. */}
       <select
-        value={endAt ? 'active' : 'off'}
+        defaultValue="off"
         onChange={handleChange}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         aria-label="Temporizador de soneca"
       >
-        <option value="off">Desligado</option>
+        <option value="off">Escolher tempo...</option>
         <option value="15">15 minutos</option>
         <option value="30">30 minutos</option>
         <option value="45">45 minutos</option>
         <option value="60">60 minutos</option>
-        {endAt && <option value="active" disabled>Ativo — {remainingLabel}</option>}
+        {endAt && <option value="cancel">Cancelar temporizador</option>}
       </select>
     </div>
   );

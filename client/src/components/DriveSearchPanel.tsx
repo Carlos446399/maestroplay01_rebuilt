@@ -40,11 +40,25 @@ export const DriveSearchPanel = ({ isOpen, onClose, onPlayDrive }: DriveSearchPa
       setError(null);
       try {
         const files = await searchDriveFiles(query);
-        setResults(files.filter(f => AUDIO_MIME_TYPES.has(f.mimeType)));
+        const filtered = files.filter(f => AUDIO_MIME_TYPES.has(f.mimeType));
+        // Adia a troca da lista de resultados para depois do próximo
+        // repaint (dois requestAnimationFrame) — evita atualizar a lista
+        // de botões bem no meio do processamento de um evento de teclado
+        // ainda em andamento, causa provável do crash de inserção/
+        // remoção de nós em alguns celulares.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setResults(filtered);
+            setIsSearching(false);
+          });
+        });
       } catch (err: any) {
-        setError(err?.message || 'Erro ao buscar no Drive');
-      } finally {
-        setIsSearching(false);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setError(err?.message || 'Erro ao buscar no Drive');
+            setIsSearching(false);
+          });
+        });
       }
     }, 500);
 

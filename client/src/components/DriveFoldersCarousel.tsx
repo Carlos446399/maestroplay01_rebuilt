@@ -3,6 +3,7 @@ import { FolderOpen } from 'lucide-react';
 import { listFolderContents, cleanFolderName, FOLDER_MIME, DriveItem } from '@/services/googleDriveService';
 
 const ROOT_FOLDER_ID = '1zqRZc6TRZkQafTOhCokzyD6HUWpTQusx';
+const CACHE_KEY = 'maestroplay_drive_folders_cache';
 
 interface DriveFoldersCarouselProps {
   /** Abre o painel do Drive já dentro da pasta escolhida, mostrando as músicas */
@@ -14,10 +15,22 @@ interface DriveFoldersCarouselProps {
  * mesmo formato/estrutura do carrossel de categorias (quadrado fixo com
  * ícone + nome dentro dele). Tocar num card abre o painel do Drive já
  * dentro daquela pasta, com a lista de músicas — igual abrir uma playlist.
+ *
+ * Usa um cache rápido em sessionStorage: mostra a última lista conhecida
+ * na hora (sem esperar a rede) e atualiza silenciosamente por trás —
+ * evita a demora perceptível de esperar a API do Drive responder toda
+ * vez que a tela inicial abre.
  */
 export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps) => {
-  const [folders, setFolders] = useState<DriveItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [folders, setFolders] = useState<DriveItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isLoading, setIsLoading] = useState(folders.length === 0);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -25,7 +38,14 @@ export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps
     listFolderContents(ROOT_FOLDER_ID)
       .then(items => {
         if (cancelled) return;
-        setFolders(items.filter(i => i.mimeType === FOLDER_MIME));
+        const onlyFolders = items.filter(i => i.mimeType === FOLDER_MIME);
+        setFolders(onlyFolders);
+        setError(false);
+        try {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(onlyFolders));
+        } catch {
+          // sessionStorage indisponível/cheio — sem problema, só não cacheia
+        }
       })
       .catch(() => {
         if (!cancelled) setError(true);
@@ -36,8 +56,9 @@ export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps
     return () => { cancelled = true; };
   }, []);
 
-  // Não mostra nada se ainda não carregou, deu erro, ou não há pastas
-  if (isLoading || error || folders.length === 0) return null;
+  // Não mostra nada se ainda não carregou (e não há cache), deu erro sem
+  // ter cache, ou não há pastas
+  if ((isLoading && folders.length === 0) || (error && folders.length === 0) || folders.length === 0) return null;
 
   return (
     <div className="flex gap-2 px-2 py-1 mt-1 overflow-x-auto custom-scrollbar w-full">

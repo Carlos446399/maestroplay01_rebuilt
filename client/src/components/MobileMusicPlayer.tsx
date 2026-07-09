@@ -26,6 +26,7 @@ import { DriveFoldersCarousel } from './DriveFoldersCarousel';
 import { DiscoverPanel } from './DiscoverPanel';
 import { HistoryStatsPanel } from './HistoryStatsPanel';
 import { DriveSearchPanel } from './DriveSearchPanel';
+import { DriveOfflinePanel } from './DriveOfflinePanel';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 import { getDrivePreviewUrl } from '@/services/googleDriveService';
 import { audioStorage } from '@/services/audioStorage';
@@ -81,7 +82,7 @@ export const MobileMusicPlayer = () => {
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [isFavoritesListOpen, setIsFavoritesListOpen] = useState(false);
+  const [isDriveOfflineOpen, setIsDriveOfflineOpen] = useState(false);
   const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
   const [isDriveOpen, setIsDriveOpen] = useState(false);
@@ -790,7 +791,7 @@ export const MobileMusicPlayer = () => {
       <MobileBottomIcons
         onSearch={() => setIsLocalPlaylistOpen(true)}
         onFavorite={handleFavorite}
-        onFavoritesList={() => setIsFavoritesListOpen(true)}
+        onFavoritesList={() => setIsDriveOfflineOpen(true)}
         onAddMusic={handleAddMusic}
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsDiscoverOpen(true)}
@@ -912,12 +913,11 @@ export const MobileMusicPlayer = () => {
         </div>
       )}
 
-      {/* Favorites List Panel */}
-      <LocalPlaylistPanel
-        isOpen={isFavoritesListOpen}
-        tracks={tracks.filter(t => favorites.has(t.id))}
-        onClose={() => setIsFavoritesListOpen(false)}
-        onTrackSelect={handlePlayTrack}
+      {/* Músicas do Drive salvas offline */}
+      <DriveOfflinePanel
+        isOpen={isDriveOfflineOpen}
+        onClose={() => setIsDriveOfflineOpen(false)}
+        onTrackSelect={(fileId, title, cover) => handleDrivePlay(fileId, title, cover)}
       />
 
       {/* Equalizer Panel */}

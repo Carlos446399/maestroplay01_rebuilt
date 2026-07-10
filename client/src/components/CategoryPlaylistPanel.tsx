@@ -15,7 +15,7 @@ interface CategoryPlaylistPanelProps {
   onClose: () => void;
   onTrackSelect: (trackId: string, trackTitle: string, trackThumbnail: string) => void;
   /** Toca a playlist inteira a partir da música escolhida (habilita próxima/anterior) */
-  onPlayPlaylist?: (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => void;
+  onPlayPlaylist?: (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number, categoryId?: string) => void;
 }
 
 export const CategoryPlaylistPanel = ({
@@ -208,7 +208,8 @@ export const CategoryPlaylistPanel = ({
                   if (onPlayPlaylist && playlist) {
                     onPlayPlaylist(
                       playlist.tracks.map(t => ({ id: t.id, title: t.title, thumbnail: t.thumbnail })),
-                      index
+                      index,
+                      category?.id
                     );
                   } else {
                     onTrackSelect(track.id, track.title, track.thumbnail);

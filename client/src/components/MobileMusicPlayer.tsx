@@ -85,6 +85,7 @@ export const MobileMusicPlayer = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isDriveOfflineOpen, setIsDriveOfflineOpen] = useState(false);
   const [showDriveFolders, setShowDriveFolders] = useState(true);
+  const [playingCategoryId, setPlayingCategoryId] = useState<string | null>(null);
   const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
   const [isDriveOpen, setIsDriveOpen] = useState(false);
@@ -388,6 +389,7 @@ export const MobileMusicPlayer = () => {
     if (track) {
       recordPlay({ id: track.id, name: track.name, cover: track.cover, source: 'local' });
     }
+    setPlayingCategoryId(null);
     playTrack(index);
   };
 
@@ -407,6 +409,7 @@ export const MobileMusicPlayer = () => {
     if (radio) {
       recordPlay({ id: radio.id, name: radio.name, cover: radio.cover, source: 'radio' });
     }
+    setPlayingCategoryId(null);
     playRadio(index);
   };
 
@@ -416,10 +419,11 @@ export const MobileMusicPlayer = () => {
       audioRef.current.pause();
     }
     recordPlay({ id: `yt-${videoId}`, name: title, cover: thumbnail, source: 'youtube' });
+    setPlayingCategoryId(null);
     handleYouTubePlay(videoId, title, thumbnail);
   };
 
-  const handlePlayPlaylist = (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => {
+  const handlePlayPlaylist = (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number, categoryId?: string) => {
     // Para TODOS os outros players
     if (audioRef.current) {
       audioRef.current.pause();
@@ -430,6 +434,7 @@ export const MobileMusicPlayer = () => {
     }
     setIsDriveMode(false);
     setDrivePlaying(false);
+    setPlayingCategoryId(categoryId || null);
 
     const startVideo = songs[startIndex];
     // Usa handleYouTubePlay para garantir que o player é criado se não existir
@@ -619,6 +624,7 @@ export const MobileMusicPlayer = () => {
     }
     setIsYouTubeMode(false);
     setYtPlaying(false);
+    setPlayingCategoryId(null);
     if (audioRef.current) audioRef.current.pause();
 
     // Salva a playlist para navegação próxima/anterior
@@ -722,7 +728,7 @@ export const MobileMusicPlayer = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-main text-white flex flex-col items-center overflow-hidden pb-4">
+    <div className="h-[100dvh] w-full bg-gradient-main text-white flex flex-col items-center overflow-hidden pb-2">
       <MobileHeader
         onSleepTimerEnd={() => {
           if (audioRef.current) audioRef.current.pause();
@@ -826,7 +832,7 @@ export const MobileMusicPlayer = () => {
 
       {/* Área de Carrosséis com scroll vertical se necessário, mas contida */}
       <div className={cn(
-        "w-full flex-1 overflow-y-auto custom-scrollbar px-2 pb-3 space-y-1.5",
+        "w-full flex-1 min-h-0 overflow-y-auto custom-scrollbar px-2 pb-3 space-y-1.5",
         isPlayerLocked && "pointer-events-none opacity-40"
       )}>
         <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />
@@ -836,6 +842,7 @@ export const MobileMusicPlayer = () => {
             setSelectedCategory(category);
             setIsCategoryPlaylistOpen(true);
           }}
+          playingCategoryId={playingCategoryId}
         />
 
         {showDriveFolders && (

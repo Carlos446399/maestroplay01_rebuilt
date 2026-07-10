@@ -10,6 +10,8 @@ interface Category {
 
 interface CategoryCarouselProps {
   onCategorySelect: (category: Category) => void;
+  /** ID da categoria cujas músicas estão tocando agora — mostra um destaque pulsante nela */
+  playingCategoryId?: string | null;
 }
 
 const CATEGORIES: Category[] = [
@@ -51,35 +53,44 @@ const CATEGORIES: Category[] = [
   { id: 'orquestra', name: 'Orquestra', icon: '🎼', color: 'from-blue-700 to-purple-700', query: 'orchestra music' },
 ];
 
-export const CategoryCarousel = ({ onCategorySelect }: CategoryCarouselProps) => {
+export const CategoryCarousel = ({ onCategorySelect, playingCategoryId }: CategoryCarouselProps) => {
   return (
     <div className="flex gap-3 px-2 py-1 mt-1 overflow-x-auto custom-scrollbar w-full">
-      {CATEGORIES.map((category) => (
-        <button
-          key={category.id}
-          onClick={() => onCategorySelect(category)}
-          className={`flex-shrink-0 w-[70px] h-[70px] rounded cursor-pointer p-1
-            flex flex-col items-center justify-center
-            transition-all duration-200 hover:scale-105 active:scale-95
-            bg-gradient-to-br ${category.color} shadow-lg hover:shadow-xl
-            group relative overflow-hidden`}
-        >
-          {/* Overlay escuro ao hover */}
-          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all" />
-          
-          {/* Conteudo */}
-          <div className="relative z-10 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl mb-0.5">{category.icon}</span>
-            <span className="text-white font-bold text-[7px] text-center leading-tight truncate px-0.5">
-              {category.name}
-            </span>
-          </div>
+      {CATEGORIES.map((category) => {
+        const isPlaying = category.id === playingCategoryId;
+        return (
+          <button
+            key={category.id}
+            onClick={() => onCategorySelect(category)}
+            className={`flex-shrink-0 w-[70px] h-[70px] rounded cursor-pointer p-1
+              flex flex-col items-center justify-center
+              transition-all duration-200 hover:scale-105 active:scale-95
+              bg-gradient-to-br ${category.color} shadow-lg hover:shadow-xl
+              group relative overflow-hidden
+              ${isPlaying ? 'ring-2 ring-white animate-pulse' : ''}`}
+          >
+            {/* Overlay escuro ao hover */}
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all" />
+            
+            {/* Conteudo */}
+            <div className="relative z-10 flex flex-col items-center justify-center h-full">
+              <span className="text-2xl mb-0.5">{category.icon}</span>
+              <span className="text-white font-bold text-[7px] text-center leading-tight truncate px-0.5">
+                {category.name}
+              </span>
+            </div>
 
-          {/* Shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
-            transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
-        </button>
-      ))}
+            {/* Indicador de "tocando agora" */}
+            {isPlaying && (
+              <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-white shadow-[0_0_6px_2px_rgba(255,255,255,0.8)]" />
+            )}
+
+            {/* Shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
+              transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
+          </button>
+        );
+      })}
     </div>
   );
 };

@@ -144,7 +144,7 @@ export const ProfileButton = () => {
                 placeholder="Como você quer ser chamado"
                 value={authUsername}
                 onChange={e => setAuthUsername(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 mt-1 focus:outline-none focus:border-purple-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 mb-3 mt-1 focus:outline-none focus:border-purple-400"
               />
               <label className="text-[11px] font-semibold text-gray-500">Senha</label>
               <input
@@ -153,7 +153,7 @@ export const ProfileButton = () => {
                 value={authPassword}
                 onChange={e => setAuthPassword(e.target.value)}
                 className={cn(
-                  "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:border-purple-400",
+                  "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 mt-1 focus:outline-none focus:border-purple-400",
                   hasProfile() ? "mb-4" : "mb-3"
                 )}
               />
@@ -165,7 +165,7 @@ export const ProfileButton = () => {
                     placeholder="Digite a senha de novo"
                     value={authPasswordConfirm}
                     onChange={e => setAuthPasswordConfirm(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 mt-1 focus:outline-none focus:border-purple-400"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 mb-4 mt-1 focus:outline-none focus:border-purple-400"
                   />
                 </>
               )}
@@ -215,7 +215,7 @@ export const ProfileButton = () => {
                 defaultValue={profile?.username}
                 key={profile?.username}
                 onBlur={e => handleUsernameEdit(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 mt-1 focus:outline-none focus:border-purple-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 mb-4 mt-1 focus:outline-none focus:border-purple-400"
               />
 
               <button

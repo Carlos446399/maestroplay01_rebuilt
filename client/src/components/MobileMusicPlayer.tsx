@@ -835,7 +835,7 @@ export const MobileMusicPlayer = () => {
           fileira individual rola na horizontal. Altura reservada pra cada
           fileira assíncrona não fazer o layout "pular". */}
       <div className={cn(
-        "w-full flex-1 min-h-0 overflow-hidden px-2 pb-1 flex flex-col justify-center gap-1",
+        "w-full flex-1 min-h-0 overflow-hidden px-2 pb-1 flex flex-col justify-start gap-1",
         isPlayerLocked && "pointer-events-none opacity-40"
       )}>
         <div className="min-h-[64px]">

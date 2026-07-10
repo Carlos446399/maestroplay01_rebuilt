@@ -83,6 +83,7 @@ export const MobileMusicPlayer = () => {
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isDriveOfflineOpen, setIsDriveOfflineOpen] = useState(false);
+  const [showDriveFolders, setShowDriveFolders] = useState(true);
   const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
   const [isDriveOpen, setIsDriveOpen] = useState(false);
@@ -766,6 +767,15 @@ export const MobileMusicPlayer = () => {
         />
       </div>
 
+      {/* Nome do app — estilizado e discreto, entre a capa e a barra de progresso */}
+      <div className="w-full text-center my-1 select-none pointer-events-none">
+        <span
+          className="text-sm font-black tracking-[0.2em] uppercase bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(251,191,36,0.35)]"
+        >
+          Maestro Play
+        </span>
+      </div>
+
       <div className={isPlayerLocked ? 'pointer-events-none opacity-50 w-full' : 'w-full'}>
         <ProgressBar
           currentTime={displayTime}
@@ -796,7 +806,7 @@ export const MobileMusicPlayer = () => {
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsDiscoverOpen(true)}
         onArtists={() => setIsArtistsPanelOpen(true)}
-        onDrive={() => setIsDriveOpen(true)}
+        onDrive={() => setShowDriveFolders(v => !v)}
         isFavorite={
           isDriveMode
             ? favorites.has(`drive-${driveFileId}`)
@@ -827,12 +837,14 @@ export const MobileMusicPlayer = () => {
           }}
         />
 
-        <DriveFoldersCarousel
-          onOpenFolder={(folder) => {
-            setDriveJumpFolder(folder);
-            setIsDriveOpen(true);
-          }}
-        />
+        {showDriveFolders && (
+          <DriveFoldersCarousel
+            onOpenFolder={(folder) => {
+              setDriveJumpFolder(folder);
+              setIsDriveOpen(true);
+            }}
+          />
+        )}
       </div>
 
       <LocalPlaylistPanel
@@ -877,6 +889,7 @@ export const MobileMusicPlayer = () => {
           // Usar handleYouTubePlay para reproduzir corretamente
           handleYouTubePlay(trackId, trackTitle, trackThumbnail);
         }}
+        onPlayPlaylist={handlePlayPlaylist}
       />
 
       {/* Hidden YouTube player */}

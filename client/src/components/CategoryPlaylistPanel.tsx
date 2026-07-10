@@ -14,6 +14,8 @@ interface CategoryPlaylistPanelProps {
   } | null;
   onClose: () => void;
   onTrackSelect: (trackId: string, trackTitle: string, trackThumbnail: string) => void;
+  /** Toca a playlist inteira a partir da música escolhida (habilita próxima/anterior) */
+  onPlayPlaylist?: (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number) => void;
 }
 
 export const CategoryPlaylistPanel = ({
@@ -21,6 +23,7 @@ export const CategoryPlaylistPanel = ({
   category,
   onClose,
   onTrackSelect,
+  onPlayPlaylist,
 }: CategoryPlaylistPanelProps) => {
   const [playlist, setPlaylist] = useState<CategoryPlaylist | null>(null);
   const [loading, setLoading] = useState(false);
@@ -202,7 +205,14 @@ export const CategoryPlaylistPanel = ({
               <button
                 key={track.id}
                 onClick={() => {
-                  onTrackSelect(track.id, track.title, track.thumbnail);
+                  if (onPlayPlaylist && playlist) {
+                    onPlayPlaylist(
+                      playlist.tracks.map(t => ({ id: t.id, title: t.title, thumbnail: t.thumbnail })),
+                      index
+                    );
+                  } else {
+                    onTrackSelect(track.id, track.title, track.thumbnail);
+                  }
                   onClose();
                 }}
                 className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-900/50 hover:bg-gray-800 

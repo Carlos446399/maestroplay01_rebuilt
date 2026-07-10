@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Hourglass, Star } from 'lucide-react';
+import { Hourglass, Star, Crown } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useMediaSession } from '@/hooks/useMediaSession';
@@ -804,7 +805,7 @@ export const MobileMusicPlayer = () => {
         onFavoritesList={() => setIsDriveOfflineOpen(true)}
         onAddMusic={handleAddMusic}
         onRadio={() => setIsRadioOpen(true)}
-        onPlaylist={() => setIsDiscoverOpen(true)}
+        onPlaylist={() => setIsSavedSongsOpen(true)}
         onArtists={() => setIsArtistsPanelOpen(true)}
         onDrive={() => setShowDriveFolders(v => !v)}
         isFavorite={
@@ -941,13 +942,14 @@ export const MobileMusicPlayer = () => {
         onPlayPlaylist={handlePlayPlaylist}
       />
 
-      {/* Botão flutuante: Músicas Salvas */}
+      {/* Botão flutuante: reservado para o futuro perfil de usuário —
+          por enquanto só um marcador visual (coroa) */}
       <button
-        onClick={() => setIsSavedSongsOpen(true)}
+        onClick={() => toast.info('Perfil chegando em breve! 👑')}
         className="fixed top-20 right-4 z-20 w-12 h-12 flex items-center justify-center rounded-lg bg-black/80 backdrop-blur-sm border border-gray-700 hover:border-gray-500 transition-all duration-300"
-        title="Músicas Salvas"
+        title="Perfil (em breve)"
       >
-        <Star size={20} className={savedSongs.length > 0 ? 'text-red-500' : 'text-gray-400'} />
+        <Crown size={20} className="text-amber-400" />
       </button>
 
       <SavedSongsPanel

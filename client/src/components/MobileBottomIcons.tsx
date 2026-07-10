@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { 
   Search, 
-  Star, 
+  Heart, 
+  Star,
   Plus, 
   Radio,
   Music,
@@ -60,7 +61,7 @@ export const MobileBottomIcons = ({
           size={20} 
           onClick={isLocked ? undefined : onSearch} 
         />
-        <Star 
+        <Heart 
           className={cn(
             "cursor-pointer transition-all duration-200",
             isFavorite ? 'text-red-600 fill-red-600' : 'text-white hover:text-primary',
@@ -111,7 +112,7 @@ export const MobileBottomIcons = ({
           size={20} 
           onClick={isLocked ? undefined : onRadio} 
         />
-        <Music 
+        <Star 
           className={cn("cursor-pointer text-white hover:text-primary transition-colors", lockedClass)}
           size={20} 
           onClick={isLocked ? undefined : onPlaylist} 

@@ -55,14 +55,14 @@ const CATEGORIES: Category[] = [
 
 export const CategoryCarousel = ({ onCategorySelect, playingCategoryId }: CategoryCarouselProps) => {
   return (
-    <div className="flex gap-3 px-2 py-1 mt-1 overflow-x-auto custom-scrollbar w-full">
+    <div className="flex gap-2 px-2 py-0.5 overflow-x-auto custom-scrollbar w-full">
       {CATEGORIES.map((category) => {
         const isPlaying = category.id === playingCategoryId;
         return (
           <button
             key={category.id}
             onClick={() => onCategorySelect(category)}
-            className={`flex-shrink-0 w-[70px] h-[70px] rounded cursor-pointer p-1
+            className={`flex-shrink-0 w-[58px] h-[58px] rounded cursor-pointer p-1
               flex flex-col items-center justify-center
               transition-all duration-200 hover:scale-105 active:scale-95
               bg-gradient-to-br ${category.color} shadow-lg hover:shadow-xl
@@ -74,7 +74,7 @@ export const CategoryCarousel = ({ onCategorySelect, playingCategoryId }: Catego
             
             {/* Conteudo */}
             <div className="relative z-10 flex flex-col items-center justify-center h-full">
-              <span className="text-2xl mb-0.5">{category.icon}</span>
+              <span className="text-lg mb-0.5">{category.icon}</span>
               <span className="text-white font-bold text-[7px] text-center leading-tight truncate px-0.5">
                 {category.name}
               </span>

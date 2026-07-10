@@ -66,7 +66,7 @@ export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps
         <button
           key={folder.id}
           onClick={() => onOpenFolder({ id: folder.id, name: folder.name })}
-          className="flex-shrink-0 w-[70px] h-[70px] rounded cursor-pointer p-1
+          className="flex-shrink-0 w-[58px] h-[58px] rounded cursor-pointer p-1
             flex flex-col items-center justify-center
             transition-all duration-200 hover:scale-105 active:scale-95
             bg-gradient-to-br from-emerald-600 to-teal-700 shadow-lg hover:shadow-xl
@@ -77,7 +77,7 @@ export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps
 
           {/* Conteúdo */}
           <div className="relative z-10 flex flex-col items-center justify-center h-full">
-            <FolderOpen className="text-white mb-0.5" size={24} />
+            <FolderOpen className="text-white mb-0.5" size={18} />
             <span className="text-white font-bold text-[7px] text-center leading-tight truncate px-0.5 w-full">
               {cleanFolderName(folder.name)}
             </span>

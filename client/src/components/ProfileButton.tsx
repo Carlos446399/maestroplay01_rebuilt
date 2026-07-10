@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Crown, X, Camera, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import {
   getProfile,
   hasProfile,
@@ -30,6 +31,7 @@ export const ProfileButton = () => {
   const [modalMode, setModalMode] = useState<ModalMode>('closed');
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [authPasswordConfirm, setAuthPasswordConfirm] = useState('');
   const [, setProfileVersion] = useState(0); // força re-render após mudanças
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,6 +56,10 @@ export const ProfileButton = () => {
     }
 
     if (!hasProfile()) {
+      if (authPassword !== authPasswordConfirm) {
+        toast.error('As senhas não são iguais. Confirme novamente.');
+        return;
+      }
       createProfile(username, authPassword);
       toast.success('Conta criada neste aparelho!');
     } else {
@@ -66,6 +72,7 @@ export const ProfileButton = () => {
     }
     setAuthUsername('');
     setAuthPassword('');
+    setAuthPasswordConfirm('');
     setModalMode('profile');
     bump();
   };
@@ -131,20 +138,37 @@ export const ProfileButton = () => {
               <p className="text-[11px] text-gray-400 mb-4">
                 Guardado só neste aparelho — não é sincronizado com nenhum servidor.
               </p>
+              <label className="text-[11px] font-semibold text-gray-500">Nome de usuário</label>
               <input
                 type="text"
-                placeholder="Nome de usuário"
+                placeholder="Como você quer ser chamado"
                 value={authUsername}
                 onChange={e => setAuthUsername(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:border-purple-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 mt-1 focus:outline-none focus:border-purple-400"
               />
+              <label className="text-[11px] font-semibold text-gray-500">Senha</label>
               <input
                 type="password"
-                placeholder="Senha"
+                placeholder="Sua senha"
                 value={authPassword}
                 onChange={e => setAuthPassword(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:border-purple-400"
+                className={cn(
+                  "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:border-purple-400",
+                  hasProfile() ? "mb-4" : "mb-3"
+                )}
               />
+              {!hasProfile() && (
+                <>
+                  <label className="text-[11px] font-semibold text-gray-500">Confirmar senha</label>
+                  <input
+                    type="password"
+                    placeholder="Digite a senha de novo"
+                    value={authPasswordConfirm}
+                    onChange={e => setAuthPasswordConfirm(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 mt-1 focus:outline-none focus:border-purple-400"
+                  />
+                </>
+              )}
               <button
                 onClick={handleAuthSubmit}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm py-2.5 rounded-lg transition-colors"

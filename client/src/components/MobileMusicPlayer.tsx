@@ -776,7 +776,7 @@ export const MobileMusicPlayer = () => {
       </div>
 
       {/* Nome do app — estilizado e discreto, entre a capa e a barra de progresso */}
-      <div className="w-full text-center mt-1 mb-3 select-none pointer-events-none">
+      <div className="w-full text-center mt-2 mb-5 select-none pointer-events-none">
         <span
           className="text-sm font-black tracking-[0.2em] uppercase bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(251,191,36,0.35)]"
         >
@@ -831,14 +831,14 @@ export const MobileMusicPlayer = () => {
         onToggleLock={handleToggleLock}
       />
 
-      {/* Área de Carrosséis — altura reservada para cada fileira assíncrona
-          (artistas salvos, pastas do Drive) para o layout não "pular" pra
-          cima e pra baixo enquanto os dados carregam */}
+      {/* Área de Carrosséis — estática (não rola verticalmente), só cada
+          fileira individual rola na horizontal. Altura reservada pra cada
+          fileira assíncrona não fazer o layout "pular". */}
       <div className={cn(
-        "w-full flex-1 min-h-0 overflow-y-auto custom-scrollbar px-2 pb-3 space-y-1.5",
+        "w-full flex-1 min-h-0 overflow-hidden px-2 pb-1 flex flex-col justify-center gap-1",
         isPlayerLocked && "pointer-events-none opacity-40"
       )}>
-        <div className="min-h-[82px]">
+        <div className="min-h-[64px]">
           <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />
         </div>
 
@@ -851,7 +851,7 @@ export const MobileMusicPlayer = () => {
         />
 
         {showDriveFolders && (
-          <div className="min-h-[82px]">
+          <div className="min-h-[64px]">
             <DriveFoldersCarousel
               onOpenFolder={(folder) => {
                 setDriveJumpFolder(folder);

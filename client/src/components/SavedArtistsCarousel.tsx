@@ -277,12 +277,12 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
         </h3>
         
         {/* Strip horizontal seguindo o padrão do CategoryCarousel */}
-        <div className="flex gap-3 px-2 py-1 overflow-x-auto custom-scrollbar w-full">
+        <div className="flex gap-2 px-2 py-0.5 overflow-x-auto custom-scrollbar w-full">
           {savedArtists.map((artist) => (
             <button
               key={artist.id}
               onClick={() => handlePlayArtist(artist)}
-              className="flex-shrink-0 w-[70px] h-[70px] bg-gradient-to-br from-red-600 to-red-800 rounded cursor-pointer p-1 flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg relative group overflow-hidden"
+              className="flex-shrink-0 w-[58px] h-[58px] bg-gradient-to-br from-red-600 to-red-800 rounded cursor-pointer p-1 flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg relative group overflow-hidden"
             >
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all" />
               

@@ -28,6 +28,7 @@ import { DiscoverPanel } from './DiscoverPanel';
 import { HistoryStatsPanel } from './HistoryStatsPanel';
 import { DriveSearchPanel } from './DriveSearchPanel';
 import { DriveOfflinePanel } from './DriveOfflinePanel';
+import { ProfileButton } from './ProfileButton';
 import { favoritesStorage, FavoriteSong } from '@/services/favoritesStorage';
 import { getDrivePreviewUrl } from '@/services/googleDriveService';
 import { audioStorage } from '@/services/audioStorage';
@@ -775,7 +776,7 @@ export const MobileMusicPlayer = () => {
       </div>
 
       {/* Nome do app — estilizado e discreto, entre a capa e a barra de progresso */}
-      <div className="w-full text-center my-1 select-none pointer-events-none">
+      <div className="w-full text-center mt-1 mb-3 select-none pointer-events-none">
         <span
           className="text-sm font-black tracking-[0.2em] uppercase bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(251,191,36,0.35)]"
         >
@@ -783,7 +784,7 @@ export const MobileMusicPlayer = () => {
         </span>
       </div>
 
-      <div className={isPlayerLocked ? 'pointer-events-none opacity-50 w-full' : 'w-full'}>
+      <div className={isPlayerLocked ? 'pointer-events-none opacity-50 w-full mt-1' : 'w-full mt-1'}>
         <ProgressBar
           currentTime={displayTime}
           duration={displayDuration}
@@ -830,12 +831,16 @@ export const MobileMusicPlayer = () => {
         onToggleLock={handleToggleLock}
       />
 
-      {/* Área de Carrosséis com scroll vertical se necessário, mas contida */}
+      {/* Área de Carrosséis — altura reservada para cada fileira assíncrona
+          (artistas salvos, pastas do Drive) para o layout não "pular" pra
+          cima e pra baixo enquanto os dados carregam */}
       <div className={cn(
         "w-full flex-1 min-h-0 overflow-y-auto custom-scrollbar px-2 pb-3 space-y-1.5",
         isPlayerLocked && "pointer-events-none opacity-40"
       )}>
-        <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />
+        <div className="min-h-[82px]">
+          <SavedArtistsCarousel onPlayPlaylist={handlePlayPlaylist} />
+        </div>
 
         <CategoryCarousel
           onCategorySelect={(category) => {
@@ -846,12 +851,14 @@ export const MobileMusicPlayer = () => {
         />
 
         {showDriveFolders && (
-          <DriveFoldersCarousel
-            onOpenFolder={(folder) => {
-              setDriveJumpFolder(folder);
-              setIsDriveOpen(true);
-            }}
-          />
+          <div className="min-h-[82px]">
+            <DriveFoldersCarousel
+              onOpenFolder={(folder) => {
+                setDriveJumpFolder(folder);
+                setIsDriveOpen(true);
+              }}
+            />
+          </div>
         )}
       </div>
 
@@ -898,6 +905,7 @@ export const MobileMusicPlayer = () => {
           handleYouTubePlay(trackId, trackTitle, trackThumbnail);
         }}
         onPlayPlaylist={handlePlayPlaylist}
+        currentPlayingId={isYouTubeMode ? ytPlaylist[ytCurrentIndex]?.id : undefined}
       />
 
       {/* Hidden YouTube player */}
@@ -949,15 +957,9 @@ export const MobileMusicPlayer = () => {
         onPlayPlaylist={handlePlayPlaylist}
       />
 
-      {/* Botão flutuante: reservado para o futuro perfil de usuário —
-          por enquanto só um marcador visual (coroa) */}
-      <button
-        onClick={() => toast.info('Perfil chegando em breve! 👑')}
-        className="fixed top-20 right-4 z-20 w-12 h-12 flex items-center justify-center rounded-lg bg-black/80 backdrop-blur-sm border border-gray-700 hover:border-gray-500 transition-all duration-300"
-        title="Perfil (em breve)"
-      >
-        <Crown size={20} className="text-amber-400" />
-      </button>
+      {/* Botão flutuante de perfil — cria conta local, permite trocar
+          foto e nome de usuário */}
+      <ProfileButton />
 
       <SavedSongsPanel
         isOpen={isSavedSongsOpen}

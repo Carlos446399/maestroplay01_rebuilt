@@ -16,6 +16,8 @@ interface CategoryPlaylistPanelProps {
   onTrackSelect: (trackId: string, trackTitle: string, trackThumbnail: string) => void;
   /** Toca a playlist inteira a partir da música escolhida (habilita próxima/anterior) */
   onPlayPlaylist?: (songs: Array<{id: string; title: string; thumbnail: string}>, startIndex: number, categoryId?: string) => void;
+  /** ID do vídeo do YouTube tocando agora — destaca essa música na lista */
+  currentPlayingId?: string;
 }
 
 export const CategoryPlaylistPanel = ({
@@ -24,6 +26,7 @@ export const CategoryPlaylistPanel = ({
   onClose,
   onTrackSelect,
   onPlayPlaylist,
+  currentPlayingId,
 }: CategoryPlaylistPanelProps) => {
   const [playlist, setPlaylist] = useState<CategoryPlaylist | null>(null);
   const [loading, setLoading] = useState(false);
@@ -233,8 +236,11 @@ export const CategoryPlaylistPanel = ({
 
                 {/* Info */}
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-white font-medium truncate text-sm">
-                    {track.title}
+                  <p className="text-white font-medium truncate text-sm flex items-center gap-1.5">
+                    {track.id === currentPlayingId && (
+                      <span className="w-2 h-2 rounded-full bg-red-600 flex-shrink-0 shadow-[0_0_6px_2px_rgba(220,38,38,0.6)]" />
+                    )}
+                    <span className="truncate">{track.title}</span>
                   </p>
                 </div>
 

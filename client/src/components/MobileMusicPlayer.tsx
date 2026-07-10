@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useMediaSession } from '@/hooks/useMediaSession';
 import { useBackgroundPlayback } from '@/hooks/useBackgroundPlayback';
-import { MobileHeader } from './MobileHeader';
 import { AlbumArt } from './AlbumArt';
 import { ProgressBar } from './ProgressBar';
 import { MobileControls } from './MobileControls';
@@ -730,16 +729,6 @@ export const MobileMusicPlayer = () => {
 
   return (
     <div className="h-[100dvh] w-full bg-gradient-main text-white flex flex-col items-center overflow-hidden pb-2">
-      <MobileHeader
-        onSleepTimerEnd={() => {
-          if (audioRef.current) audioRef.current.pause();
-          if (driveAudioRef.current) driveAudioRef.current.pause();
-          if (isYouTubeMode && ytPlayer) ytPlayer.pauseVideo();
-        }}
-        onOpenStats={() => setIsStatsOpen(true)}
-        onOpenDriveSearch={() => setIsDriveSearchOpen(true)}
-      />
-
       {importProgress && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 animate-fade-in">
           <Hourglass className="text-golden animate-spin" size={40} />
@@ -804,6 +793,12 @@ export const MobileMusicPlayer = () => {
         isShuffle={isShuffle}
         onToggleShuffle={isPlayerLocked ? undefined : () => setIsShuffle(!isShuffle)}
         isLocked={isPlayerLocked}
+        onOpenDriveSearch={() => setIsDriveSearchOpen(true)}
+        onSleepTimerEnd={() => {
+          if (audioRef.current) audioRef.current.pause();
+          if (driveAudioRef.current) driveAudioRef.current.pause();
+          if (isYouTubeMode && ytPlayer) ytPlayer.pauseVideo();
+        }}
       />
 
       <MobileBottomIcons
@@ -959,7 +954,7 @@ export const MobileMusicPlayer = () => {
 
       {/* Botão flutuante de perfil — cria conta local, permite trocar
           foto e nome de usuário */}
-      <ProfileButton />
+      <ProfileButton onOpenStats={() => setIsStatsOpen(true)} />
 
       <SavedSongsPanel
         isOpen={isSavedSongsOpen}

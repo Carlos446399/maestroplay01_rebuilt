@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Crown, X, Camera, LogOut } from 'lucide-react';
+import { Crown, X, Camera, LogOut, BarChart2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -27,7 +27,12 @@ type ModalMode = 'closed' | 'auth' | 'profile';
  * IMPORTANTE: isso é uma trava local simples, guardada só neste
  * aparelho — não é uma conta real sincronizada com servidor.
  */
-export const ProfileButton = () => {
+interface ProfileButtonProps {
+  /** Abre o painel de estatísticas de escuta (agora acessível só por aqui) */
+  onOpenStats?: () => void;
+}
+
+export const ProfileButton = ({ onOpenStats }: ProfileButtonProps) => {
   const [modalMode, setModalMode] = useState<ModalMode>('closed');
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -217,6 +222,13 @@ export const ProfileButton = () => {
                 onBlur={e => handleUsernameEdit(e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 mb-4 mt-1 focus:outline-none focus:border-purple-400"
               />
+
+              <button
+                onClick={() => { onOpenStats?.(); setModalMode('closed'); }}
+                className="w-full flex items-center justify-center gap-2 text-purple-600 text-sm font-semibold py-2 rounded-lg hover:bg-purple-50 transition-colors mb-2"
+              >
+                <BarChart2 size={14} /> Estatísticas de escuta
+              </button>
 
               <button
                 onClick={handleLogout}

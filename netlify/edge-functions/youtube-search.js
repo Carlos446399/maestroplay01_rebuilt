@@ -13,7 +13,7 @@
 //
 // Caminho: /api/youtube-search?query=TERMO&type=video|channel
 
-import { getStore } from '@netlify/blobs';
+import { getStore } from 'npm:@netlify/blobs@10.7.9';
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
 

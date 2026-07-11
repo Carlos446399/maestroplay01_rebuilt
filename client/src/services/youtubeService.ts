@@ -1,5 +1,3 @@
-const YOUTUBE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
-
 export interface YouTubeResult {
   id: string;
   title: string;
@@ -25,7 +23,7 @@ export interface YouTubeChannelSearchResult {
 }
 
 /**
- * Extrai uma mensagem de erro legível da resposta da API do YouTube.
+ * Extrai uma mensagem de erro legível da resposta do proxy de busca.
  * Traduz o caso mais comum (cota diária excedida) para uma mensagem clara
  * em vez do genérico "YouTube search failed", que escondia a causa real.
  */
@@ -34,13 +32,13 @@ const buildYouTubeError = async (response: Response, context: string): Promise<E
   let message = '';
   try {
     const data = await response.json();
-    reason = data?.error?.errors?.[0]?.reason || '';
-    message = data?.error?.message || '';
+    reason = data?.reason || data?.error?.errors?.[0]?.reason || '';
+    message = data?.error || '';
   } catch {
     // resposta não era JSON, segue com o status
   }
 
-  if (reason === 'quotaExceeded' || response.status === 403 && /quota/i.test(message)) {
+  if (reason === 'quotaExceeded' || (response.status === 403 && /quota/i.test(message))) {
     return new Error(
       'A cota diária gratuita de busca do YouTube acabou. Ela é renovada automaticamente à meia-noite (horário do Pacífico, EUA). Tente novamente mais tarde.'
     );
@@ -53,15 +51,12 @@ const buildYouTubeError = async (response: Response, context: string): Promise<E
   return new Error(`${context} (${response.status}${message ? `: ${message}` : ''})`);
 };
 
-// Busca canais/artistas no YouTube (usado para encontrar novos artistas)
+// Busca canais/artistas no YouTube (usado para encontrar novos artistas).
+// Passa por um proxy no servidor com cache compartilhado entre todos os
+// usuários — economiza bastante a cota diária da API.
 export const searchYouTubeArtists = async (query: string, pageToken?: string): Promise<YouTubeChannelSearchResult> => {
-  let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=25&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
-
-  if (pageToken) {
-    url += `&pageToken=${pageToken}`;
-  }
-
-  const response = await fetch(url);
+  const qs = new URLSearchParams({ query, type: 'channel', ...(pageToken ? { pageToken } : {}) });
+  const response = await fetch(`/api/youtube-search?${qs.toString()}`);
   if (!response.ok) {
     throw await buildYouTubeError(response, 'Busca de artistas no YouTube falhou');
   }
@@ -79,21 +74,18 @@ export const searchYouTubeArtists = async (query: string, pageToken?: string): P
   };
 };
 
-// Busca músicas no YouTube com suporte a múltiplas páginas
+// Busca músicas no YouTube com suporte a múltiplas páginas. Passa por um
+// proxy no servidor com cache compartilhado entre todos os usuários —
+// buscas repetidas (a maioria, na prática) não gastam cota de novo.
 export const searchYouTube = async (query: string, pageToken?: string): Promise<YouTubeSearchResult> => {
-  let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=50&q=${encodeURIComponent(query + ' music')}&key=${YOUTUBE_API_KEY}`;
-  
-  if (pageToken) {
-    url += `&pageToken=${pageToken}`;
-  }
-  
-  const response = await fetch(url);
+  const qs = new URLSearchParams({ query, type: 'video', ...(pageToken ? { pageToken } : {}) });
+  const response = await fetch(`/api/youtube-search?${qs.toString()}`);
   if (!response.ok) {
     throw await buildYouTubeError(response, 'Busca de músicas no YouTube falhou');
   }
-  
+
   const data = await response.json();
-  
+
   return {
     items: (data.items || []).map((item: any) => ({
       id: item.id.videoId,

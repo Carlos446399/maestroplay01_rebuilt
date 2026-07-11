@@ -19,6 +19,12 @@
   path = "/api/drive-list"
   function = "drive-list"
 
+# Edge Function para busca no YouTube com cache compartilhado
+# (economiza cota da API entre todos os usuários)
+[[edge_functions]]
+  path = "/api/youtube-search"
+  function = "youtube-search"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

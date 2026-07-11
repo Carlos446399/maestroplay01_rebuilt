@@ -79,11 +79,12 @@ const SavedArtistCard = ({
   const [thumb, setThumb] = useState<string | undefined>(artist.image);
   const isLoading = loadingArtist === artist.id;
 
-  // Buscar thumbnail do canal se não tiver imagem
+  // Buscar thumbnail do canal se não tiver imagem (via proxy com cache
+  // compartilhado — evita gastar cota da API sozinho a cada card exibido)
   useEffect(() => {
     if (thumb) return;
-    const GOOGLE_API_KEY = 'AIzaSyD_7sAIrifwx9sWahzM6ZjD74gYqjcWrXI';
-    fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=1&q=${encodeURIComponent(artist.name)}&key=${GOOGLE_API_KEY}`)
+    const qs = new URLSearchParams({ query: artist.name, type: 'channel' });
+    fetch(`/api/youtube-search?${qs.toString()}`)
       .then(r => r.json())
       .then(d => {
         const img = d.items?.[0]?.snippet?.thumbnails?.medium?.url;

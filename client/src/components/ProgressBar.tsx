@@ -156,7 +156,7 @@ export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false, is
   };
 
   return (
-    <div className="w-[90%] flex items-center justify-center my-2 gap-2">
+    <div className="w-[92%] flex items-center justify-center my-2 gap-2 mx-auto">
       {isLiveStream && !isYouTube ? (
         // Para rádios ao vivo: centralizar "AO VIVO" sem linha
         <div className="flex-1 flex items-center justify-center py-6">
@@ -165,10 +165,10 @@ export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false, is
       ) : (
         // Para músicas com duração: mostrar barra de progresso
         <>
-          <div className="text-xs text-muted-foreground min-w-[35px]">
+          <div className="text-xs text-muted-foreground min-w-[38px] flex-shrink-0 text-center tabular-nums">
             {formatTime(currentTime)}
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <canvas
               ref={canvasRef}
               onClick={handleCanvasClick}
@@ -176,7 +176,7 @@ export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false, is
               style={{ display: 'block' }}
             />
           </div>
-          <div className="text-xs text-muted-foreground min-w-[35px]">
+          <div className="text-xs text-muted-foreground min-w-[38px] flex-shrink-0 text-center tabular-nums">
             {formatTime(duration)}
           </div>
         </>

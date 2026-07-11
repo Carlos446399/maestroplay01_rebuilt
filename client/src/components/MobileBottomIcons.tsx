@@ -12,6 +12,7 @@ import {
   HardDrive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SleepTimerButton } from './SleepTimerButton';
 
 interface MobileBottomIconsProps {
   onSearch: () => void;
@@ -21,7 +22,8 @@ interface MobileBottomIconsProps {
   onRadio: () => void;
   onPlaylist: () => void;
   onArtists?: () => void;
-  onDrive?: () => void;
+  onOpenDriveSearch?: () => void;
+  onSleepTimerEnd?: () => void;
   isFavorite: boolean;
   isLocked?: boolean;
   onToggleLock?: () => void;
@@ -35,7 +37,8 @@ export const MobileBottomIcons = ({
   onRadio,
   onPlaylist,
   onArtists,
-  onDrive,
+  onOpenDriveSearch,
+  onSleepTimerEnd,
   isFavorite,
   isLocked = false,
   onToggleLock
@@ -91,12 +94,22 @@ export const MobileBottomIcons = ({
         />
       </div>
       
-      <div className="flex gap-4">
-        <HardDrive
-          className={cn("cursor-pointer text-green-400 hover:text-green-300 transition-colors", lockedClass)}
-          size={20}
-          onClick={isLocked ? undefined : onDrive}
-        />
+      <div className="flex gap-3 items-center">
+        {onOpenDriveSearch && (
+          <button
+            onClick={isLocked ? undefined : onOpenDriveSearch}
+            title="Buscar no Google Drive"
+            className={cn(
+              "p-1 rounded-full bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-400/30 transition-all",
+              lockedClass
+            )}
+          >
+            <HardDrive size={16} />
+          </button>
+        )}
+        {onSleepTimerEnd && !isLocked && (
+          <SleepTimerButton onTimerEnd={onSleepTimerEnd} />
+        )}
         <Users
           className={cn("cursor-pointer text-white hover:text-primary transition-colors", lockedClass)}
           size={20} 

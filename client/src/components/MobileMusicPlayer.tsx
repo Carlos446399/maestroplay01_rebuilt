@@ -84,7 +84,6 @@ export const MobileMusicPlayer = () => {
   const [isShuffle, setIsShuffle] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isDriveOfflineOpen, setIsDriveOfflineOpen] = useState(false);
-  const [showDriveFolders, setShowDriveFolders] = useState(true);
   const [playingCategoryId, setPlayingCategoryId] = useState<string | null>(null);
   const [savedSongs, setSavedSongs] = useState<FavoriteSong[]>([]);
   const [isSavedSongsOpen, setIsSavedSongsOpen] = useState(false);
@@ -793,12 +792,6 @@ export const MobileMusicPlayer = () => {
         isShuffle={isShuffle}
         onToggleShuffle={isPlayerLocked ? undefined : () => setIsShuffle(!isShuffle)}
         isLocked={isPlayerLocked}
-        onOpenDriveSearch={() => setIsDriveSearchOpen(true)}
-        onSleepTimerEnd={() => {
-          if (audioRef.current) audioRef.current.pause();
-          if (driveAudioRef.current) driveAudioRef.current.pause();
-          if (isYouTubeMode && ytPlayer) ytPlayer.pauseVideo();
-        }}
       />
 
       <MobileBottomIcons
@@ -809,7 +802,12 @@ export const MobileMusicPlayer = () => {
         onRadio={() => setIsRadioOpen(true)}
         onPlaylist={() => setIsSavedSongsOpen(true)}
         onArtists={() => setIsArtistsPanelOpen(true)}
-        onDrive={() => setShowDriveFolders(v => !v)}
+        onOpenDriveSearch={() => setIsDriveSearchOpen(true)}
+        onSleepTimerEnd={() => {
+          if (audioRef.current) audioRef.current.pause();
+          if (driveAudioRef.current) driveAudioRef.current.pause();
+          if (isYouTubeMode && ytPlayer) ytPlayer.pauseVideo();
+        }}
         isFavorite={
           isDriveMode
             ? favorites.has(`drive-${driveFileId}`)
@@ -845,16 +843,14 @@ export const MobileMusicPlayer = () => {
           playingCategoryId={playingCategoryId}
         />
 
-        {showDriveFolders && (
-          <div className="min-h-[64px]">
-            <DriveFoldersCarousel
-              onOpenFolder={(folder) => {
-                setDriveJumpFolder(folder);
-                setIsDriveOpen(true);
-              }}
-            />
-          </div>
-        )}
+        <div className="min-h-[64px]">
+          <DriveFoldersCarousel
+            onOpenFolder={(folder) => {
+              setDriveJumpFolder(folder);
+              setIsDriveOpen(true);
+            }}
+          />
+        </div>
       </div>
 
       <LocalPlaylistPanel

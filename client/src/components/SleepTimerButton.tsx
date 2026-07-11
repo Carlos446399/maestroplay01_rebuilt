@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Moon } from 'lucide-react';
+import { AlarmClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SleepTimerButtonProps {
@@ -75,7 +75,7 @@ export const SleepTimerButton = ({ onTimerEnd }: SleepTimerButtonProps) => {
         endAt ? "bg-purple-500/30 text-purple-200 border border-purple-400/40" : "bg-white/10 text-white hover:bg-white/20 border border-white/20"
       )}
     >
-      <Moon size={12} className="pointer-events-none" />
+      <AlarmClock size={12} className="pointer-events-none" />
       <span className="pointer-events-none">{endAt ? remainingLabel : 'Soneca'}</span>
       {/* <select> nativo nao-controlado: serve só como um seletor de ação
           (escolher/cancelar), sempre volta pro placeholder depois de cada

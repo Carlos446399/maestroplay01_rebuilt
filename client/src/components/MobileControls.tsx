@@ -1,7 +1,6 @@
-import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, HardDrive } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { SleepTimerButton } from './SleepTimerButton';
 
 interface MobileControlsProps {
   isPlaying: boolean;
@@ -13,8 +12,6 @@ interface MobileControlsProps {
   isShuffle: boolean;
   onToggleShuffle?: () => void;
   isLocked?: boolean;
-  onOpenDriveSearch?: () => void;
-  onSleepTimerEnd?: () => void;
 }
 
 export const MobileControls = ({ 
@@ -27,26 +24,9 @@ export const MobileControls = ({
   isShuffle,
   onToggleShuffle,
   isLocked = false,
-  onOpenDriveSearch,
-  onSleepTimerEnd,
 }: MobileControlsProps) => {
   return (
-    <div className="flex items-center justify-center my-1 gap-2">
-      {/* Busca no Google Drive */}
-      {onOpenDriveSearch && (
-        <button
-          onClick={onOpenDriveSearch}
-          disabled={isLocked}
-          title="Buscar no Google Drive"
-          className={cn(
-            "p-1.5 rounded-full bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-400/30 transition-all",
-            isLocked && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          <HardDrive size={14} />
-        </button>
-      )}
-
+    <div className="flex items-center justify-center my-1 gap-4">
       <Button
         variant="ghost"
         size="icon"
@@ -118,11 +98,6 @@ export const MobileControls = ({
       >
         <Shuffle size={24} />
       </Button>
-
-      {/* Temporizador de soneca */}
-      {onSleepTimerEnd && !isLocked && (
-        <SleepTimerButton onTimerEnd={onSleepTimerEnd} />
-      )}
     </div>
   );
 };

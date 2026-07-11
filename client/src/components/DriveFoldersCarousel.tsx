@@ -16,15 +16,16 @@ interface DriveFoldersCarouselProps {
  * ícone + nome dentro dele). Tocar num card abre o painel do Drive já
  * dentro daquela pasta, com a lista de músicas — igual abrir uma playlist.
  *
- * Usa um cache rápido em sessionStorage: mostra a última lista conhecida
- * na hora (sem esperar a rede) e atualiza silenciosamente por trás —
- * evita a demora perceptível de esperar a API do Drive responder toda
- * vez que a tela inicial abre.
+ * Usa um cache rápido em localStorage (persiste entre aberturas do
+ * app, não só na mesma sessão): mostra a última lista conhecida na hora
+ * (sem esperar a rede) e atualiza silenciosamente por trás — evita a
+ * demora perceptível de esperar a API do Drive responder toda vez que a
+ * tela inicial abre, mesmo depois de fechar e reabrir o app.
  */
 export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps) => {
   const [folders, setFolders] = useState<DriveItem[]>(() => {
     try {
-      const cached = sessionStorage.getItem(CACHE_KEY);
+      const cached = localStorage.getItem(CACHE_KEY);
       return cached ? JSON.parse(cached) : [];
     } catch {
       return [];
@@ -42,9 +43,9 @@ export const DriveFoldersCarousel = ({ onOpenFolder }: DriveFoldersCarouselProps
         setFolders(onlyFolders);
         setError(false);
         try {
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify(onlyFolders));
+          localStorage.setItem(CACHE_KEY, JSON.stringify(onlyFolders));
         } catch {
-          // sessionStorage indisponível/cheio — sem problema, só não cacheia
+          // localStorage indisponível/cheio — sem problema, só não cacheia
         }
       })
       .catch(() => {

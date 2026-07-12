@@ -200,13 +200,13 @@ const plugins = [
       screenshots: [
         {
           src: '/screenshot-1.png',
-          sizes: '540x720',
+          sizes: '1024x1536',
           form_factor: 'narrow',
           type: 'image/png',
         },
         {
           src: '/screenshot-2.png',
-          sizes: '1280x720',
+          sizes: '1536x1024',
           form_factor: 'wide',
           type: 'image/png',
         },

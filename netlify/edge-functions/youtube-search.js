@@ -1,21 +1,18 @@
 // Edge Function que faz proxy das buscas no YouTube (vídeos e canais),
-// com CACHE COMPARTILHADO entre todos os usuários via Netlify Blobs.
+// com CACHE COMPARTILHADO entre todos os usuários via cache de CDN do
+// próprio Netlify (Cache-Control), sem precisar de bibliotecas extras.
 //
 // Por quê: a cota gratuita da API do YouTube é de 10.000 unidades/dia
 // POR PROJETO (não por usuário) — cada busca custa 100 unidades, ou seja,
 // só ~100 buscas por dia no total, para todo mundo que usa o app.
 //
-// Como o cache ajuda: se a Pessoa A busca "sertanejo" e a cota é gasta,
-// quando a Pessoa B busca "sertanejo" horas depois, ela recebe o mesmo
-// resultado do cache — SEM gastar cota de novo. Buscas repetidas (a
-// maioria, na prática) passam a ser de graça, esticando bastante a
-// mesma cota fixa.
+// Como o cache ajuda: se a Pessoa A busca "sertanejo", a resposta fica
+// guardada no CDN do Netlify por 24h. Quando a Pessoa B busca "sertanejo"
+// horas depois, o CDN devolve a mesma resposta direto — SEM que essa
+// requisição sequer chegue até esta função, e SEM gastar cota de novo.
+// Buscas repetidas (a maioria, na prática) passam a ser de graça.
 //
 // Caminho: /api/youtube-search?query=TERMO&type=video|channel
-
-import { getStore } from 'npm:@netlify/blobs@10.7.9';
-
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
 
 export default async (request, context) => {
   const url = new URL(request.url);
@@ -38,25 +35,6 @@ export default async (request, context) => {
     });
   }
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const cacheKey = `${type}:${normalizedQuery}:${pageToken}`;
-
-  const store = getStore('youtube-search-cache');
-
-  // 1) Tenta responder do cache compartilhado primeiro (sem gastar cota)
-  try {
-    const cached = await store.get(cacheKey, { type: 'json' });
-    if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
-      return new Response(JSON.stringify(cached.data), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' },
-      });
-    }
-  } catch {
-    // Se o cache falhar por algum motivo, seguimos e buscamos na API normalmente
-  }
-
-  // 2) Cache miss (ou expirado): busca de verdade na API do YouTube
   const params = new URLSearchParams({
     part: 'snippet',
     type,
@@ -78,16 +56,16 @@ export default async (request, context) => {
       });
     }
 
-    // 3) Guarda no cache compartilhado para a próxima pessoa que buscar o mesmo termo
-    try {
-      await store.setJSON(cacheKey, { cachedAt: Date.now(), data });
-    } catch {
-      // Falha ao gravar no cache não deve quebrar a resposta pro usuário
-    }
-
     return new Response(JSON.stringify(data), {
       status: 200,
-      headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' },
+      headers: {
+        'Content-Type': 'application/json',
+        // Cache compartilhado no CDN do Netlify: mesma busca (mesma URL
+        // exata, com a mesma query string) responde do cache por 24h
+        // para qualquer pessoa, sem gastar cota de novo.
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+        'Netlify-CDN-Cache-Control': 'public, max-age=86400, durable',
+      },
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: 'Erro ao consultar o YouTube' }), {
@@ -97,4 +75,4 @@ export default async (request, context) => {
   }
 };
 
-export const config = { path: '/api/youtube-search' };
+export const config = { path: '/api/youtube-search', cache: 'manual' };

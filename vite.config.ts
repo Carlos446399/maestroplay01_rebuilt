@@ -161,6 +161,7 @@ const plugins = [
     registerType: 'autoUpdate',
     includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
     manifest: {
+      id: '/',
       name: 'Maestro Play',
       short_name: 'MaestroPlay',
       description: 'Aplicativo de música com suporte a YouTube, rádios online e playlists locais',

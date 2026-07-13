@@ -91,23 +91,23 @@ export const SplashScreen = ({ onEnter }: SplashScreenProps) => {
           <div
             className="relative mb-5"
             style={{
-              width: '100px',
-              height: '100px',
+              width: '150px',
+              height: '150px',
             }}
           >
             <div
-              className="absolute inset-0 rounded-2xl"
+              className="absolute inset-0 rounded-3xl"
               style={{
                 background: 'linear-gradient(135deg, #a855f7, #ec4899)',
-                boxShadow: '0 0 40px rgba(168,85,247,0.5), 0 0 80px rgba(236,72,153,0.3)',
+                boxShadow: '0 0 50px rgba(168,85,247,0.55), 0 0 100px rgba(236,72,153,0.35)',
               }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Music2 size={52} className="text-white" style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.4))' }} />
+              <Music2 size={78} className="text-white" style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.4))' }} />
             </div>
             {/* Pulso */}
             <div
-              className="absolute inset-0 rounded-2xl animate-ping"
+              className="absolute inset-0 rounded-3xl animate-ping"
               style={{
                 background: 'linear-gradient(135deg, #a855f7, #ec4899)',
                 opacity: 0.2,

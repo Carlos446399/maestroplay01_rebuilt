@@ -759,7 +759,7 @@ export const MobileMusicPlayer = () => {
           key={isDriveMode ? 'drive-visualizer' : 'main-visualizer'}
           audioRef={isDriveMode ? driveAudioRef : audioRef}
           isPlaying={isDriveMode ? drivePlaying : (isPlaying && !isYouTubeMode)}
-          isRadio={currentSource === 'radios'}
+          isRadio={!isDriveMode && !isYouTubeMode && currentSource === 'radios'}
         />
       </div>
 
@@ -777,7 +777,7 @@ export const MobileMusicPlayer = () => {
           currentTime={displayTime}
           duration={displayDuration}
           onSeek={isPlayerLocked ? (() => {}) : handleSeek}
-          isRadio={currentSource === 'radios'}
+          isRadio={!isDriveMode && !isYouTubeMode && currentSource === 'radios'}
           isYouTube={isYouTubeMode}
         />
       </div>

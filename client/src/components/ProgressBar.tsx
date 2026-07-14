@@ -9,6 +9,7 @@ interface ProgressBarProps {
 }
 
 const formatTime = (seconds: number): string => {
+  if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return '0:00';
   const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
   const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
   return `${mins}:${secs}`;
@@ -16,8 +17,13 @@ const formatTime = (seconds: number): string => {
 
 export const ProgressBar = ({ currentTime, duration, onSeek, isRadio = false, isYouTube = false }: ProgressBarProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const isLiveStream = (isRadio && !isYouTube) || (duration === 0 && !isYouTube) || (!isFinite(duration) && !isYouTube);
+  const progress = duration > 0 && isFinite(duration) ? (currentTime / duration) * 100 : 0;
+  // "Ao vivo" só quando é realmente uma rádio de internet — não inferir
+  // isso a partir da duração (0 ou infinita), porque músicas do Drive
+  // podem ter duração temporariamente desconhecida enquanto carregam ou
+  // vinda de um streaming sem Content-Length, o que fazia a barra de
+  // progresso sumir e mostrar "AO VIVO" por engano.
+  const isLiveStream = isRadio && !isYouTube;
 
   // Draw heartbeat waveform on canvas
   useEffect(() => {

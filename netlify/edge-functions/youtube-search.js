@@ -65,6 +65,10 @@ export default async (request, context) => {
         // para qualquer pessoa, sem gastar cota de novo.
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
         'Netlify-CDN-Cache-Control': 'public, max-age=86400, durable',
+        // Garante explicitamente que o cache diferencia por query string
+        // completa (query, type e pageToken) — sem isso, buscas de
+        // artistas diferentes podiam devolver o mesmo resultado cacheado.
+        'Netlify-Vary': 'query=query,type,pageToken',
       },
     });
   } catch (err) {

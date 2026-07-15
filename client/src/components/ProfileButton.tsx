@@ -143,6 +143,18 @@ export const ProfileButton = ({ onOpenStats }: ProfileButtonProps) => {
               <p className="text-[11px] text-gray-400 mb-4">
                 Guardado só neste aparelho — não é sincronizado com nenhum servidor.
               </p>
+              {!hasProfile() && (
+                <p className="text-[10px] text-gray-400 mb-3 -mt-2">
+                  Ao criar uma conta, você concorda com os{' '}
+                  <a href="/terms-of-service.html" target="_blank" rel="noopener" className="underline text-purple-500">
+                    Termos de Serviço
+                  </a>{' '}
+                  e a{' '}
+                  <a href="/privacy-policy.html" target="_blank" rel="noopener" className="underline text-purple-500">
+                    Política de Privacidade
+                  </a>.
+                </p>
+              )}
               <label className="text-[11px] font-semibold text-gray-500">Nome de usuário</label>
               <input
                 type="text"

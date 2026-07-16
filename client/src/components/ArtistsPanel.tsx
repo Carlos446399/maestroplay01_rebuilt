@@ -284,11 +284,19 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
   const allArtists = [...baseArtists, ...extraArtists];
   const displayedArtists = allArtists.slice(0, displayedArtistsCount);
 
-  // Carregar artistas salvos do localStorage
+  // Carregar artistas salvos do localStorage (aceita tanto o formato
+  // antigo, uma lista de IDs, quanto o novo, uma lista de objetos
+  // completos com nome/foto)
   useEffect(() => {
     const saved = localStorage.getItem('savedArtists');
     if (saved) {
-      setSavedArtists(new Set(JSON.parse(saved)));
+      try {
+        const parsed = JSON.parse(saved);
+        const ids = parsed.map((entry: any) => (typeof entry === 'string' ? entry : entry.id));
+        setSavedArtists(new Set(ids));
+      } catch {
+        // ignora dado corrompido
+      }
     }
   }, []);
 
@@ -364,13 +372,34 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
 
   const handleSaveArtist = (artist: Artist) => {
     const newSaved = new Set(savedArtists);
+    // Lê a lista atual de artistas salvos (objetos completos) para poder
+    // adicionar/remover mantendo os dados de quem foi pesquisado (nome,
+    // foto) — sem isso, artistas pesquisados eram "salvos" só pelo ID e
+    // nunca apareciam na tela inicial, já que ela não tem como descobrir
+    // o nome/foto de um artista que não está na lista fixa pré-definida.
+    let savedList: Array<Partial<Artist>> = [];
+    try {
+      const raw = localStorage.getItem('savedArtists');
+      savedList = raw ? JSON.parse(raw) : [];
+    } catch {
+      savedList = [];
+    }
+
     if (newSaved.has(artist.id)) {
       newSaved.delete(artist.id);
+      savedList = savedList.filter((a: any) => (typeof a === 'string' ? a !== artist.id : a.id !== artist.id));
     } else {
       newSaved.add(artist.id);
+      savedList.push({
+        id: artist.id,
+        name: artist.name,
+        country: artist.country,
+        genre: artist.genre,
+        image: artist.image,
+      });
     }
     setSavedArtists(newSaved);
-    localStorage.setItem('savedArtists', JSON.stringify(Array.from(newSaved)));
+    localStorage.setItem('savedArtists', JSON.stringify(savedList));
   };
 
   // Busca artistas pelo nome (primeira página)
@@ -636,7 +665,13 @@ export const ArtistsPanel = ({ isOpen, onClose, onPlaySong, onPlayPlaylist }: Ar
                       <div
                         key={song.id}
                         className="p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors flex items-center gap-2 cursor-pointer"
-                        onClick={() => onPlayPlaylist?.(artistSongs, index) || onPlaySong?.(song.id, song.title, song.thumbnail)}
+                        onClick={() => {
+                          if (onPlayPlaylist) {
+                            onPlayPlaylist(artistSongs, index);
+                          } else {
+                            onPlaySong?.(song.id, song.title, song.thumbnail);
+                          }
+                        }}
                       >
                         <img
                           src={song.thumbnail}

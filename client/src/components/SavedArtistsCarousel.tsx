@@ -11,8 +11,9 @@ import { cn } from '@/lib/utils';
 interface SavedArtist {
   id: string;
   name: string;
-  country: string;
-  genre: string;
+  country?: string;
+  genre?: string;
+  thumbnail?: string;
 }
 
 interface SavedArtistsCarouselProps {
@@ -154,7 +155,7 @@ const ALL_ARTISTS: Record<string, SavedArtist> = {
 };
 
 export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselProps) => {
-  const [savedArtistIds, setSavedArtistIds] = useState<string[]>([]);
+  const [savedArtistIds, setSavedArtistIds] = useState<Array<string | SavedArtist>>([]);
   const [selectedArtist, setSelectedArtist] = useState<SavedArtist | null>(null);
   const [artistSongs, setArtistSongs] = useState<Array<{id: string; title: string; thumbnail: string}>>([]);
   const [isLoadingSongs, setIsLoadingSongs] = useState(false);
@@ -183,9 +184,9 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
     return () => clearInterval(interval);
   }, []);
 
-  const savedArtists = savedArtistIds
-    .map(id => ALL_ARTISTS[id])
-    .filter(artist => artist !== undefined);
+  const savedArtists: SavedArtist[] = savedArtistIds
+    .map(entry => (typeof entry === 'string' ? ALL_ARTISTS[entry] : entry))
+    .filter((artist): artist is SavedArtist => artist !== undefined);
 
   const handlePlayArtist = async (artist: SavedArtist) => {
     setSelectedArtist(artist);
@@ -291,7 +292,7 @@ export const SavedArtistsCarousel = ({ onPlayPlaylist }: SavedArtistsCarouselPro
                   {artist.name}
                 </p>
                 <p className="text-red-100 text-[6px] text-center truncate w-full">
-                  {artist.country}
+                  {artist.country || artist.genre || ''}
                 </p>
               </div>
 
